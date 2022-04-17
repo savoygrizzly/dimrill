@@ -11,7 +11,7 @@ const getInstructions = (req, user, context, condition) => {
   };
 
   condition.split(":").forEach((e) => {
-    if (Conditions.includes(e)) {
+    if (typeof Conditions[e] === "function") {
       instructions.condition = e;
     } else if (instructions[e] !== undefined) {
       instructions[e] = instructions[e] !== undefined ? true : instructions[e];
@@ -19,7 +19,6 @@ const getInstructions = (req, user, context, condition) => {
   });
   return instructions;
 };
-const apply = (instructions, operand, req, user, context) => {};
 const matchVariables = (operands, variables) => {
   return operands.map((value) => {
     const match = value.match(/\$\{(..*?)\}/);
@@ -36,24 +35,53 @@ const matchVariables = (operands, variables) => {
     }
   });
 };
+
 const verify = (
+  instructions,
+  conditionOperands,
+  adapters = {},
+  toContext = false
+) => {
+  if (toContext) {
+    return typeof adapters[instructions.condition] === "function"
+      ? adapters[instructions.condition](
+          conditionOperands[0],
+          conditionOperands[1]
+        )
+      : false;
+  } else {
+    return typeof Conditions[instructions.condition] === "function"
+      ? Conditions[instructions.condition](
+          conditionOperands[0],
+          conditionOperands[1]
+        )
+      : false;
+  }
+};
+const verifyCondition = (
   instructions,
   conditionOperands,
   req = {},
   user = {},
-  context = {}
+  context = {},
+  adapters = {}
 ) => {
   //check if conditionOperands is an array:
   if (Array.isArray(conditionOperands) && conditionOperands.length > 1) {
-    //is Array
+    //is Array need to iterate
   } else {
     const OperandsArray = matchVariables(Object.entries(conditionOperands)[0], {
       req,
       user,
       context,
     });
-
-    console.log(OperandsArray);
+    let validated = verify(
+      instructions,
+      OperandsArray,
+      adapters,
+      instructions.ToContext
+    );
+    console.log(validated);
   }
 };
 
@@ -62,27 +90,29 @@ const validateConditions = (
   req,
   user,
   context,
-  adapter = undefined
+  adapters = undefined
 ) => {
   if (typeof Array.isArray(conditions) && conditions.length > 1) {
     //iterate and apply "AND" operand
     console.log("must iterate");
     conditions.forEach((condition) => {
-      verify(
+      verifyCondition(
         getInstructions(req, user, context, Object.keys(condition)[0]),
         Object.values(conditions)[0],
         req,
         user,
-        context
+        context,
+        adapters
       );
     });
   } else {
-    verify(
+    verifyCondition(
       getInstructions(req, user, context, Object.keys(conditions)[0]),
       Object.values(conditions)[0],
       req,
       user,
-      context
+      context,
+      adapters
     );
   }
 };
@@ -98,7 +128,7 @@ function validate(statement, req, user, context) {
     this.context = context;
   } else {
     //validate
-    validateConditions(statement.Condition, req, user, context);
+    validateConditions(statement.Condition, req, user, context, this.adapter);
   }
   return this;
 }

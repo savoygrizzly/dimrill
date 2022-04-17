@@ -118,3 +118,24 @@ const Bool = (leftOperator, rightOperator) => {
 const InArray = (leftOperator, rightOperator) => {
   return Array(leftOperator).includes(Array(rightOperator));
 };
+
+module.exports = {
+  StringStrictlyEquals,
+  StringEquals,
+  StringStrictlyNotEquals,
+  StringNotEquals,
+  NumericEquals,
+  NumericNotEquals,
+  NumericLessThan,
+  NumericLessThanEquals,
+  NumericGreaterThan,
+  NumericGreaterThanEquals,
+  DateEquals,
+  DateNotEquals,
+  DateLessThan,
+  DateLessThanEquals,
+  DateGreaterThan,
+  DateGreaterThanEquals,
+  Bool,
+  InArray,
+};

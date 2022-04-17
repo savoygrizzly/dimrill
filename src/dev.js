@@ -44,7 +44,11 @@ Bolt.initialize({ options: { adapter: "mongo" } });
 const t = Bolt.validate(
   obj2,
   { req: "req" },
-  { user: "tes" },
+  {
+    user: {
+      id: "test",
+    },
+  },
   {
     context: {
       organization: {

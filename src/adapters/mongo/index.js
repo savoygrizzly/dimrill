@@ -2,61 +2,61 @@
 
 const StringStrictlyEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: String(rightOperator),
+    [String(leftOperator)]: String(rightOperator),
   };
 };
 
 const StringEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: String(rightOperator),
+    [String(leftOperator)]: String(rightOperator),
   };
 };
 
 const StringStrictlyNotEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $ne: String(rightOperator) },
+    [String(leftOperator)]: { $ne: String(rightOperator) },
   };
 };
 
 const StringNotEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $ne: String(rightOperator) },
+    [String(leftOperator)]: { $ne: String(rightOperator) },
   };
 };
 
 const NumericEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: Number(rightOperator),
+    [String(leftOperator)]: Number(rightOperator),
   };
 };
 
 const NumericNotEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $ne: Number(rightOperator) },
+    [String(leftOperator)]: { $ne: Number(rightOperator) },
   };
 };
 
 const NumericLessThan = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $lt: Number(rightOperator) },
+    [String(leftOperator)]: { $lt: Number(rightOperator) },
   };
 };
 
 const NumericLessThanEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $lte: Number(rightOperator) },
+    [String(leftOperator)]: { $lte: Number(rightOperator) },
   };
 };
 
 const NumericGreaterThan = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $gt: Number(rightOperator) },
+    [String(leftOperator)]: { $gt: Number(rightOperator) },
   };
 };
 
 const NumericGreaterThanEquals = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: { $gte: Number(rightOperator) },
+    [String(leftOperator)]: { $gte: Number(rightOperator) },
   };
 };
 
@@ -125,34 +125,34 @@ const DateGreaterThanEquals = (leftOperator, rightOperator) => {
 
 const Bool = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: Boolean(rightOperator),
+    [String(leftOperator)]: Boolean(rightOperator),
   };
 };
 
 const InArray = (leftOperator, rightOperator) => {
   return {
-    [String(lefOperator)]: {
+    [String(leftOperator)]: {
       $in: Array.isArray(rightOperator) ? t : Array(rightOperator),
     },
   };
 };
 
 module.exports = {
-  StringStrictlyEquals: StringStrictlyEquals,
-  StringEquals: StringEquals,
-  StringStrictlyNotEquals: StringStrictlyNotEquals,
-  StringNotEquals: StringNotEquals,
-  NumericEquals: NumericNotEquals,
-  NumericLessThan: NumericLessThan,
-  NumericLessThanEquals: NumericLessThanEquals,
-  NumericGreaterThan: NumericGreaterThan,
-  NumericGreaterThanEquals: NumericGreaterThanEquals,
-  DateEquals: DateEquals,
-  DateNotEquals: DateNotEquals,
-  DateLessThan: DateLessThan,
-  DateLessThanEquals: DateLessThanEquals,
-  DateGreaterThan: DateGreaterThan,
-  DateGreaterThanEquals: DateGreaterThanEquals,
-  Bool: Bool,
-  InArray: InArray,
+  StringStrictlyEquals,
+  StringEquals,
+  StringStrictlyNotEquals,
+  StringNotEquals,
+  NumericNotEquals,
+  NumericLessThan,
+  NumericLessThanEquals,
+  NumericGreaterThan,
+  NumericGreaterThanEquals,
+  DateEquals,
+  DateNotEquals,
+  DateLessThan,
+  DateLessThanEquals,
+  DateGreaterThan,
+  DateGreaterThanEquals,
+  Bool,
+  InArray,
 };

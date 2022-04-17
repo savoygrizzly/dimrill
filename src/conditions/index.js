@@ -1,4 +1,6 @@
 "use-strict";
 
-const Conditions = require("./list");
-module.exports = Conditions;
+const Validators = require("./validate");
+module.exports = {
+  ...Validators,
+};
