@@ -18,28 +18,26 @@ const obj1 = {
 const obj = {
   Condition: [
     {
-      "ToContext:AnyValue:StringEquals": {
-        "${context.organization.attached}": "${user.id}",
+      "ToContext:StringEquals": {
+        "${context:organization.attached}": "${user:id}",
       },
     },
     {
-      "EveryValue:InArray": {
-        "${context.organization.attached}": "${user.id}",
+      StringEquals: {
+        "${context:organization.attached}": "${user:id}",
       },
     },
   ],
 };
 
-const obj2 = {
-  Condition: {
-    "ToContext:AnyValue:StringEquals": {
-      "${context:organization.attached}": "${user:id}",
-    },
-  },
-};
-
 const Bolt = require("./index.js");
 Bolt.initialize({ options: { adapter: "mongo" } });
+
+const obj2 = {
+  Condition: {
+    "AnyValue:StringEquals": {},
+  },
+};
 
 const t = Bolt.validate(
   obj2,
@@ -47,12 +45,14 @@ const t = Bolt.validate(
   {
     user: {
       id: "test",
+      test: "truffe3",
     },
   },
   {
     context: {
       organization: {
         attached: "test",
+        test: "truffe",
       },
     },
   }
