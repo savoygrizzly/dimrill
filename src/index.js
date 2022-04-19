@@ -20,10 +20,15 @@ const getInstructions = (req, user, context, condition) => {
   return instructions;
 };
 const matchVariables = (operands, variables) => {
+  if (!Array.isArray(operands) || operands.length < 1) {
+    return null;
+  }
   return operands.map((value) => {
     const match = value.match(/\$\{(..*?)\}/);
-    const variable = variables[match[1].split(":")[0]][match[1].split(":")[0]];
     if (match) {
+      const variable =
+        variables[match[1].split(":")[0]][match[1].split(":")[0]];
+
       const value = match[1]
         .split(":")[1]
         .split(".")
@@ -31,12 +36,13 @@ const matchVariables = (operands, variables) => {
 
       return value ?? null;
     } else {
-      return null;
+      //value is a fixed string
+      return value;
     }
   });
 };
 
-const verify = (
+const verifyOperands = (
   instructions,
   conditionOperands,
   adapters = {},
@@ -58,7 +64,7 @@ const verify = (
       : false;
   }
 };
-const verifyCondition = (
+const verifyConditionSet = (
   instructions,
   conditionOperands,
   req = {},
@@ -67,15 +73,53 @@ const verifyCondition = (
   adapters = {}
 ) => {
   //check if conditionOperands is an array:
+  //console.log(conditionOperands);
+  const verificationState = {
+    hasContext: false,
+    context: {},
+    valid: true,
+  };
   if (Array.isArray(conditionOperands) && conditionOperands.length > 1) {
     //is Array need to iterate
+
+    conditionOperands.forEach((operand) => {
+      const OperandsArray = matchVariables(Object.entries(operand)[0], {
+        req,
+        user,
+        context,
+      });
+      let validated = verifyOperands(
+        instructions,
+        OperandsArray,
+        adapters,
+        instructions.ToContext
+      );
+      console.log(instructions, validated);
+      if (typeof validated === "boolean") {
+        /*
+          Verify wether condition matches instructions
+        */
+        verificationState.valid =
+          (validated || verificationState.valid) && instructions.AnyValue
+            ? true
+            : validated && verificationState.valid;
+      } else if (typeof validated === "object" && Object.keys().length >= 1) {
+        verificationState.hasContext = true;
+        verificationState.context = {
+          ...verificationState.hasContext,
+          ...validated,
+        };
+      }
+      console.log(verificationState);
+    });
+    console.log(verificationState);
   } else {
     const OperandsArray = matchVariables(Object.entries(conditionOperands)[0], {
       req,
       user,
       context,
     });
-    let validated = verify(
+    let validated = verifyOperands(
       instructions,
       OperandsArray,
       adapters,
@@ -92,13 +136,32 @@ const validateConditions = (
   context,
   adapters = undefined
 ) => {
-  if (typeof Array.isArray(conditions) && conditions.length > 1) {
+  conditions =
+    Array.isArray(conditions) && conditions.length > 1
+      ? conditions
+      : Array(conditions);
+
+  conditions.forEach((condition) => {
+    if (!Object.keys(condition).length >= 1) {
+      //no conditions
+    } else {
+      verifyConditionSet(
+        getInstructions(req, user, context, Object.keys(condition)[0]),
+        Object.values(condition)[0],
+        req,
+        user,
+        context,
+        adapters
+      );
+    }
+  });
+  /*if (Array.isArray(conditions) && conditions.length > 1) {
     //iterate and apply "AND" operand
     console.log("must iterate");
     conditions.forEach((condition) => {
-      verifyCondition(
+      verifyConditionSet(
         getInstructions(req, user, context, Object.keys(condition)[0]),
-        Object.values(conditions)[0],
+        Object.values(condition)[0],
         req,
         user,
         context,
@@ -106,7 +169,7 @@ const validateConditions = (
       );
     });
   } else {
-    verifyCondition(
+    verifyConditionSet(
       getInstructions(req, user, context, Object.keys(conditions)[0]),
       Object.values(conditions)[0],
       req,
@@ -114,7 +177,7 @@ const validateConditions = (
       context,
       adapters
     );
-  }
+  }*/
 };
 
 function validate(statement, req, user, context) {
