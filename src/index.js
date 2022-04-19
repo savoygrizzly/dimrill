@@ -48,6 +48,9 @@ const verifyOperands = (
   adapters = {},
   toContext = false
 ) => {
+  if (!conditionOperands) {
+    return false;
+  }
   if (toContext) {
     return typeof adapters[instructions.condition] === "function"
       ? adapters[instructions.condition](
@@ -79,46 +82,53 @@ const verifyConditionSet = (
     context: {},
     valid: true,
   };
-  if (Array.isArray(conditionOperands) && conditionOperands.length > 1) {
-    //is Array need to iterate
+  conditionOperands =
+    Array.isArray(conditionOperands) && conditionOperands.length > 1
+      ? conditionOperands
+      : Array(conditionOperands);
 
-    conditionOperands.forEach((operand) => {
-      const OperandsArray = matchVariables(Object.entries(operand)[0], {
-        req,
-        user,
-        context,
-      });
-      let validated = verifyOperands(
-        instructions,
-        OperandsArray,
-        adapters,
-        instructions.ToContext
-      );
-      console.log(instructions, validated);
-      if (typeof validated === "boolean") {
-        /*
+  conditionOperands.forEach((operand) => {
+    const OperandsArray = matchVariables(Object.entries(operand)[0], {
+      req,
+      user,
+      context,
+    });
+    console.log(OperandsArray);
+    let validated = verifyOperands(
+      instructions,
+      OperandsArray,
+      adapters,
+      instructions.ToContext
+    );
+    console.log(instructions, validated);
+    if (typeof validated === "boolean") {
+      /*
           Verify wether condition matches instructions
         */
-        verificationState.valid =
-          (validated || verificationState.valid) && instructions.AnyValue
-            ? true
-            : validated && verificationState.valid;
-      } else if (typeof validated === "object" && Object.keys().length >= 1) {
-        verificationState.hasContext = true;
-        verificationState.context = {
-          ...verificationState.hasContext,
-          ...validated,
-        };
-      }
-      console.log(verificationState);
-    });
+      verificationState.valid =
+        (validated || verificationState.valid) && instructions.AnyValue
+          ? true
+          : validated && verificationState.valid;
+    } else if (typeof validated === "object" && Object.keys().length >= 1) {
+      verificationState.hasContext = true;
+      verificationState.context = {
+        ...verificationState.hasContext,
+        ...validated,
+      };
+    }
     console.log(verificationState);
+  });
+  console.log(verificationState);
+  /*
+  if (Array.isArray(conditionOperands) && conditionOperands.length > 1) {
+    
   } else {
     const OperandsArray = matchVariables(Object.entries(conditionOperands)[0], {
       req,
       user,
       context,
     });
+    console.log(OperandsArray);
     let validated = verifyOperands(
       instructions,
       OperandsArray,
@@ -126,7 +136,7 @@ const verifyConditionSet = (
       instructions.ToContext
     );
     console.log(validated);
-  }
+  }*/
 };
 
 const validateConditions = (

@@ -35,7 +35,7 @@ Bolt.initialize({ options: { adapter: "mongo" } });
 
 const obj2 = {
   Condition: {
-    "AnyValue:StringEquals": {},
+    "ToContext:StringEquals": [],
   },
 };
 
