@@ -35,7 +35,20 @@ Bolt.initialize({ options: { adapter: "mongo" } });
 
 const obj2 = {
   Condition: {
-    "ToContext:StringEquals": [],
+    "EveryValue:StringEquals": [
+      { "${context:organization.id}": "${user:id}" },
+      {
+        truffe: "truffde",
+      },
+    ],
+
+    "ToContext:EveryValue:StringEquals": [
+      {
+        "organization.test": true,
+      },
+      { "organization.dev": false },
+      ,
+    ],
   },
 };
 
@@ -51,8 +64,9 @@ const t = Bolt.validate(
   {
     context: {
       organization: {
-        attached: "test",
-        test: "truffe",
+        attached: ["test"],
+        id: "test",
+        test: true,
       },
     },
   }
