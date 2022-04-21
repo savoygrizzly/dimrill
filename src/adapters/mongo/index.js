@@ -137,6 +137,16 @@ const InArray = (leftOperator, rightOperator) => {
   };
 };
 
+/*
+    Logiv^cal operators
+*/
+const or = (object) => {
+  return { $or: Object.entries(object).map((m) => ({ [m[0]]: m[1] })) };
+};
+const and = (object) => {
+  return object;
+};
+
 module.exports = {
   StringStrictlyEquals,
   StringEquals,
@@ -155,4 +165,8 @@ module.exports = {
   DateGreaterThanEquals,
   Bool,
   InArray,
+  operators: {
+    or,
+    and,
+  },
 };

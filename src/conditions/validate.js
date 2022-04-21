@@ -17,11 +17,11 @@ const StringNotEquals = (leftOperator, rightOperator) => {
 };
 
 const NumericEquals = (leftOperator, rightOperator) => {
-  return Number(leftOperator) == Number(rightOperator);
+  return Number(leftOperator) === Number(rightOperator);
 };
 
 const NumericNotEquals = (leftOperator, rightOperator) => {
-  return Number(leftOperator) != Number(rightOperator);
+  return Number(leftOperator) !== Number(rightOperator);
 };
 
 const NumericLessThan = (leftOperator, rightOperator) => {

@@ -11,10 +11,11 @@ const getInstructions = (req, user, context, condition) => {
   };
 
   condition.split(":").forEach((e) => {
-    if (typeof Conditions[e] === "function") {
+    if (typeof Conditions[String(e)] === "function") {
       instructions.condition = e;
-    } else if (instructions[e] !== undefined) {
-      instructions[e] = instructions[e] !== undefined ? true : instructions[e];
+    } else if (instructions[String(e)] !== undefined) {
+      instructions[String(e)] =
+        instructions[String(e)] !== undefined ? true : instructions[String(e)];
     }
   });
   return instructions;
@@ -24,19 +25,28 @@ const matchVariables = (operands, variables) => {
     return null;
   }
   return operands.map((value) => {
-    const match = value.match(/\$\{(..*?)\}/);
-    if (match) {
-      const variable =
-        variables[match[1].split(":")[0]][match[1].split(":")[0]];
+    if (typeof value === "string") {
+      const match = value.match(/\$\{(..*?)\}/);
+      if (match) {
+        const variable =
+          variables[match[1].split(":")[0]][match[1].split(":")[0]];
 
-      const value = match[1]
-        .split(":")[1]
-        .split(".")
-        .reduce((a, b) => a[b], variable);
+        const value = match[1]
+          .split(":")[1]
+          .split(".")
+          .reduce((a, b) => a[String(b)], variable);
 
-      return value ?? null;
+        return value ?? null;
+      } else {
+        //value is a fixed string
+        return value;
+      }
     } else {
-      //value is a fixed string
+      //value is a not a string
+      /*
+        If a function is returned here it should get cast to supported format by either the validator or the adapter
+        However if the user supplies an adapter that does not cast input type, it can lead to a code injection via adapter
+      */
       return value;
     }
   });
@@ -52,6 +62,9 @@ const verifyOperands = (
     return false;
   }
   if (toContext) {
+    /*
+      Apply adapter
+    */
     return typeof adapters[instructions.condition] === "function"
       ? adapters[instructions.condition](
           conditionOperands[0],
@@ -59,6 +72,9 @@ const verifyOperands = (
         )
       : false;
   } else {
+    /*
+      validate condition
+    */
     return typeof Conditions[instructions.condition] === "function"
       ? Conditions[instructions.condition](
           conditionOperands[0],
@@ -75,13 +91,12 @@ const verifyConditionSet = (
   context = {},
   adapters = {}
 ) => {
-  //check if conditionOperands is an array:
-  //console.log(conditionOperands);
   const verificationState = {
     hasContext: false,
     context: {},
     valid: true,
   };
+  //check wether conditionOperands is an array:
   conditionOperands =
     Array.isArray(conditionOperands) && conditionOperands.length > 1
       ? conditionOperands
@@ -93,50 +108,62 @@ const verifyConditionSet = (
       user,
       context,
     });
-    console.log(OperandsArray);
     let validated = verifyOperands(
       instructions,
       OperandsArray,
       adapters,
       instructions.ToContext
     );
-    console.log(instructions, validated);
     if (typeof validated === "boolean") {
       /*
           Verify wether condition matches instructions
-        */
+      */
       verificationState.valid =
-        (validated || verificationState.valid) && instructions.AnyValue
+        (validated || verificationState.valid) &&
+        instructions.AnyValue &&
+        instructions.condition
           ? true
           : validated && verificationState.valid;
-    } else if (typeof validated === "object" && Object.keys().length >= 1) {
+    } else if (
+      typeof validated === "object" &&
+      Object.keys(validated).length >= 1
+    ) {
+      /*
+        Add context
+
+      */
       verificationState.hasContext = true;
       verificationState.context = {
-        ...verificationState.hasContext,
+        ...verificationState.context,
         ...validated,
       };
     }
-    console.log(verificationState);
   });
-  console.log(verificationState);
-  /*
-  if (Array.isArray(conditionOperands) && conditionOperands.length > 1) {
-    
-  } else {
-    const OperandsArray = matchVariables(Object.entries(conditionOperands)[0], {
-      req,
-      user,
-      context,
-    });
-    console.log(OperandsArray);
-    let validated = verifyOperands(
-      instructions,
-      OperandsArray,
-      adapters,
-      instructions.ToContext
-    );
-    console.log(validated);
-  }*/
+  /* 
+      check wether Context must be wrapped in a logic operator
+  */
+  if (
+    verificationState.hasContext &&
+    Object.keys(verificationState.context).length >= 2
+  ) {
+    /* 
+      Context must be applied to a OR logical operator
+    */
+    if (instructions.AnyValue) {
+      verificationState.context = adapters.operators.or(
+        verificationState.context
+      );
+    } else {
+      /* 
+      Context must be applied to a AND logical operator,
+      this line is required to make sure translation to languages other than MongoDB happens
+    */
+      verificationState.context = adapters.operators.and(
+        verificationState.context
+      );
+    }
+  }
+  return verificationState;
 };
 
 const validateConditions = (
@@ -146,16 +173,32 @@ const validateConditions = (
   context,
   adapters = undefined
 ) => {
+  const conditionsResults = {
+    hasContext: false,
+    context: {},
+    valid: true,
+  };
+  /* 
+    Transform conditions into an array if it isn't
+  */
   conditions =
     Array.isArray(conditions) && conditions.length > 1
       ? conditions
+      : Object.keys(conditions).length > 1
+      ? Object.entries(conditions).map((m) => ({ [m[0]]: m[1] }))
       : Array(conditions);
-
+  /*
+    Iterate over the condition block keys
+  */
   conditions.forEach((condition) => {
-    if (!Object.keys(condition).length >= 1) {
-      //no conditions
-    } else {
-      verifyConditionSet(
+    /*
+      if is not an object but an array
+    */
+    if (Object.keys(condition).length >= 1) {
+      /*
+        Extract instructions from the key of the object
+      */
+      const setResults = verifyConditionSet(
         getInstructions(req, user, context, Object.keys(condition)[0]),
         Object.values(condition)[0],
         req,
@@ -163,31 +206,28 @@ const validateConditions = (
         context,
         adapters
       );
+      /*
+          Merge condition result results with others by applying an AND logic 
+          (if all conditions are true)
+      */
+      conditionsResults.valid = setResults.valid && conditionsResults.valid;
+      if (
+        typeof setResults.context === "object" &&
+        Object.keys(setResults.context).length >= 1
+      ) {
+        /*
+          Merge condition context results with others
+        */
+        conditionsResults.hasContext = true;
+        conditionsResults.context = {
+          ...conditionsResults.context,
+          ...setResults.context,
+        };
+      }
     }
   });
-  /*if (Array.isArray(conditions) && conditions.length > 1) {
-    //iterate and apply "AND" operand
-    console.log("must iterate");
-    conditions.forEach((condition) => {
-      verifyConditionSet(
-        getInstructions(req, user, context, Object.keys(condition)[0]),
-        Object.values(condition)[0],
-        req,
-        user,
-        context,
-        adapters
-      );
-    });
-  } else {
-    verifyConditionSet(
-      getInstructions(req, user, context, Object.keys(conditions)[0]),
-      Object.values(conditions)[0],
-      req,
-      user,
-      context,
-      adapters
-    );
-  }*/
+  console.log(conditionsResults);
+  return conditionsResults;
 };
 
 function validate(statement, req, user, context) {
