@@ -182,7 +182,7 @@ const validateConditions = (
     Transform conditions into an array if it isn't
   */
   conditions =
-    Array.isArray(conditions) && conditions.length > 1
+    Array.isArray(conditions) && conditions.length >= 1
       ? conditions
       : Object.keys(conditions).length > 1
       ? Object.entries(conditions).map((m) => ({ [m[0]]: m[1] }))
@@ -198,14 +198,57 @@ const validateConditions = (
       /*
         Extract instructions from the key of the object
       */
-      const setResults = verifyConditionSet(
-        getInstructions(req, user, context, Object.keys(condition)[0]),
-        Object.values(condition)[0],
-        req,
-        user,
-        context,
-        adapters
-      );
+
+      let setResults = {
+        valid: false,
+        hasContext: false,
+        context: {},
+      };
+      /*
+      If its an array it means a logical OR is present 
+      */
+      if (Array.isArray(condition) && condition.length > 1) {
+        condition.forEach((conditionPart) => {
+          /*
+            Verify and merge results and context for each or the array's element
+          */
+          const subSetResults = verifyConditionSet(
+            getInstructions(req, user, context, Object.keys(conditionPart)[0]),
+            Object.values(conditionPart)[0],
+            req,
+            user,
+            context,
+            adapters
+          );
+          //console.log(subSetResults);
+          /*
+            Merge valid and hasContext states
+          */
+          setResults.valid = subSetResults.valid || setResults.valid;
+          setResults.hasContext =
+            subSetResults.hasContext || setResults.hasContext;
+
+          setResults.context = {
+            ...setResults.context,
+            ...subSetResults.context,
+          };
+        });
+        /*
+          apply the logical OR adapter if there is a context
+        */
+        setResults.context = adapters.operators.or(setResults.context);
+        console.log(setResults.context);
+      } else {
+        setResults = verifyConditionSet(
+          getInstructions(req, user, context, Object.keys(condition)[0]),
+          Object.values(condition)[0],
+          req,
+          user,
+          context,
+          adapters
+        );
+      }
+
       /*
           Merge condition result results with others by applying an AND logic 
           (if all conditions are true)

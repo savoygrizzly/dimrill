@@ -16,40 +16,42 @@ const obj1 = {
 };
 
 const obj = {
-  Condition: [
-    {
-      "ToContext:StringEquals": {
-        "${context:organization.attached}": "${user:id}",
-      },
+  Condition: {
+    InArray: {
+      "${context:organization.attached}": "${user:id}",
     },
-    {
-      StringEquals: {
-        "${context:organization.attached}": "${user:id}",
-      },
-    },
-  ],
+
+    "AnyValue:StringEquals": [
+      { "${context:organization.id}": "${user:id}" },
+      { "${user:name}": "truffee" },
+    ],
+  },
 };
 
 const Bolt = require("./index.js");
 Bolt.initialize({ options: { adapter: "mongo" } });
 
 const obj2 = {
-  Condition: {
-    "EveryValue:StringEquals": [
-      { "${context:organization.id}": "${user:id}" },
+  Condition: [
+    [
       {
-        truffe: "truffde",
+        "ToContext:EveryValue:StringEquals": [
+          { "${context:organization.id}": "shit" },
+          {
+            truffee: "${user:name}",
+          },
+        ],
+      },
+      {
+        "ToContext:EveryValue:Bool": [
+          {
+            "context:organization.test": true,
+          },
+          { "context:organization.dev": false },
+        ],
       },
     ],
-
-    "ToContext:EveryValue:StringEquals": [
-      {
-        "organization.test": true,
-      },
-      { "organization.dev": false },
-      ,
-    ],
-  },
+  ],
 };
 
 const t = Bolt.validate(
@@ -59,6 +61,7 @@ const t = Bolt.validate(
     user: {
       id: "test",
       test: "truffe3",
+      name: "truffe",
     },
   },
   {
@@ -67,6 +70,7 @@ const t = Bolt.validate(
         attached: ["test"],
         id: "test",
         test: true,
+        dev: false,
       },
     },
   }

@@ -116,7 +116,9 @@ const Bool = (leftOperator, rightOperator) => {
 };
 
 const InArray = (leftOperator, rightOperator) => {
-  return Array(leftOperator).includes(Array(rightOperator));
+  return (
+    Array.isArray(leftOperator) ? leftOperator : Array(leftOperator)
+  ).includes(rightOperator);
 };
 
 module.exports = {
