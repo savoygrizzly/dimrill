@@ -1,6 +1,7 @@
 "use strict";
 const Adapters = require("./adapters");
 const Conditions = require("./conditions");
+const util = require("util");
 
 const getInstructions = (req, user, context, condition) => {
   const instructions = {
@@ -202,7 +203,7 @@ const validateConditions = (
       let setResults = {
         valid: false,
         hasContext: false,
-        context: {},
+        context: [],
       };
       /*
       If its an array it means a logical OR is present 
@@ -228,16 +229,18 @@ const validateConditions = (
           setResults.hasContext =
             subSetResults.hasContext || setResults.hasContext;
 
-          setResults.context = {
-            ...setResults.context,
-            ...subSetResults.context,
-          };
+          subSetResults.context =
+            Object.values(subSetResults.context).length > 1
+              ? adapters.operators.explicitAnd(subSetResults.context)
+              : subSetResults.context;
+          setResults.context.push(subSetResults.context);
         });
         /*
           apply the logical OR adapter if there is a context
         */
-        setResults.context = adapters.operators.or(setResults.context);
         console.log(setResults.context);
+        setResults.context = adapters.operators.or(setResults.context);
+        console.log(JSON.stringify(setResults.context));
       } else {
         setResults = verifyConditionSet(
           getInstructions(req, user, context, Object.keys(condition)[0]),

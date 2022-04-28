@@ -141,10 +141,17 @@ const InArray = (leftOperator, rightOperator) => {
     Logiv^cal operators
 */
 const or = (object) => {
-  return { $or: Object.entries(object).map((m) => ({ [m[0]]: m[1] })) };
+  return Array.isArray(object)
+    ? { $or: object }
+    : {
+        $or: Object.entries(object).map((m) => ({ [m[0]]: m[1] })),
+      };
 };
 const and = (object) => {
   return object;
+};
+const explicitAnd = (object) => {
+  return { $and: Object.entries(object).map((m) => ({ [m[0]]: m[1] })) };
 };
 
 module.exports = {
@@ -168,5 +175,6 @@ module.exports = {
   operators: {
     or,
     and,
+    explicitAnd,
   },
 };
