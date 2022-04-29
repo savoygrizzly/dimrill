@@ -35,7 +35,7 @@ const obj2 = {
   Condition: [
     [
       {
-        "ToContext:AnyValue:StringEquals": [
+        "ToContext:EveryValue:StringEquals": [
           { "${context:organization.id}": "shit" },
           {
             truffee: "${user:name}",

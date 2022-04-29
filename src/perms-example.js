@@ -2,12 +2,7 @@ module.exports = {
     // [service]
     blackeye: {
      
-      organizations: {
-          Effect:"Allow",
-          Ressource:[
-              "organization_id_1"  // [organization id] Mongodb ObjectId
-          ]
-      },
+      
       Statement:[
         {
           Effect:"Allow",

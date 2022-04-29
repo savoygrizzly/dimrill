@@ -1,5 +1,3 @@
-"use-strict";
-
 const StringStrictlyEquals = (leftOperator, rightOperator) => {
   return String(leftOperator) === String(rightOperator);
 };
