@@ -26,10 +26,14 @@ For example, the wildcard in the following statement:
 Allows access to any of the subsequent steps of `categoryOne:subCategory`
 
 If a wildcard is used as a `parameterValue` or sub-value, it will represent any subsequent value or sub-values for that parameter.
-For instance: `:parameterName/*` represents:
+For instance: `:parameterName/*` will include all the following:
 
-`:parameterName/parameterValue/parameterSubValue`
-
-or
-
-`:parameterName/parameterValue/parameterSubValue2/parameterSubSubValue`
+```
+:parameterName/parameterValue/parameterSubValue
+:parameterName/parameterValue/parameterSubValue2/parameterSubSubValue
+:parameterName/parameterValue/parameterSubValue2/parameterSubSubValue1
+:parameterName/parameterValue/parameterSubValue3/parameterSubSubValue1
+:parameterName/parameterValue/parameterSubValue3/parameterSubSubValue2
+:parameterName/parameterValue/parameterSubValue3/parameterSubSubValue3
+:parameterName/parameterValue/parameterSubValue4/parameterSubSubValue1/somethingElse
+```
