@@ -1,19 +1,65 @@
-const obj1 = {
-  Condition: [
-    {
-      "ToContext:AnyValue:StringEquals": [
-        { "${context.organization.attached}": "${user.id}" },
-        { "${context.organization.attached}": "${user.id}" },
-        { "${context.organization.attached}": "${user.id}" },
-      ],
-    },
-    {
-      "EveryValue:InArray": {
-        "${context.organization.attached}": "${user.id}",
+const Policies = [
+  {
+    Version: "2022-05-02", //YYYY-MM-DD
+    /*
+        --------- Dimrill - RNA (DRNA) ---------
+
+        Starts with lowercase servicename 
+        The expression must go down the logical path to the targeted function, each step being separated by ":"; Consider the following structure
+
+        service:categoryOne:subCategory:functionTargeted
+
+        each 
+    */
+    Statement: [
+      {
+        Effect: "Allow",
+        Action: [
+          //service:Action
+         
+          "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789", //service:ActionCategory:Function:[ParameterName/ParameterValue]:
+          "blackeye:newOrder:EditDelivery",
+        ],
+        Ressource: ["blackeye:newOrder:"],
+        Condition: {
+          DateEquals: {
+            "${user:birthdate_string}": new Date().toISOString(), //should match
+          },
+        },
       },
+    ],
+  },
+];
+const req = {
+    body: {
+      name: "James Bond",
     },
-  ],
-};
+  },
+  user = {
+    id: "bond",
+    affiliation: "MI6",
+    name: "James Bond",
+    rights: ["toKill", "toDrink", "toDestroy"],
+  },
+  context = {
+    organization: {
+      affiliated: ["MI6"],
+      id: "test",
+      test: true,
+      dev: false,
+    },
+  };
+
+const Bolt = require("./index.js");
+Bolt.initialize({ options: { adapter: "mongo" } });
+
+/*
+
+  Page REQ: POST newOrder/create/distributor_price
+
+
+*/
+console.log(Bolt.validate("newOrder:"Statement, req, user, context));
 
 const obj = {
   Condition: {
@@ -28,40 +74,31 @@ const obj = {
   },
 };
 
-const Bolt = require("./index.js");
-Bolt.initialize({ options: { adapter: "mongo" } });
-
 const obj2 = {
-  Condition: [
-    [
+  Condition: {
+    "EveryValue:StringEquals": [
+      { "${context:organization.id}": "test" },
       {
-        "ToContext:EveryValue:StringEquals": [
-          { "${context:organization.id}": "shit" },
-          {
-            truffee: "${user:name}",
-          },
-        ],
-      },
-      {
-        "ToContext:AnyValue:Bool": [
-          {
-            "context:organization.test": true,
-          },
-          { "context:organization.dev": false },
-        ],
+        truffee: "${user:name}",
       },
     ],
-  ],
+    "ToContext:EveryValue:StringEquals": [
+      { "organization.id": "test" },
+      {
+        truffe: "${user:name}",
+      },
+    ],
+  },
 };
 
 const t = Bolt.validate(
-  obj2,
+  Statement,
   { req: "req" },
   {
     user: {
       id: "test",
       test: "truffe3",
-      name: "truffe",
+      name: "truffee",
     },
   },
   {
@@ -77,7 +114,28 @@ const t = Bolt.validate(
 );
 
 console.log(t);
-
+const t2 = Bolt.validate(
+  obj2,
+  { req: "req" },
+  {
+    user: {
+      id: "test",
+      test: "truffe",
+      name: "truffe",
+    },
+  },
+  {
+    context: {
+      organization: {
+        attached: ["test"],
+        id: "test",
+        test: true,
+        dev: false,
+      },
+    },
+  }
+);
+console.log(t2);
 const test = {
   test: {
     sub: {
