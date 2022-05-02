@@ -18,7 +18,7 @@ const getOperators = (req, user, context, condition) => {
   return instructions;
 };
 
-const matchVariables = (operands, variables) => {
+const matchVariables = (operands, variables, sanitize = true) => {
   if (!Array.isArray(operands) || operands.length < 1) {
     return null;
   }
@@ -28,13 +28,17 @@ const matchVariables = (operands, variables) => {
       if (match) {
         const variable =
           variables[match[1].split(":")[0]][match[1].split(":")[0]];
-
         const value = match[1]
           .split(":")[1]
           .split(".")
-          .reduce((a, b) => a[String(b)], variable);
-
-        return value ?? null;
+          .reduce(
+            (a, b) =>
+              sanitize
+                ? a[String(b)].replace(/:/, "").replace(/\//, "")
+                : a[String(b)],
+            variable
+          );
+        return (typeof value !== "function" ? value : null) ?? null;
       } else {
         //value is a fixed string
         return value;
@@ -124,11 +128,15 @@ const verifyOperator = (
       : Array(conditionOperands);
 
   conditionOperands.forEach((operand, k, arr) => {
-    const OperandsArray = matchVariables(Object.entries(operand)[0], {
-      req,
-      user,
-      context,
-    });
+    const OperandsArray = matchVariables(
+      Object.entries(operand)[0],
+      {
+        req,
+        user,
+        context,
+      },
+      false
+    );
     let validated = verifyOperands(
       instructions,
       OperandsArray,

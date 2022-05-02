@@ -1,3 +1,20 @@
+const variables = {
+  test: {
+    test: "Hello",
+  },
+};
+const value = "${test:test}";
+const match = value.match(/\$\{(..*?)\}/);
+if (match) {
+  const variable = variables[match[1].split(":")[0]][match[1].split(":")[0]];
+  console.log(variable);
+  const value = match[1]
+    .split(":")[1]
+    .split(".")
+    .reduce((a, b) => a[String(b)], variable);
+  console.log(value);
+}
+
 const Policies = [
   {
     Version: "2022-05-02", //YYYY-MM-DD
@@ -16,7 +33,7 @@ const Policies = [
         Effect: "Allow",
         Action: [
           //service:Action
-         
+
           "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789", //service:ActionCategory:Function:[ParameterName/ParameterValue]:
           "blackeye:newOrder:EditDelivery",
         ],
@@ -30,6 +47,13 @@ const Policies = [
     ],
   },
 ];
+const cond = {
+  Condition: {
+    InArray: {
+      "${req:body.name}": new Date().toISOString(), //should match
+    },
+  },
+};
 const req = {
     body: {
       name: "James Bond",
@@ -38,6 +62,9 @@ const req = {
   user = {
     id: "bond",
     affiliation: "MI6",
+    birthdate_string: "1988-01-05 08:17:51",
+    test: ["1988-01-05 08:17:51"],
+    testInj: "malicious",
     name: "James Bond",
     rights: ["toKill", "toDrink", "toDestroy"],
   },
@@ -52,14 +79,13 @@ const req = {
 
 const Bolt = require("./index.js");
 Bolt.initialize({ options: { adapter: "mongo" } });
-
+console.log(Bolt.validate(cond, req, user, context));
 /*
 
   Page REQ: POST newOrder/create/distributor_price
 
 
 */
-console.log(Bolt.validate("newOrder:"Statement, req, user, context));
 
 const obj = {
   Condition: {
