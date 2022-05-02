@@ -88,8 +88,15 @@ There is no depth limitation on objects. However considering our example and as 
 
 ```Javascript
 /*
-    The following wouldn't work
-    ${context:abilities.0} -> Error,
+    The following will NOT work
+    ${context:abilities.0} -> Error
     ${context:abilities[0]} -> Error
 */
 ```
+
+Variables can be included in DRNA statements, using our above example the following statement:  
+`service:categoryOne:subCategory:functionTargeted:name/${context:animalName}`  
+will translate to:  
+`service:categoryOne:subCategory:functionTargeted:name/Truffier`
+
+It is _STRONGLY_ recommended that variables passed to `Ressource` or `Action` statements contains no empty space or special characters.
