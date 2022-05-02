@@ -53,7 +53,8 @@ const verifyOperands = (
   instructions,
   conditionOperands,
   adapters = {},
-  toContext = false
+  toContext = false,
+  silent = false
 ) => {
   if (!conditionOperands) {
     return false;
@@ -62,22 +63,42 @@ const verifyOperands = (
     /*
         Apply adapter
       */
-    return typeof adapters[instructions.condition] === "function"
-      ? adapters[instructions.condition](
-          conditionOperands[0],
-          conditionOperands[1]
-        )
-      : false;
+    try {
+      return typeof adapters[instructions.condition] === "function"
+        ? adapters[instructions.condition](
+            conditionOperands[0],
+            conditionOperands[1]
+          )
+        : false;
+    } catch (error) {
+      /*
+        If adapter operator fails throws an error unless silent parameter is passed in the options in which case it returns false
+      */
+      if (silent) {
+        return false;
+      }
+      throw new Error(`Invalid context operator: ${error}`);
+    }
   } else {
     /*
         validate condition
       */
-    return typeof Conditions[instructions.condition] === "function"
-      ? Conditions[instructions.condition](
-          conditionOperands[0],
-          conditionOperands[1]
-        )
-      : false;
+    try {
+      return typeof Conditions[instructions.condition] === "function"
+        ? Conditions[instructions.condition](
+            conditionOperands[0],
+            conditionOperands[1]
+          )
+        : false;
+    } catch (error) {
+      /*
+        If operator fails throws an error unless silent parameter is passed in the options in which case it returns false
+      */
+      if (silent) {
+        return false;
+      }
+      throw new Error(`Invalid operator: ${error}`);
+    }
   }
 };
 const verifyOperator = (
@@ -86,20 +107,23 @@ const verifyOperator = (
   req = {},
   user = {},
   context = {},
-  adapters = {}
+  adapters = {},
+  silent = false
 ) => {
   const verificationState = {
     hasContext: false,
     context: {},
-    valid: true,
+    valid: undefined,
   };
   //check wether conditionOperands is an array:
   conditionOperands =
     Array.isArray(conditionOperands) && conditionOperands.length > 1
       ? conditionOperands
+      : Object.entries(conditionOperands).length > 1
+      ? Object.entries(conditionOperands).map((m) => ({ [m[0]]: m[1] }))
       : Array(conditionOperands);
 
-  conditionOperands.forEach((operand) => {
+  conditionOperands.forEach((operand, k, arr) => {
     const OperandsArray = matchVariables(Object.entries(operand)[0], {
       req,
       user,
@@ -109,26 +133,33 @@ const verifyOperator = (
       instructions,
       OperandsArray,
       adapters,
-      instructions.ToContext
+      instructions.ToContext,
+      silent
     );
     if (typeof validated === "boolean") {
       /*
             Verify wether condition matches instructions
         */
       verificationState.valid =
-        (validated || verificationState.valid) &&
+        (validated || verificationState.valid === true) &&
         instructions.AnyValue &&
         instructions.condition
           ? true
-          : validated && verificationState.valid;
+          : validated &&
+            (verificationState.valid === true ||
+              verificationState.valid === undefined);
     } else if (
       typeof validated === "object" &&
       Object.keys(validated).length >= 1
     ) {
       /*
           Add context
-  
+          Mark as Valid
         */
+      verificationState.valid =
+        Object.is(arr.length - 1, k) && verificationState.valid === undefined
+          ? true
+          : verificationState.valid;
       verificationState.hasContext = true;
       verificationState.context = {
         ...verificationState.context,

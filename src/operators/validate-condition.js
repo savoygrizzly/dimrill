@@ -4,7 +4,8 @@ module.exports = function validateConditions(
   req,
   user,
   context,
-  adapters = undefined
+  adapters = undefined,
+  silent = false
 ) {
   const conditionsResults = {
     hasContext: false,
@@ -20,6 +21,7 @@ module.exports = function validateConditions(
       : Object.keys(conditions).length > 1
       ? Object.entries(conditions).map((m) => ({ [m[0]]: m[1] }))
       : Array(conditions);
+
   /*
       Iterate over the condition block keys
     */
@@ -79,7 +81,8 @@ module.exports = function validateConditions(
           req,
           user,
           context,
-          adapters
+          adapters,
+          silent
         );
       }
 

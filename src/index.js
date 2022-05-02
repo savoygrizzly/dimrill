@@ -10,13 +10,20 @@ const validateConditions = require("./operators/validate-condition");
 
 function validate(statement, req, user, context) {
   if (typeof this.adapter !== "object") {
-    console.error("Bolt is not initialized");
-    return this;
+    throw new Error("Bolt is not initialized");
   }
+  /* serialize req, user and context params to be later access via object properties */
+  req = { req };
+  user = { user };
+  context = { context };
+
   if (!statement.Condition) {
     //Nothing to validate condition is empty
-    this.valid = true;
-    this.context = context;
+    return {
+      hasContext: false,
+      context: {},
+      valid: true,
+    };
   } else {
     //validate
     const condition = validateConditions(
@@ -26,10 +33,8 @@ function validate(statement, req, user, context) {
       context,
       this.adapter
     );
-    this.valid = condition.valid;
-    console.log(condition);
+    return condition;
   }
-  return this;
 }
 
 function initialize(...args) {

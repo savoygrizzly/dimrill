@@ -35,7 +35,7 @@ const NumericGreaterThan = (leftOperator, rightOperator) => {
 };
 
 const NumericGreaterThanEquals = (leftOperator, rightOperator) => {
-  return Number(leftOperator) > Number(rightOperator);
+  return Number(leftOperator) >= Number(rightOperator);
 };
 
 const DateEquals = (leftOperator, rightOperator) => {
