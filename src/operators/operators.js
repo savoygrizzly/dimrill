@@ -34,7 +34,10 @@ const matchVariables = (operands, variables, sanitize = true) => {
           .reduce(
             (a, b) =>
               sanitize
-                ? a[String(b)].replace(/:/, "").replace(/\//, "")
+                ? a[String(b)]
+                    .replace(/:/, "")
+                    .replace(/\//, "")
+                    .replace(/\*/, "")
                 : a[String(b)],
             variable
           );
