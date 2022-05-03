@@ -35,7 +35,8 @@ const Policies = [
           //service:Action
 
           "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789", //service:ActionCategory:Function:[ParameterName/ParameterValue]:
-          "blackeye:newOrder:EditDelivery",
+          "blackeye:newOrder:editDelivery",
+          "blackeye:users:getUser:user/${user:id}",
         ],
         Ressource: ["blackeye:newOrder:"],
         Condition: {
@@ -77,13 +78,20 @@ const req = {
     },
   };
 
-const Bolt = require("./index.js");
-Bolt.initialize({ options: { adapter: "mongo" } });
-console.log(Bolt.validate(cond, req, user, context));
+const Dimrill = require("./index.js");
+Dimrill.initialize({ options: { adapter: "mongo" } });
+console.log(Dimrill.validate(cond, req, user, context));
 /*
 
-  Page REQ: POST newOrder/create/distributor_price
+  Page REQ: POST newOrder/createOrder/
+  POST params
+    - priceList : distributorPrice
+    - organization : 123456789
+  
+  Synthetize DRNA from page
 
+  auth(Dimrill.synthetize("newOrder/createOrder/",req)) => 
+  "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789"
 
 */
 
