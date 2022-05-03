@@ -4,3 +4,4 @@ node_modules
 # Serverless directories
 .DS_Store
 .vscode
+yarn.lock
