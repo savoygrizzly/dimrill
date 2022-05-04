@@ -1,6 +1,5 @@
 "use strict";
 const Adapters = require("./adapters");
-const util = require("util");
 const validateConditions = require("./operators/validate-condition");
 /*
 
@@ -42,24 +41,109 @@ function synthetize(str, req, service, paths = undefined) {
     possible paths are either defined by passing a paths object or using a config file
   */
 }
-function Schema(args) {
-  if (typeof args !== "object") {
-    throw new Error("Dimrill Schema must contain an Object");
-  }
-  Object.keys(args).forEach((key) => {
-    /*
-      Check wether key contains spaces or special characters
-    */
-    if (key.test(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
-      throw new Error(
-        `For key: ${key}; Dimrill Schema properties must be guidelines compliant`
-      );
+class Schema {
+  constructor(...args) {
+    if (typeof args[0] !== "object") {
+      throw new Error("Dimrill Schema must contain an Object");
     }
-    /*
-      Check wether property's value is an Object or an Array
+    if (args[1] === "DEBUG") {
+      function iterate(object) {
+        for (const property in object) {
+          if (property.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
+            throw new Error(
+              `For key: ${property}; Dimrill Schema properties must be guidelines compliant`
+            );
+          }
+          if (
+            // eslint-disable-next-line security/detect-object-injection
+            typeof object[property] === "object" &&
+            // eslint-disable-next-line security/detect-object-injection
+            !Array.isArray(object[property]) &&
+            // eslint-disable-next-line security/detect-object-injection
+            object[property] !== null
+          ) {
+            // eslint-disable-next-line security/detect-object-injection
+            iterate(object[property]);
+          } else {
+            // eslint-disable-next-line security/detect-object-injection
+            if (
+              // eslint-disable-next-line security/detect-object-injection
+              Array.isArray(object[property]) &&
+              // eslint-disable-next-line security/detect-object-injection
+              object[property].length > 1
+            ) {
+              // eslint-disable-next-line security/detect-object-injection
+              object[property].forEach((n) => {
+                if (n.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
+                  throw new Error(
+                    `For property "${property}" value "${n}"; Dimrill Schema values must be guidelines compliant`
+                  );
+                }
+              });
+            } else {
+              throw new Error(
+                `For property "${property}" value "${n}" must be an array; Dimrill Schema must be guidelines compliant`
+              );
+            }
+          }
+        }
+      }
+      iterate(args[0]);
+    }
+    this.schema = args[0];
+  }
+
+  synthetize(...args) {
+    /* 
+      Match provided args (path, req) with the associated schema
     */
-    if(args[key]) 
-  });
+
+    /* 
+            DEV GOAL
+      Match "blackeye:newOrder:createOrder:pricelist/distributorPrice:organization/123456789"
+      In passed Schema.
+    */
+    const localPath = args[0].split(":"),
+      localSchema = this.schema,
+      parameters = localPath.reduce((a, b) => a[String(b)], localSchema);
+    let matched = [...this.paramsMatcher(parameters, args[1])];
+    /* 
+      Create potential wildcards for every items in local path,
+    */
+    const wildcards = [...this.argumentsWildcard(localPath)];
+    return [...wildcards, [...localPath, ...matched].join(":")];
+  }
+  *argumentsWildcard(array) {
+    for (let i in array) {
+      // eslint-disable-next-line security/detect-object-injection
+      yield `${i > 0 ? array.slice(0, i).join(":") + ":" : ""}${array[i]}:*`;
+    }
+  }
+  *paramsMatcher(params, req) {
+    let reqValues = req;
+    if (req.body) {
+      reqValues = { ...req, ...req.body };
+    }
+    if (req.query) {
+      reqValues = { ...req, ...req.query };
+    }
+    for (const paramName of params) {
+      /* 
+        If param is wildcard 
+        Need to stop match
+      */
+      if (paramName === "*") {
+      }
+      // eslint-disable-next-line security/detect-object-injection
+      if (reqValues[paramName]) {
+        // eslint-disable-next-line security/detect-object-injection
+        yield `${String(paramName)}/${String(reqValues[paramName]).replace(
+          /[\W_]+/,
+          ""
+        )}`;
+      }
+    }
+  }
 }
 function initialize(...args) {
   this.adapter = args[0].options
@@ -72,4 +156,5 @@ module.exports = {
   validate: validate,
   initialize: initialize,
   synthetize: synthetize,
+  Schema: Schema,
 };

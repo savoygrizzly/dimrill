@@ -1,44 +1,17 @@
-const variables = {
-  test: {
-    test: "Hello",
-  },
-};
-const value = "${test:test}";
-const match = value.match(/\$\{(..*?)\}/);
-if (match) {
-  const variable = variables[match[1].split(":")[0]][match[1].split(":")[0]];
-  console.log(variable);
-  const value = match[1]
-    .split(":")[1]
-    .split(".")
-    .reduce((a, b) => a[String(b)], variable);
-  console.log(value);
-}
-
 const Policies = [
   {
-    Version: "2022-05-02", //YYYY-MM-DD
-    /*
-        --------- Dimrill - RNA (DRNA) ---------
-
-        Starts with lowercase servicename 
-        The expression must go down the logical path to the targeted function, each step being separated by ":"; Consider the following structure
-
-        service:categoryOne:subCategory:functionTargeted
-
-        each 
-    */
+    Version: "2022-05-02",
     Statement: [
       {
         Effect: "Allow",
         Action: [
           //service:Action
-
+          "blackeye:newOrder:*",
           "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789", //service:ActionCategory:Function:[ParameterName/ParameterValue]:
           "blackeye:newOrder:editDelivery",
           "blackeye:users:getUser:user/${user:id}",
         ],
-        Ressource: ["blackeye:newOrder:"],
+        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
         Condition: {
           DateEquals: {
             "${user:birthdate_string}": new Date().toISOString(), //should match
@@ -48,16 +21,11 @@ const Policies = [
     ],
   },
 ];
-const cond = {
-  Condition: {
-    InArray: {
-      "${req:body.name}": new Date().toISOString(), //should match
-    },
-  },
-};
+
 const req = {
     body: {
-      name: "James Bond",
+      pricelist: "distributorPrice",
+      organization: "123456789",
     },
   },
   user = {
@@ -65,9 +33,9 @@ const req = {
     affiliation: "MI6",
     birthdate_string: "1988-01-05 08:17:51",
     test: ["1988-01-05 08:17:51"],
-    testInj: "malicious",
+    testInj: "shit",
     name: "James Bond",
-    rights: ["toKill", "toDrink", "toDestroy"],
+    rights: ["toKill", "toDrink", "shit"],
   },
   context = {
     organization: {
@@ -80,7 +48,19 @@ const req = {
 
 const Dimrill = require("./index.js");
 Dimrill.initialize({ options: { adapter: "mongo" } });
-console.log(Dimrill.validate(cond, req, user, context));
+const Schema = new Dimrill.Schema(
+  {
+    newOrder: { createOrder: { createSmthg: ["pricelist", "organization"] } },
+  },
+  "DEBUG"
+);
+/*
+  Parameters to be matched must be direclty accesible in the passed req object
+*/
+const drna = Schema.synthetize("newOrder:createOrder:createSmthg", req);
+console.log(drna);
+//Dimrill.validate(cond, req, user, context)
+//Dimrill.synthetize("newOrder/createOrder/",req)
 /*
 
   Page REQ: POST newOrder/createOrder/
@@ -94,97 +74,3 @@ console.log(Dimrill.validate(cond, req, user, context));
   "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789"
 
 */
-
-const obj = {
-  Condition: {
-    InArray: {
-      "${context:organization.attached}": "${user:id}",
-    },
-
-    "AnyValue:StringEquals": [
-      { "${context:organization.id}": "${user:id}" },
-      { "${user:name}": "truffee" },
-    ],
-  },
-};
-
-const obj2 = {
-  Condition: {
-    "EveryValue:StringEquals": [
-      { "${context:organization.id}": "test" },
-      {
-        truffee: "${user:name}",
-      },
-    ],
-    "ToContext:EveryValue:StringEquals": [
-      { "organization.id": "test" },
-      {
-        truffe: "${user:name}",
-      },
-    ],
-  },
-};
-
-const t = Bolt.validate(
-  Statement,
-  { req: "req" },
-  {
-    user: {
-      id: "test",
-      test: "truffe3",
-      name: "truffee",
-    },
-  },
-  {
-    context: {
-      organization: {
-        attached: ["test"],
-        id: "test",
-        test: true,
-        dev: false,
-      },
-    },
-  }
-);
-
-console.log(t);
-const t2 = Bolt.validate(
-  obj2,
-  { req: "req" },
-  {
-    user: {
-      id: "test",
-      test: "truffe",
-      name: "truffe",
-    },
-  },
-  {
-    context: {
-      organization: {
-        attached: ["test"],
-        id: "test",
-        test: true,
-        dev: false,
-      },
-    },
-  }
-);
-console.log(t2);
-const test = {
-  test: {
-    sub: {
-      subtest: {
-        shit: {
-          happens: {
-            sometimes: {
-              in: "here",
-            },
-          },
-        },
-      },
-    },
-  },
-};
-const keys = "test.sub.subtest.shit.happens.sometimes.in";
-const str = keys.split(".").reduce((a, b) => a[b], test);
-console.log(str);

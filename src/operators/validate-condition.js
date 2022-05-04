@@ -93,6 +93,8 @@ module.exports = function validateConditions(
       conditionsResults.valid = setResults.valid && conditionsResults.valid;
       if (
         typeof setResults.context === "object" &&
+        !Array.isArray(setResults.context) &&
+        setResults.context !== null &&
         Object.keys(setResults.context).length >= 1
       ) {
         /*

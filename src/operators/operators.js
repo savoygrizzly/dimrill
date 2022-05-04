@@ -1,4 +1,5 @@
 const Conditions = require("./list");
+const util = require("util");
 const getOperators = (req, user, context, condition) => {
   const instructions = {
     ToContext: false,
@@ -8,11 +9,18 @@ const getOperators = (req, user, context, condition) => {
   };
 
   condition.split(":").forEach((e) => {
-    if (typeof Conditions[String(e)] === "function") {
+    if (
+      typeof Conditions[String(e)] === "function" &&
+      Conditions.hasOwnProperty(e)
+    ) {
       instructions.condition = e;
-    } else if (instructions[String(e)] !== undefined) {
+    } else if (
+      instructions[String(e)] !== undefined &&
+      typeof String(e) !== "function" &&
+      instructions.hasOwnProperty(e)
+    ) {
       instructions[String(e)] =
-        instructions[String(e)] !== undefined ? true : instructions[String(e)];
+        instructions[String(e)] !== undefined ? true : false;
     }
   });
   return instructions;
@@ -41,6 +49,9 @@ const matchVariables = (operands, variables, sanitize = true) => {
                 : a[String(b)],
             variable
           );
+        /*
+            Prevents object injection by removing any function, passed as an argument 
+        */
         return (typeof value !== "function" ? value : null) ?? null;
       } else {
         //value is a fixed string
@@ -63,6 +74,18 @@ const verifyOperands = (
   toContext = false,
   silent = false
 ) => {
+  /*
+    Prevent Object property injections via condition statments
+  */
+  if (
+    !adapters.hasOwnProperty(instructions.condition) ||
+    !Conditions[instructions.condition]
+  ) {
+    if (silent) {
+      return false;
+    }
+    throw new Error(`Condition override detected: ${error}`);
+  }
   if (!conditionOperands) {
     return false;
   }
@@ -161,6 +184,8 @@ const verifyOperator = (
               verificationState.valid === undefined);
     } else if (
       typeof validated === "object" &&
+      !Array.isArray(validated) &&
+      validated !== null &&
       Object.keys(validated).length >= 1
     ) {
       /*

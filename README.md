@@ -9,13 +9,13 @@ The expression must go down the logical path to the targeted function, each step
 
 `service:categoryOne:subCategory:functionTargeted`
 
-Each step must start with a lowercase letter should be written in `camelCase` styled syntax. There is no limitation on the number of steps.
+Each step must start with a lowercase letter should be written in `camelCase` styled syntax for increased readability, although no style is enforced. There is no limitation on the number of steps.
 
 ### Parameters
 
 Parameters are expressed as follow `:parameterName/parameterValue/parameterSubValue`.
 
-There is no limitation on the number of expressed parameters sub-values.
+Parameters can be written following `camelCase` syntax or not, it is recommended to keep consistency. There is no limitation on the number of expressed parameters.
 
 The use of wildcards `*` is permitted, a wildcard will represent any combination of characters where it is placed.  
 For example, the wildcard in the following statement: `service:categoryOne:subCategory:*`  
