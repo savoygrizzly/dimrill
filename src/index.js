@@ -1,6 +1,10 @@
 "use strict";
+const util = require("util");
+const vm = require("vm");
+
 const Adapters = require("./adapters");
 const validateConditions = require("./operators/validate-condition");
+
 /*
 
   TODO:DEV
@@ -34,12 +38,6 @@ function validate(statement, req, user, context) {
     );
     return condition;
   }
-}
-function synthetize(str, req, service, paths = undefined) {
-  /* 
-    This function synthetizes drna from base string by adding parameters from req or the passed object
-    possible paths are either defined by passing a paths object or using a config file
-  */
 }
 class Schema {
   constructor(...args) {
@@ -92,26 +90,62 @@ class Schema {
     }
     this.schema = args[0];
   }
+  matchPolicy(drna, Policies) {
+    /*
+      Wrap this function in a VM to prevent ReDOS
+    */
+    const sandbox = {
+        result: null,
+      },
+      context = vm.createContext(sandbox);
+    const script = new vm.Script(`
+      context.Policies.forEach((policy) => {
+        policy.Statement.forEach((statement) => {
+          statement.Action.find((drna) => {
+            const match = context.elem.match(new RegExp(drna.replace("*", ".*")));
+            if (match) {
+              console.log(match[0]);
+            }
+          });
+        });
+      });
+      `);
 
+    try {
+      // One could argue if a RegExp hasn't processed in a given time.
+      // then, its likely it will take exponential time.
+      script.runInContext(context, { timeout: "1000" }); // milliseconds
+    } catch (e) {
+      console.log("ReDos occurred"); // Take some remedial action here...
+    }
+
+    console.log(util.inspect(sandbox));
+    Policies.forEach((policy) => {
+      policy.Statement.forEach((statement) => {
+        statement.Action.find((drna) => {
+          console.log(safe(new RegExp(drna.replace("*", ".*"))));
+          const match = elem.match(new RegExp(drna.replace("*", ".*")));
+          if (match) {
+            console.log(match[0]);
+          }
+        });
+      });
+    });
+  }
   synthetize(...args) {
     /* 
       Match provided args (path, req) with the associated schema
     */
-
-    /* 
-            DEV GOAL
-      Match "blackeye:newOrder:createOrder:pricelist/distributorPrice:organization/123456789"
-      In passed Schema.
-    */
     const localPath = args[0].split(":"),
       localSchema = this.schema,
       parameters = localPath.reduce((a, b) => a[String(b)], localSchema);
-    let matched = [...this.paramsMatcher(parameters, args[1])];
+    const paramsMatched = [...this.paramsMatcher(parameters, args[1])];
+    //let paramsWildcards = [...this.paramsWildcards(parameters, args[1])];
     /* 
       Create potential wildcards for every items in local path,
     */
     const wildcards = [...this.argumentsWildcard(localPath)];
-    return [...wildcards, [...localPath, ...matched].join(":")];
+    return [...wildcards, [...localPath, ...paramsMatched].join(":")];
   }
   *argumentsWildcard(array) {
     for (let i in array) {
@@ -128,12 +162,10 @@ class Schema {
       reqValues = { ...req, ...req.query };
     }
     for (const paramName of params) {
-      /* 
-        If param is wildcard 
-        Need to stop match
+      /*
+        Yield every params with a wildcard
       */
-      if (paramName === "*") {
-      }
+
       // eslint-disable-next-line security/detect-object-injection
       if (reqValues[paramName]) {
         // eslint-disable-next-line security/detect-object-injection
