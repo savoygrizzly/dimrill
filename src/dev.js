@@ -1,3 +1,6 @@
+const util = require("util");
+const vm = require("vm");
+
 const Policies = [
   {
     Version: "2022-05-02",
@@ -6,10 +9,12 @@ const Policies = [
         Effect: "Allow",
         Action: [
           //service:Action
-          "blackeye:newOrder:*",
-          "blackeye:newOrder:createOrder:priceList/distributorPrice:organization/123456789", //service:ActionCategory:Function:[ParameterName/ParameterValue]:
+
+          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
           "blackeye:newOrder:editDelivery",
           "blackeye:users:getUser:user/${user:id}",
+          "blackeye:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
+          //"blackeye:newOrder:*",
         ],
         Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
         Condition: {
@@ -22,6 +27,33 @@ const Policies = [
   },
 ];
 
+const elem =
+  "blackeye:newOrder:createOrder:createSmthg:pricelist/distributorPrice:organization/123456789";
+
+const results = Policies.map((policy) => {
+  const matchedPolicy = policy.Statement.map((statement) => {
+    const matchedStatement = statement.Action.find((drna) => {
+      const match = elem.match(new RegExp(drna.replace("*", ".*")));
+      if (match) {
+        return drna;
+      }
+    });
+    if (matchedStatement) {
+      return statement;
+    }
+  });
+  if (matchedPolicy) {
+    return matchedPolicy;
+  }
+});
+console.log(results);
+
+const matches = Policies[0].Statement[0].Action.filter((element) => {
+  if (element.match(regex)) {
+    return element;
+  }
+});
+console.log(matches);
 const req = {
     body: {
       pricelist: "distributorPrice",
@@ -58,7 +90,7 @@ const Schema = new Dimrill.Schema(
   Parameters to be matched must be direclty accesible in the passed req object
 */
 const drna = Schema.synthetize("newOrder:createOrder:createSmthg", req);
-console.log(drna);
+//console.log(drna);
 //Dimrill.validate(cond, req, user, context)
 //Dimrill.synthetize("newOrder/createOrder/",req)
 /*
