@@ -23,14 +23,29 @@ const Policies = [
           },
         },
       },
+      {
+        Effect: "Allow",
+        Action: [
+          //service:Action
+
+          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
+          "blackeye2:newOrder:editDelivery",
+          "blackeye2:users:getUser:user/${user:id}",
+          "blackeye2:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
+          //"blackeye:newOrder:*",
+        ],
+        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
+        Condition: {
+          DateEquals: {
+            "${user:birthdate_string}": new Date().toISOString(), //should match
+          },
+        },
+      },
     ],
   },
 ];
 
-const elem =
-  "blackeye:newOrder:createOrder:createSmthg:pricelist/distributorPrice:organization/123456789";
-
-const results = Policies.map((policy) => {
+/*const results = Policies.map((policy) => {
   const matchedPolicy = policy.Statement.map((statement) => {
     const matchedStatement = statement.Action.find((drna) => {
       const match = elem.match(new RegExp(drna.replace("*", ".*")));
@@ -38,13 +53,9 @@ const results = Policies.map((policy) => {
         return drna;
       }
     });
-    if (matchedStatement) {
-      return statement;
-    }
+    return matchedStatement ? statement : null;
   });
-  if (matchedPolicy) {
-    return matchedPolicy;
-  }
+  return matchedPolicy ?? null;
 });
 console.log(results);
 
@@ -53,7 +64,7 @@ const matches = Policies[0].Statement[0].Action.filter((element) => {
     return element;
   }
 });
-console.log(matches);
+console.log(matches);*/
 const req = {
     body: {
       pricelist: "distributorPrice",
@@ -86,11 +97,15 @@ const Schema = new Dimrill.Schema(
   },
   "DEBUG"
 );
+const match = Schema.matchPolicy(
+  "blackeye:newOrder:createOrder:createSmthg:pricelist/distributorPrice:organization/123456789",
+  Policies
+);
+console.log(match);
 /*
   Parameters to be matched must be direclty accesible in the passed req object
 */
-const drna = Schema.synthetize("newOrder:createOrder:createSmthg", req);
-//console.log(drna);
+
 //Dimrill.validate(cond, req, user, context)
 //Dimrill.synthetize("newOrder/createOrder/",req)
 /*

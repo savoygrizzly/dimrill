@@ -94,43 +94,37 @@ class Schema {
     /*
       Wrap this function in a VM to prevent ReDOS
     */
-    const sandbox = {
-        result: null,
-      },
-      context = vm.createContext(sandbox);
-    const script = new vm.Script(`
-      context.Policies.forEach((policy) => {
-        policy.Statement.forEach((statement) => {
-          statement.Action.find((drna) => {
-            const match = context.elem.match(new RegExp(drna.replace("*", ".*")));
-            if (match) {
-              console.log(match[0]);
-            }
-          });
-        });
-      });
-      `);
+    const results = Policies.map((policy) => {
+      const matchedPolicy = policy.Statement.map((statement) => {
+        const matchedStatement = statement.Action.find((elem) => {
+          const sandbox = {
+              result: null,
+              matching: drna,
+              str: elem,
+            },
+            context = vm.createContext(sandbox);
+          const script = new vm.Script(
+            `result = String(matching).match(
+              new RegExp(String(str).replace("*", ".*"))
+            );`
+          );
 
-    try {
-      // One could argue if a RegExp hasn't processed in a given time.
-      // then, its likely it will take exponential time.
-      script.runInContext(context, { timeout: "1000" }); // milliseconds
-    } catch (e) {
-      console.log("ReDos occurred"); // Take some remedial action here...
-    }
-
-    console.log(util.inspect(sandbox));
-    Policies.forEach((policy) => {
-      policy.Statement.forEach((statement) => {
-        statement.Action.find((drna) => {
-          console.log(safe(new RegExp(drna.replace("*", ".*"))));
-          const match = elem.match(new RegExp(drna.replace("*", ".*")));
-          if (match) {
-            console.log(match[0]);
+          try {
+            // One could argue if a RegExp hasn't processed in a given time.
+            // then, its likely it will take exponential time.
+            script.runInContext(context, { timeout: 100 }); // milliseconds
+          } catch (e) {
+            console.log(e); // Take some remedial action here...
+          }
+          if (sandbox.result) {
+            return drna;
           }
         });
+        return matchedStatement ? statement : null;
       });
+      return matchedPolicy ?? null;
     });
+    return results.flat();
   }
   synthetize(...args) {
     /* 
@@ -140,19 +134,10 @@ class Schema {
       localSchema = this.schema,
       parameters = localPath.reduce((a, b) => a[String(b)], localSchema);
     const paramsMatched = [...this.paramsMatcher(parameters, args[1])];
-    //let paramsWildcards = [...this.paramsWildcards(parameters, args[1])];
-    /* 
-      Create potential wildcards for every items in local path,
-    */
-    const wildcards = [...this.argumentsWildcard(localPath)];
-    return [...wildcards, [...localPath, ...paramsMatched].join(":")];
+
+    return [...localPath, ...paramsMatched].join(":");
   }
-  *argumentsWildcard(array) {
-    for (let i in array) {
-      // eslint-disable-next-line security/detect-object-injection
-      yield `${i > 0 ? array.slice(0, i).join(":") + ":" : ""}${array[i]}:*`;
-    }
-  }
+
   *paramsMatcher(params, req) {
     let reqValues = req;
     if (req.body) {
@@ -162,10 +147,6 @@ class Schema {
       reqValues = { ...req, ...req.query };
     }
     for (const paramName of params) {
-      /*
-        Yield every params with a wildcard
-      */
-
       // eslint-disable-next-line security/detect-object-injection
       if (reqValues[paramName]) {
         // eslint-disable-next-line security/detect-object-injection
@@ -187,6 +168,5 @@ function initialize(...args) {
 module.exports = {
   validate: validate,
   initialize: initialize,
-  synthetize: synthetize,
   Schema: Schema,
 };
