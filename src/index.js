@@ -12,7 +12,7 @@ function initialize(...args) {
   return this;
 }
 
-function validate(statement, req, user, context) {
+function verifyCondition(statement, req, user, context) {
   if (typeof this.adapter !== "object") {
     throw new Error("Bolt is not initialized");
   }
@@ -59,7 +59,7 @@ function authorize(drna, policies, req, user, context) {
     context
   )[0];
   if (statement) {
-    const condition = this.validate(statement, req, user, context);
+    const condition = verifyCondition.call(this, statement, req, user, context); //pass down this to function
     if (condition.valid && statement.Effect == "Allow") {
       authorization.valid = true;
       authorization.context = condition.context;
@@ -75,7 +75,6 @@ function authorize(drna, policies, req, user, context) {
 }
 
 module.exports = {
-  validate: validate,
   authorize: authorize,
   initialize: initialize,
   Schema: Schema,
