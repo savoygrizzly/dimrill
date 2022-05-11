@@ -11,6 +11,10 @@ The expression must go down the logical path to the targeted function, each step
 
 Each step must start with a lowercase letter should be written in `camelCase` styled syntax for increased readability, although no style is enforced. There is no limitation on the number of steps.
 
+### Schemas
+
+A Schema is a way to describe the possible parameters for an expression.
+
 ### Parameters
 
 Parameters are expressed as follow `:parameterName/parameterValue/parameterSubValue`.
@@ -94,9 +98,19 @@ There is no depth limitation on objects. However considering our example and as 
 */
 ```
 
-Variables can be included in DRNA statements, using our above example the following statement:  
+Variables can be included in DRNA statements, using our above example the following statement:
+
 `service:categoryOne:subCategory:functionTargeted:name/${context:animalName}`  
-will translate to:  
+will translate to:
+
 `service:categoryOne:subCategory:functionTargeted:name/Truffier`
 
-It is _STRONGLY_ recommended that variables passed to `Ressource` or `Action` statements contains no empty space or special characters.
+It is possible to use multiple variables in the same expression:
+
+`service:categoryOne:subCategory:functionTargeted:nameAndRace/${context:animalName}-${context:race}`
+
+will yield:
+
+`service:categoryOne:subCategory:functionTargeted:name/Truffier-WildBoar`
+
+Variables expressed in `Ressource` or `Action` expressions will have all non-alphanumerical characters replaced by `""`.

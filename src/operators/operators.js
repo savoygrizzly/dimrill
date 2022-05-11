@@ -1,5 +1,4 @@
 const Conditions = require("./list");
-const util = require("util");
 const getOperators = (req, user, context, condition) => {
   const instructions = {
     ToContext: false,
@@ -26,7 +25,7 @@ const getOperators = (req, user, context, condition) => {
   return instructions;
 };
 
-const matchVariables = (operands, variables, sanitize = true) => {
+const matchVariables = (operands, variables) => {
   if (!Array.isArray(operands) || operands.length < 1) {
     return null;
   }
@@ -39,16 +38,7 @@ const matchVariables = (operands, variables, sanitize = true) => {
         const value = match[1]
           .split(":")[1]
           .split(".")
-          .reduce(
-            (a, b) =>
-              sanitize
-                ? a[String(b)]
-                    .replace(/:/, "")
-                    .replace(/\//, "")
-                    .replace(/\*/, "")
-                : a[String(b)],
-            variable
-          );
+          .reduce((a, b) => a[String(b)], variable);
         /*
             Prevents object injection by removing any function, passed as an argument 
         */

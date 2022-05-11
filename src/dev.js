@@ -12,8 +12,8 @@ const Policies = [
 
           //service:ActionCategory:Function:[ParameterName/ParameterValue]:
           "blackeye:newOrder:editDelivery",
-          "blackeye:users:getUser:user/${user:id}",
-          "blackeye:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
+          "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
+          "blackeye:newOrder:createOrder:createSmthg:*",
           //"blackeye:newOrder:*",
         ],
         Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
@@ -44,27 +44,6 @@ const Policies = [
     ],
   },
 ];
-
-/*const results = Policies.map((policy) => {
-  const matchedPolicy = policy.Statement.map((statement) => {
-    const matchedStatement = statement.Action.find((drna) => {
-      const match = elem.match(new RegExp(drna.replace("*", ".*")));
-      if (match) {
-        return drna;
-      }
-    });
-    return matchedStatement ? statement : null;
-  });
-  return matchedPolicy ?? null;
-});
-console.log(results);
-
-const matches = Policies[0].Statement[0].Action.filter((element) => {
-  if (element.match(regex)) {
-    return element;
-  }
-});
-console.log(matches);*/
 const req = {
     body: {
       pricelist: "distributorPrice",
@@ -77,8 +56,11 @@ const req = {
     birthdate_string: "1988-01-05 08:17:51",
     test: ["1988-01-05 08:17:51"],
     testInj: "shit",
-    name: "James Bond",
+    name: "James John Bond",
     rights: ["toKill", "toDrink", "shit"],
+    hello: {
+      test: "test",
+    },
   },
   context = {
     organization: {
@@ -93,15 +75,33 @@ const Dimrill = require("./index.js");
 Dimrill.initialize({ options: { adapter: "mongo" } });
 const Schema = new Dimrill.Schema(
   {
-    newOrder: { createOrder: { createSmthg: ["pricelist", "organization"] } },
+    blackeye: {
+      newOrder: {
+        editDelivery: true,
+        createOrder: {
+          createSmthg: ["pricelist", "organization"],
+        },
+      },
+    },
   },
-  "DEBUG"
+  { debug: true, strict: true }
 );
-const match = Schema.matchPolicy(
+const drna = Schema.synthetize(
+  "blackeye:newOrder:createOrder:createSmthg", //"blackeye:newOrder:createOrder:createSmthg"
+  req
+);
+console.log(drna);
+const matchedPolicy = Schema.matchPolicy(
   "blackeye:newOrder:createOrder:createSmthg:pricelist/distributorPrice:organization/123456789",
-  Policies
+  Policies,
+  req,
+  user,
+  context
 );
-console.log(match);
+console.log(matchedPolicy);
+
+Dimrill.validate();
+
 /*
   Parameters to be matched must be direclty accesible in the passed req object
 */
