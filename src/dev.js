@@ -2,6 +2,7 @@ const req = {
     body: {
       pricelist: "distributorPrice",
       organization: "123456789",
+      other: "not_here",
     },
   },
   user = {
@@ -34,9 +35,9 @@ const Policies = [
         Action: [
           "blackeye:newOrder:editDelivery",
           "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
-          "blackeye:newOrder:createOrder:createSmthg:*",
+          "blackeye:newOrder:createOrder:createSmthg:*:other/nothere",
         ],
-        Ressource: ["blackeye:newOrder:getSheet:*"],
+        Ressource: ["blackeye:newOrder:getSheet:pricelist/*"],
         Condition: {
           StringEquals: {
             "${user:id}": "bond", //should match
@@ -56,10 +57,28 @@ const Schema = new Dimrill.Schema(
   {
     blackeye: {
       newOrder: {
-        getSheet: true,
-        editDelivery: true,
+        getSheet: {
+          Ressource: true,
+        },
+        editDelivery: {
+          Action: true,
+        },
         createOrder: {
-          createSmthg: ["pricelist", "organization"],
+          createSmthg: [
+            {
+              name: "pricelist",
+              Action: false,
+            },
+            {
+              name: "organization",
+              Action: true,
+            },
+            {
+              name: "other",
+              Ressource: true,
+              Action: true,
+            },
+          ],
         },
       },
     },
@@ -84,16 +103,16 @@ console.log(matchedPolicy);*/
 
 console.log(
   Dimrill.authorize(
-    "blackeye:newOrder:createOrder:createSmthg",
+    ["Action", "blackeye:newOrder:createOrder:createSmthg"],
     Policies,
     req,
     user,
     context
-  ).valid
+  )
 );
 console.log(
   Dimrill.authorize(
-    "blackeye2:newOrder:createOrder:createSmthg",
+    ["Ressource", "blackeye:newOrder:getSheet"],
     Policies,
     req,
     user,

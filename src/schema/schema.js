@@ -1,4 +1,3 @@
-const { group } = require("console");
 const vm = require("vm");
 
 module.exports = class Schema {
@@ -44,8 +43,14 @@ module.exports = class Schema {
           // eslint-disable-next-line security/detect-object-injection
           object[property] !== null
         ) {
-          // eslint-disable-next-line security/detect-object-injection
-          iterate(object[property]);
+          if (property == "Action" || property == "Ressource") {
+            throw new Error(
+              `For property "${property}"; "${property}" is a reserved name. Dimrill Schema values must be guidelines compliant.`
+            );
+          } else {
+            // eslint-disable-next-line security/detect-object-injection
+            iterate(object[property]);
+          }
         } else {
           // eslint-disable-next-line security/detect-object-injection
           if (
@@ -55,11 +60,38 @@ module.exports = class Schema {
             object[property].length > 1
           ) {
             // eslint-disable-next-line security/detect-object-injection
-            object[property].forEach((n) => {
-              if (n.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
-                throw new Error(
-                  `For property "${property}" value "${n}"; Dimrill Schema values must be guidelines compliant`
-                );
+            object[property].forEach((n, index) => {
+              if (typeof n === "object" && Object.keys(n).length >= 2) {
+                if (
+                  (n.hasOwnProperty("Action") &&
+                    typeof n.Action === "boolean") ||
+                  (n.hasOwnProperty("Ressource") &&
+                    typeof n.Ressource === "boolean")
+                ) {
+                  if (n.name && typeof n.name === "string") {
+                    if (
+                      n.name.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)
+                    ) {
+                      throw new Error(
+                        `For property "${property}" at index:${index} parameter "name"; Dimrill Schema values must be guidelines compliant.`
+                      );
+                    }
+                  } else {
+                    throw new Error(
+                      `For property "${property}" at index:${index} parameter "name"; Dimrill Schema parameters must have a name of String type.`
+                    );
+                  }
+                } else {
+                  throw new Error(
+                    `For property "${property}" at index:${index}; Dimrill Schema parameters must have either an "Action" or "Ressource" key.`
+                  );
+                }
+              } else {
+                if (n.match(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/)) {
+                  throw new Error(
+                    `For property "${property}" value "${n}"; Dimrill Schema values must be guidelines compliant.`
+                  );
+                }
               }
             });
           }
@@ -115,11 +147,10 @@ module.exports = class Schema {
     req = { req };
     user = { user };
     context = { context };
-    drna = String(drna);
 
     const results = Policies.map((policy) => {
       const matchedPolicy = policy.Statement.reduce((results, statement) => {
-        const matchedStatement = statement.Action.find((elem) => {
+        const matchedStatement = statement[drna[0]].find((elem) => {
           /*
               Wrap regex match in a VM to prevent ReDOS
             */
@@ -155,15 +186,22 @@ module.exports = class Schema {
     });
     return results.flat();
   }
-  synthetize(...args) {
+  synthetize(drna, req) {
     /* 
-        Match provided args (path, req) with the associated schema
-      */
-    let localPath = args[0].replace(/\./g, "-").replace(/\s/g, "-").split(":");
+        Check if drna is an array, and has both required parameters (Action/Ressource, drnaString)
+    */
+    if (!Array.isArray(drna) || drna.length < 2) {
+      return false;
+    }
+    const type = String(drna[0]);
+    if (type !== "Action" && type !== "Ressource") {
+      return false;
+    }
+    let localPath = drna[1].replace(/\./g, "-").replace(/\s/g, "-").split(":");
     const localSchema = this.schema,
       /*
           Iterate over the Schema to try and match a path to properties if they exist
-        */
+      */
       parameters = localPath.reduce((a, b) => {
         if (a && a.hasOwnProperty(b)) {
           // eslint-disable-next-line security/detect-object-injection
@@ -172,21 +210,22 @@ module.exports = class Schema {
       }, localSchema);
     const paramsMatched =
       Array.isArray(parameters) && parameters.length >= 1
-        ? [...this.paramsMatcher(parameters, args[1])]
+        ? [...this.paramsMatcher(type, parameters, req)]
         : [];
-
     /*
            If Parameters is an empty array or undefined or false in strict mode the path must be rejected as it doesnt match schema
 
     */
-    if (this.strictMode && !Array.isArray(parameters) && parameters !== true) {
-      localPath = [];
+    if (typeof parameters === "object" && parameters.hasOwnProperty(type)) {
+      // eslint-disable-next-line security/detect-object-injection
+      if (parameters[type] !== true) return false;
+    } else if (!Array.isArray(parameters) && parameters !== true) {
+      return false;
     }
-
-    return [...localPath, ...paramsMatched].join(":");
+    return [type, [...localPath, ...paramsMatched].join(":")];
   }
 
-  *paramsMatcher(params, req) {
+  *paramsMatcher(type, params, req) {
     let reqValues = req;
     if (req.body) {
       reqValues = { ...req, ...req.body };
@@ -194,14 +233,21 @@ module.exports = class Schema {
     if (req.query) {
       reqValues = { ...req, ...req.query };
     }
-    for (const paramName of params) {
-      // eslint-disable-next-line security/detect-object-injection
-      if (reqValues[paramName]) {
+    for (const parameter of params) {
+      if (
+        parameter.hasOwnProperty(type) &&
         // eslint-disable-next-line security/detect-object-injection
-        yield `${String(paramName)}/${String(reqValues[paramName]).replace(
-          /[\W_]+/,
-          ""
-        )}`;
+        parameter[type] === true &&
+        parameter.hasOwnProperty("name") &&
+        typeof parameter.name === "string"
+      ) {
+        // eslint-disable-next-line security/detect-object-injection
+        if (reqValues[parameter.name]) {
+          // eslint-disable-next-line security/detect-object-injection
+          yield `${String(parameter.name)}/${String(
+            reqValues[parameter.name]
+          ).replace(/[\W_]+/, "")}`;
+        }
       }
     }
   }
