@@ -4,11 +4,13 @@ const Adapters = require("./adapters");
 const validateConditions = require("./operators/validate-condition");
 const Schema = require("./schema/schema");
 
-/*
-
-  TODO:DEV
-  import getOperators, matchVariables
-*/
+function initialize(...args) {
+  this.adapter = args[0].options
+    ? Adapters[args[0].options.adapter] ?? Adapters.mongo
+    : Adapters.mongo;
+  this.Schema = args[0].Schema;
+  return this;
+}
 
 function validate(statement, req, user, context) {
   if (typeof this.adapter !== "object") {
@@ -18,7 +20,13 @@ function validate(statement, req, user, context) {
   req = { req };
   user = { user };
   context = { context };
-
+  if (!statement) {
+    return {
+      hasContext: false,
+      context: {},
+      valid: true,
+    };
+  }
   if (!statement.Condition) {
     //Nothing to validate condition is empty
     return {
@@ -38,16 +46,37 @@ function validate(statement, req, user, context) {
     return condition;
   }
 }
-
-function initialize(...args) {
-  this.adapter = args[0].options
-    ? Adapters[args[0].options.adapter] ?? Adapters.mongo
-    : Adapters.mongo;
-  this.synthetizer;
-  return this;
+function authorize(drna, policies, req, user, context) {
+  const authorization = {
+    valid: false,
+    context: {},
+  };
+  const statement = this.Schema.matchPolicy(
+    this.Schema.synthetize(drna, req),
+    policies,
+    req,
+    user,
+    context
+  )[0];
+  if (statement) {
+    const condition = this.validate(statement, req, user, context);
+    if (condition.valid && statement.Effect == "Allow") {
+      authorization.valid = true;
+      authorization.context = condition.context;
+    } else {
+      authorization.valid = false;
+      authorization.context = condition.context;
+    }
+  } else {
+    authorization.valid = false;
+    authorization.context = {};
+  }
+  return authorization;
 }
+
 module.exports = {
   validate: validate,
+  authorize: authorize,
   initialize: initialize,
   Schema: Schema,
 };

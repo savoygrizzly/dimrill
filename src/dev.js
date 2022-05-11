@@ -1,49 +1,3 @@
-const util = require("util");
-const vm = require("vm");
-
-const Policies = [
-  {
-    Version: "2022-05-02",
-    Statement: [
-      {
-        Effect: "Allow",
-        Action: [
-          //service:Action
-
-          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
-          "blackeye:newOrder:editDelivery",
-          "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
-          "blackeye:newOrder:createOrder:createSmthg:*",
-          //"blackeye:newOrder:*",
-        ],
-        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
-        Condition: {
-          DateEquals: {
-            "${user:birthdate_string}": new Date().toISOString(), //should match
-          },
-        },
-      },
-      {
-        Effect: "Allow",
-        Action: [
-          //service:Action
-
-          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
-          "blackeye2:newOrder:editDelivery",
-          "blackeye2:users:getUser:user/${user:id}",
-          "blackeye2:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
-          //"blackeye:newOrder:*",
-        ],
-        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
-        Condition: {
-          DateEquals: {
-            "${user:birthdate_string}": new Date().toISOString(), //should match
-          },
-        },
-      },
-    ],
-  },
-];
 const req = {
     body: {
       pricelist: "distributorPrice",
@@ -71,8 +25,51 @@ const req = {
     },
   };
 
+const Policies = [
+  {
+    Version: "2022-05-02",
+    Statement: [
+      {
+        Effect: "Allow",
+        Action: [
+          //service:Action
+
+          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
+          "blackeye:newOrder:editDelivery",
+          "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
+          "blackeye:newOrder:createOrder:createSmthg:*",
+          //"blackeye:newOrder:*",
+        ],
+        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
+        Condition: {
+          StringEquals: {
+            "${user:id}": "bond", //should match
+          },
+        },
+      },
+      {
+        Effect: "Allow",
+        Action: [
+          //service:Action
+
+          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
+          "blackeye2:newOrder:editDelivery",
+          "blackeye2:users:getUser:user/${user:id}",
+          "blackeye2:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
+          //"blackeye:newOrder:*",
+        ],
+        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
+        Condition: {
+          "ToContext:DateEquals": {
+            "${user:birthdate_string}": new Date().toISOString(), //should match
+          },
+        },
+      },
+    ],
+  },
+];
+
 const Dimrill = require("./index.js");
-Dimrill.initialize({ options: { adapter: "mongo" } });
 const Schema = new Dimrill.Schema(
   {
     blackeye: {
@@ -83,10 +80,20 @@ const Schema = new Dimrill.Schema(
         },
       },
     },
+    blackeye2: {
+      newOrder: {
+        editDelivery: true,
+        createOrder: {
+          createSmthg: ["pricelist", "organization"],
+        },
+      },
+    },
   },
   { debug: true, strict: true }
 );
-const drna = Schema.synthetize(
+Dimrill.initialize({ options: { adapter: "mongo" }, Schema: Schema });
+
+/*const drna = Schema.synthetize(
   "blackeye:newOrder:createOrder:createSmthg", //"blackeye:newOrder:createOrder:createSmthg"
   req
 );
@@ -98,10 +105,26 @@ const matchedPolicy = Schema.matchPolicy(
   user,
   context
 );
-console.log(matchedPolicy);
+console.log(matchedPolicy);*/
 
-Dimrill.validate();
-
+console.log(
+  Dimrill.authorize(
+    "blackeye:newOrder:createOrder:createSmthg",
+    Policies,
+    req,
+    user,
+    context
+  )
+);
+console.log(
+  Dimrill.authorize(
+    "blackeye2:newOrder:createOrder:createSmthg",
+    Policies,
+    req,
+    user,
+    context
+  )
+);
 /*
   Parameters to be matched must be direclty accesible in the passed req object
 */
