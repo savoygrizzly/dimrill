@@ -46,18 +46,14 @@ const Policies = [
       {
         Effect: "Allow",
         Action: [
-          //service:Action
-
-          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
           "blackeye2:newOrder:editDelivery",
           "blackeye2:users:getUser:user/${user:id}",
           "blackeye2:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
-          //"blackeye:newOrder:*",
         ],
         Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
         Condition: {
           "ToContext:DateEquals": {
-            "${user:birthdate_string}": new Date().toISOString(), //should not match
+            "user.birthdate_string": "${user:birthdate_string}",
           },
         },
       },
