@@ -15,6 +15,22 @@ Each step must start with a lowercase letter should be written in `camelCase` st
 
 A Schema is a way to describe the possible parameters for an expression.
 
+```Javascript
+const Schema = new Dimrill.Schema(
+  {
+    blackeye: {
+      newOrder: {
+        editDelivery: true,
+        createOrder: {
+          createSmthg: ["pricelist", "organization"],
+        },
+      },
+    },
+  },
+  { debug: true, strict: true }
+);
+```
+
 ### Parameters
 
 Parameters are expressed as follow `:parameterName/parameterValue/parameterSubValue`.

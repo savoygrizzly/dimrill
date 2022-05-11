@@ -68,8 +68,8 @@ module.exports = class Schema {
             /*
                 If property is a boolean it either validate or invalidate a path
             */
-            // eslint-disable-next-line security/detect-object-injection
             throw new Error(
+              // eslint-disable-next-line security/detect-object-injection
               `For property "${property}" value "${object[property]}" must be either of type Array or Boolean; Dimrill Schema must be guidelines compliant`
             );
           } else {
@@ -90,8 +90,9 @@ module.exports = class Schema {
           .split(":")[1]
           .split(".")
           .reduce((a, b) => {
-            if (a) {
-              return a[String(b)];
+            if (a && a.hasOwnProperty(b)) {
+              // eslint-disable-next-line security/detect-object-injection
+              return a[b];
             }
           }, variable);
         value = value ? String(value).replace(/[\W_]+/g, "") : "";
@@ -165,7 +166,8 @@ module.exports = class Schema {
         */
       parameters = localPath.reduce((a, b) => {
         if (a && a.hasOwnProperty(b)) {
-          return a[String(b)];
+          // eslint-disable-next-line security/detect-object-injection
+          return a[b];
         }
       }, localSchema);
     const paramsMatched =

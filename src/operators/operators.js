@@ -38,7 +38,12 @@ const matchVariables = (operands, variables) => {
         const value = match[1]
           .split(":")[1]
           .split(".")
-          .reduce((a, b) => a[String(b)], variable);
+          .reduce((a, b) => {
+            if (a && a.hasOwnProperty(b)) {
+              // eslint-disable-next-line security/detect-object-injection
+              return a[b];
+            }
+          }, variable);
         /*
             Prevents object injection by removing any function, passed as an argument 
         */
@@ -181,7 +186,7 @@ const verifyOperator = (
       /*
           Add context
           Mark as Valid
-        */
+      */
       verificationState.valid =
         Object.is(arr.length - 1, k) && verificationState.valid === undefined
           ? true
@@ -195,7 +200,7 @@ const verifyOperator = (
   });
   /* 
         check wether Context must be wrapped in a logic operator
-    */
+  */
   if (
     verificationState.hasContext &&
     Object.keys(verificationState.context).length >= 2

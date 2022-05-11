@@ -2,7 +2,7 @@
 
 const Adapters = require("./adapters");
 const validateConditions = require("./operators/validate-condition");
-const Schema = require("./schema/");
+const Schema = require("./schema/schema");
 
 /*
 
