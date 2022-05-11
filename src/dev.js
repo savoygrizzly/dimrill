@@ -21,7 +21,7 @@ const req = {
       affiliated: ["MI6"],
       id: "test",
       test: true,
-      dev: false,
+      dev: true,
     },
   };
 
@@ -32,13 +32,9 @@ const Policies = [
       {
         Effect: "Allow",
         Action: [
-          //service:Action
-
-          //service:ActionCategory:Function:[ParameterName/ParameterValue]:
           "blackeye:newOrder:editDelivery",
           "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
           "blackeye:newOrder:createOrder:createSmthg:*",
-          //"blackeye:newOrder:*",
         ],
         Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
         Condition: {
@@ -61,7 +57,7 @@ const Policies = [
         Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
         Condition: {
           "ToContext:DateEquals": {
-            "${user:birthdate_string}": new Date().toISOString(), //should match
+            "${user:birthdate_string}": new Date().toISOString(), //should not match
           },
         },
       },

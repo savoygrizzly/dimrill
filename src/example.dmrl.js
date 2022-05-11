@@ -6,7 +6,7 @@ const Dimrill = require("./index.js");
  *
  *
  *
- *              SCHEMAS IMPLEMETATION EXAMPLE
+ *              SCHEMAS IMPLEMENTATION EXAMPLE
  *
  *
  *
