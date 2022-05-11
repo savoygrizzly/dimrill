@@ -36,44 +36,27 @@ const Policies = [
           "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
           "blackeye:newOrder:createOrder:createSmthg:*",
         ],
-        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
+        Ressource: ["blackeye:newOrder:getSheet:*"],
         Condition: {
           StringEquals: {
             "${user:id}": "bond", //should match
           },
         },
       },
-      {
-        Effect: "Allow",
-        Action: [
-          "blackeye2:newOrder:editDelivery",
-          "blackeye2:users:getUser:user/${user:id}",
-          "blackeye2:newOrder:createOrder:createSmthg:pricelist/*:organization/123456789",
-        ],
-        Ressource: ["blackeye:newOrder:priceList/distributorPrice"],
-        Condition: {
-          "ToContext:DateEquals": {
-            "user.birthdate_string": "${user:birthdate_string}",
-          },
-        },
-      },
     ],
   },
 ];
-
+/*
+ *  Dev Note
+ *  The Schema Object should contain a way to differentiate Action and Ressource paths and parameters
+ *
+ */
 const Dimrill = require("./index.js");
 const Schema = new Dimrill.Schema(
   {
     blackeye: {
       newOrder: {
-        editDelivery: true,
-        createOrder: {
-          createSmthg: ["pricelist", "organization"],
-        },
-      },
-    },
-    blackeye2: {
-      newOrder: {
+        getSheet: true,
         editDelivery: true,
         createOrder: {
           createSmthg: ["pricelist", "organization"],
@@ -106,7 +89,7 @@ console.log(
     req,
     user,
     context
-  )
+  ).valid
 );
 console.log(
   Dimrill.authorize(
