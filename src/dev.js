@@ -1,33 +1,29 @@
 const req = {
-  body: {
-    pricelist: "distributorPrice",
+    pricelist: "distributor Price",
     organization: "123456789",
-    other: "not_here",
+    other: "nothere",
   },
-},
-user = {
-  id: "bond",
-  affiliation: "MI6",
-  birthdate_string: "1988-01-05 08:17:51",
-  test: ["1988-01-05 08:17:51"],
-  name: "James John Bond",
-  rights: ["toKill", "toDrink", "shit"],
-  weapons: {
-    gun: "Beretta",
-    watch: "Rolex",
+  user = {
+    id: "bond",
+    affiliation: "MI6",
+    birthdate_string: "1988-01-05 08:17:51",
+    test: ["1988-01-05 08:17:51"],
+    testInj: "shit",
+    agency: "Go$*_d guys",
+    name: "James John Bond",
+    rights: ["toKill", "toDrink", "shit"],
+    hello: {
+      test: "test",
+    },
   },
-},
-context = {
-    target: {
-        
-    }
-  organization: {
-    affiliated: ["MI6"],
-    id: "test",
-    test: true,
-    dev: true,
-  },
-};
+  context = {
+    organization: {
+      affiliated: ["MI6"],
+      id: "test",
+      test: true,
+      dev: true,
+    },
+  };
 
 const Policies = [
   {
@@ -37,7 +33,7 @@ const Policies = [
         Effect: "Allow",
         Action: [
           "blackeye:newOrder:editDelivery",
-          "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
+          "blackeye:users:getUser:user/${user:agency}-${user:hello.test}",
           "blackeye:newOrder:createOrder:*:other/nothere",
         ],
         Ressource: ["blackeye:newOrder:getSheet:pricelist/*"],
@@ -56,7 +52,7 @@ const Policies = [
  *
  */
 const Dimrill = require("./index.js");
-const Schema = new Dimrill.Schema(
+const extendedSchema = new Dimrill.Schema(
   {
     blackeye: {
       newOrder: {
@@ -93,9 +89,9 @@ const Schema = new Dimrill.Schema(
       },
     },
   },
-  { debug: true, strict: true }
+  { debug: true }
 );
-Dimrill.initialize({ options: { adapter: "mongo" }, Schema: Schema });
+Dimrill.initialize({ options: { adapter: "mongo" }, Schema: extendedSchema });
 
 /*const drna = Schema.synthetize(
   "blackeye:newOrder:createOrder:createSmthg", //"blackeye:newOrder:createOrder:createSmthg"
@@ -113,16 +109,7 @@ console.log(matchedPolicy);*/
 
 console.log(
   Dimrill.authorize(
-    ["Action", "blackeye:newOrder:createOrder:createSmthg"],
-    Policies,
-    req,
-    user,
-    context
-  )
-);
-console.log(
-  Dimrill.authorize(
-    ["Ressource", "blackeye:newOrder:getSheet"],
+    ["Action", "blackeye:newOrder:createOrder"],
     Policies,
     req,
     user,

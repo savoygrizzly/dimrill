@@ -127,10 +127,13 @@ module.exports = class Schema {
               return a[b];
             }
           }, variable);
-        value = value ? String(value).replace(/[\W_]+/g, "") : "";
+        value = value
+          ? String(value)
+              .replace(/\s/g, "-")
+              .replace(/[^\w\-\_]*/g, "")
+          : "";
         expression = expression.replace(match[0], value);
       }
-
       return expression;
     } else {
       //value is a fixed string
@@ -138,6 +141,7 @@ module.exports = class Schema {
     }
   }
   matchPolicy(drna, Policies, req, user, context) {
+    console.log(drna);
     if (!drna) {
       return false;
     }
@@ -244,9 +248,9 @@ module.exports = class Schema {
         // eslint-disable-next-line security/detect-object-injection
         if (reqValues[parameter.name]) {
           // eslint-disable-next-line security/detect-object-injection
-          yield `${String(parameter.name)}/${String(
-            reqValues[parameter.name]
-          ).replace(/[\W_]+/, "")}`;
+          yield `${String(parameter.name)}/${String(reqValues[parameter.name])
+            .replace(/\s/g, "-")
+            .replace(/[^\w\-\_]*/g, "")}`;
         }
       }
     }

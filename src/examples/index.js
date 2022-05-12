@@ -17,12 +17,12 @@ const req = {
     /*
         Note that here, to keep this example reaaaally basic, req parameters are already extracted from req.body/req.query or whatever the case may be.
     */
-    agentId: "007",
+    agentId: "James bond",
     targetName: "Renard",
-    organizationId: "09092",
+    organizationId: "Bad guys",
   },
   user = {
-    agentId: "007",
+    agentId: "James bond",
     affiliation: "MI6",
     birthdate: "1988-01-05 08:17:51",
     name: "James John Bond",
