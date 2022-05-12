@@ -1,30 +1,33 @@
 const req = {
-    body: {
-      pricelist: "distributorPrice",
-      organization: "123456789",
-      other: "not_here",
-    },
+  body: {
+    pricelist: "distributorPrice",
+    organization: "123456789",
+    other: "not_here",
   },
-  user = {
-    id: "bond",
-    affiliation: "MI6",
-    birthdate_string: "1988-01-05 08:17:51",
-    test: ["1988-01-05 08:17:51"],
-    testInj: "shit",
-    name: "James John Bond",
-    rights: ["toKill", "toDrink", "shit"],
-    hello: {
-      test: "test",
-    },
+},
+user = {
+  id: "bond",
+  affiliation: "MI6",
+  birthdate_string: "1988-01-05 08:17:51",
+  test: ["1988-01-05 08:17:51"],
+  name: "James John Bond",
+  rights: ["toKill", "toDrink", "shit"],
+  weapons: {
+    gun: "Beretta",
+    watch: "Rolex",
   },
-  context = {
-    organization: {
-      affiliated: ["MI6"],
-      id: "test",
-      test: true,
-      dev: true,
-    },
-  };
+},
+context = {
+    target: {
+        
+    }
+  organization: {
+    affiliated: ["MI6"],
+    id: "test",
+    test: true,
+    dev: true,
+  },
+};
 
 const Policies = [
   {
@@ -35,7 +38,7 @@ const Policies = [
         Action: [
           "blackeye:newOrder:editDelivery",
           "blackeye:users:getUser:user/${user:id}-${user:hello.test}",
-          "blackeye:newOrder:createOrder:createSmthg:*:other/nothere",
+          "blackeye:newOrder:createOrder:*:other/nothere",
         ],
         Ressource: ["blackeye:newOrder:getSheet:pricelist/*"],
         Condition: {
@@ -60,25 +63,32 @@ const Schema = new Dimrill.Schema(
         getSheet: {
           Ressource: true,
         },
-        editDelivery: {
+        createOrder: [
+          {
+            name: "pricelist",
+            Action: true,
+          },
+          {
+            name: "organization",
+            Action: true,
+          },
+          {
+            name: "other",
+            Ressource: true,
+            Action: true,
+          },
+        ],
+      },
+      users: {
+        createUser: {
           Action: true,
         },
-        createOrder: {
-          createSmthg: [
-            {
-              name: "pricelist",
-              Action: false,
-            },
-            {
-              name: "organization",
-              Action: true,
-            },
-            {
-              name: "other",
-              Ressource: true,
-              Action: true,
-            },
-          ],
+        getUser: {
+          Action: true,
+          Ressource: true,
+        },
+        updateUserInformations: {
+          Action: true,
         },
       },
     },

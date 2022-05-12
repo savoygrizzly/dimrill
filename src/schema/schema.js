@@ -227,12 +227,12 @@ module.exports = class Schema {
 
   *paramsMatcher(type, params, req) {
     let reqValues = req;
-    if (req.body) {
+    /*if (req.body) {
       reqValues = { ...req, ...req.body };
     }
     if (req.query) {
       reqValues = { ...req, ...req.query };
-    }
+    }*/
     for (const parameter of params) {
       if (
         parameter.hasOwnProperty(type) &&

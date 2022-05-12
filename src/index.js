@@ -49,7 +49,7 @@ function verifyCondition(statement, req, user, context) {
 function authorize(drna, policies, req, user, context) {
   const authorization = {
     valid: false,
-    context: {},
+    query: {},
   };
   const statement = this.Schema.matchPolicy(
     this.Schema.synthetize(drna, req),
@@ -62,14 +62,14 @@ function authorize(drna, policies, req, user, context) {
     const condition = verifyCondition.call(this, statement, req, user, context); //pass down this to function
     if (condition.valid && statement.Effect == "Allow") {
       authorization.valid = true;
-      authorization.context = condition.context;
+      authorization.query = condition.context;
     } else {
       authorization.valid = false;
-      authorization.context = condition.context;
+      authorization.query = condition.context;
     }
   } else {
     authorization.valid = false;
-    authorization.context = {};
+    authorization.query = {};
   }
   return authorization;
 }
