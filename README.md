@@ -125,7 +125,7 @@ const compiledSchema = new Dimrill.Schema(
 
 Let's see this schema implemented with the following example.
 
-To keep this example simple we'll set Policies, req, user and context manually.
+To keep this example simple we'll set Policies, req, user and context manually inside the middleware. In practice this will never be the case.
 Keep in mind that:
 
 - The request (req) will have to be passed to the middleware by express or the framework of your choosing.
@@ -176,6 +176,7 @@ const req = {
 ```
 
 And then let's set the policies. Usually you would fetch those from a user profile in a DB, or from a file depending on your use case. Altough you could fetch those from a JWT it is **NOT** recommended due to the size multiple policies might add up to.
+
 Policies will have to be supplied to Dimrill for every request you wish to authorize.
 
 ```Javascript
