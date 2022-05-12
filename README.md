@@ -1,4 +1,4 @@
-# Dimrill Auth system
+# Dimrill Authorization system
 
 ## Dimrill RNA (DRNA)
 
@@ -265,8 +265,6 @@ authorizer = Dimrill.authorize(
   context
 );
 console.log(authorizer); //{ valid: true, query: { 'agentId': '007' } }
-
-
 
 ```
 
