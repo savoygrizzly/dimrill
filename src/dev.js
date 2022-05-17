@@ -1,6 +1,6 @@
 const req = {
-    pricelist: "distributor Price",
-    organization: "123456789",
+    pricelist: "distributorPrice",
+    organization: "test@test.com",
     other: "nothere",
   },
   user = {
@@ -9,7 +9,7 @@ const req = {
     birthdate_string: "1988-01-05 08:17:51",
     test: ["1988-01-05 08:17:51"],
     testInj: "shit",
-    agency: "Go$*_d guys",
+    agency: "test@test.com",
     name: "James John Bond",
     rights: ["toKill", "toDrink", "shit"],
     hello: {

@@ -130,7 +130,7 @@ module.exports = class Schema {
         value = value
           ? String(value)
               .replace(/\s/g, "-")
-              .replace(/[^\w\-\_]*/g, "")
+              .replace(/(\.\*)/g, "")
           : "";
         expression = expression.replace(match[0], value);
       }
@@ -141,10 +141,10 @@ module.exports = class Schema {
     }
   }
   matchPolicy(drna, Policies, req, user, context) {
-    console.log(drna);
     if (!drna) {
       return false;
     }
+    console.log(drna);
     /*
         Cast drna param to string to prevent injections
     */
@@ -250,7 +250,7 @@ module.exports = class Schema {
           // eslint-disable-next-line security/detect-object-injection
           yield `${String(parameter.name)}/${String(reqValues[parameter.name])
             .replace(/\s/g, "-")
-            .replace(/[^\w\-\_]*/g, "")}`;
+            .replace(/(\.\*)/g, "")}`;
         }
       }
     }
