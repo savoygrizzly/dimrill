@@ -1,5 +1,6 @@
 {
-  "name": "dimrill",
+  "name": "Dimrill",
+  "repository": "https://github.com/sosickstudio/dimrill",
   "version": "1.0.0",
   "main": "src/index.js",
   "author": "Mateo Laporte",
@@ -20,5 +21,7 @@
   "scripts": {
     "test": "jest"
   },
-  "dependencies": {}
+  "dependencies": {
+    "mysql": "^2.18.1"
+  }
 }

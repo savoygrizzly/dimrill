@@ -191,13 +191,30 @@ const verifyOperator = (
         Object.is(arr.length - 1, k) && verificationState.valid === undefined
           ? true
           : verificationState.valid;
-      verificationState.hasContext = true;
-      verificationState.context = {
-        ...verificationState.context,
-        ...validated,
-      };
+
+      if (typeof validated == "string") {
+        if (verificationState.hasContext) {
+          verificationState.context =
+            typeof verificationState.context === "string" &&
+            typeof validated === "string"
+              ? `${verificationState.context} AND ${validated}`
+              : "";
+        } else {
+          verificationState.context = `${verificationState.context} AND ${validated}`;
+          verificationState.hasContext = true;
+        }
+      } else if (typeof validated == "object") {
+        if (typeof verificationState.context == "object") {
+          verificationState.context = {
+            ...verificationState.context,
+            ...validated,
+          };
+          verificationState.hasContext = true;
+        }
+      }
     }
   });
+  console.log(verificationState.context);
   /* 
         check wether Context must be wrapped in a logic operator
   */

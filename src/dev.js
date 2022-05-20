@@ -1,6 +1,6 @@
 const req = {
     pricelist: "distributorPrice",
-    organization: "test@test.com",
+    organization: "test@test.truc.com",
     other: "nothere",
   },
   user = {
@@ -38,19 +38,15 @@ const Policies = [
         ],
         Ressource: ["blackeye:newOrder:getSheet:pricelist/*"],
         Condition: {
-          StringEquals: {
-            "${user:id}": "bond", //should match
+          "ToContext:StringEquals": {
+            "${user:id}": "context", //should match
           },
         },
       },
     ],
   },
 ];
-/*
- *  Dev Note
- *  The Schema Object should contain a way to differentiate Action and Ressource paths and parameters
- *
- */
+
 const Dimrill = require("./index.js");
 const extendedSchema = new Dimrill.Schema(
   {
@@ -91,7 +87,7 @@ const extendedSchema = new Dimrill.Schema(
   },
   { debug: true }
 );
-Dimrill.initialize({ options: { adapter: "mongo" }, Schema: extendedSchema });
+Dimrill.initialize({ options: { adapter: "sql" }, Schema: extendedSchema });
 
 /*const drna = Schema.synthetize(
   "blackeye:newOrder:createOrder:createSmthg", //"blackeye:newOrder:createOrder:createSmthg"

@@ -2,6 +2,64 @@
 
 ## Dimrill RNA (DRNA)
 
+### What the heck is Dimrill ?
+
+Dimrill is a policy based authorization module for JS backends, in short it is designed to decide wether or not a certain user has the rights to access ressources or to perfom action in an Authorization flow.
+It is meant to be added after the authentification of the request has taken place, (after you checked for a valid JWT for example).
+
+By being policy based rather than role based, Dimrill offers a much finer granular and custom control over authorization, what's more it doesn't enforce a way to apply policies, giving you complete freedom.
+
+### Quickstart
+
+First of all, add Dimrill to your prject using your favorite package manager.
+
+`yarn add dimrill`
+
+or
+
+`npm install dimrill`
+
+We will use a simple expressJS example even though Dimrill isn't specifically as an express middleware, so you can use it with the framework or even deployment method of your choice.
+
+```Javascript
+//app.js
+const express = require('express')
+const app = express()
+const port = 3000
+
+app.get('/', authorizeToken(),req, res) => {
+  res.send('Hello World!')
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
+```
+
+```Javascript
+//authorization middleware
+const jwt = require('jsonwebtoken');
+
+function authorizeToken(req, res, next) {
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+
+  if (token == null) return res.sendStatus(401)
+
+  jwt.verify(token, process.env.TOKEN_SECRET as string, (err: any, user: any) => {
+    console.log(err)
+
+    if (err) return res.sendStatus(403)
+
+    req.user = user
+
+    next()
+  })
+}
+```
+
+###
+
 ### General Expression
 
 Starts with `servicename` in lowercase.
@@ -14,7 +72,9 @@ Each step must start with a lowercase letter should be written in `camelCase` st
 ### Schemas
 
 A Schema is a way to describe the possible paths and parameters for a policy expression.
-Schemas have to be generated using the Dimrill.Schema class, the Schema will then describe the structure of your authorization.
+At the end of each paths the object must contain either a child object with either or both of the keys `Action` or `Ressource` with a Boolean value. If the path takes parameters, the possible parameters must be supplied as an array of object with the key `name`containing the name of the parameter and either or both of the keys `Action` or `Ressource` with a Boolean value.
+
+Schemas have to be generated using the Dimrill.Schema class.
 
 ```Javascript
 new Dimrill.Schema(
