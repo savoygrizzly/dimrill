@@ -79,7 +79,7 @@ const verifyOperands = (
     if (silent) {
       return false;
     }
-    throw new Error(`Condition override detected: ${error}`);
+    throw new Error(`Condition override detected`);
   }
   if (!conditionOperands) {
     return false;
@@ -136,8 +136,11 @@ const verifyOperator = (
   silent = false
 ) => {
   const verificationState = {
-    hasContext: false,
-    context: {},
+    hasQuery: false,
+    /*
+      If adapter returAs String use an array so we can apply the logical operator to the string
+    */
+    query: adapters.returnAs === "Object" ? {} : [],
     valid: undefined,
   };
   //check wether conditionOperands is an array:
@@ -178,65 +181,72 @@ const verifyOperator = (
             (verificationState.valid === true ||
               verificationState.valid === undefined);
     } else if (
-      typeof validated === "object" &&
-      !Array.isArray(validated) &&
-      validated !== null &&
-      Object.keys(validated).length >= 1
+      (typeof validated === "object" &&
+        !Array.isArray(validated) &&
+        validated !== null &&
+        Object.keys(validated).length >= 1) ||
+      typeof validated === "string"
     ) {
       /*
           Add context
           Mark as Valid
       */
-      verificationState.valid =
-        Object.is(arr.length - 1, k) && verificationState.valid === undefined
-          ? true
-          : verificationState.valid;
-
-      if (typeof validated == "string") {
-        if (verificationState.hasContext) {
-          verificationState.context =
-            typeof verificationState.context === "string" &&
-            typeof validated === "string"
-              ? `${verificationState.context} AND ${validated}`
-              : "";
-        } else {
-          verificationState.context = `${verificationState.context} AND ${validated}`;
-          verificationState.hasContext = true;
-        }
-      } else if (typeof validated == "object") {
-        if (typeof verificationState.context == "object") {
-          verificationState.context = {
-            ...verificationState.context,
-            ...validated,
-          };
-          verificationState.hasContext = true;
-        }
+      if (adapters.returnAs === "Object" && typeof validated == "object") {
+        verificationState.valid =
+          Object.is(arr.length - 1, k) && verificationState.valid === undefined
+            ? true
+            : verificationState.valid;
+        verificationState.query = {
+          ...verificationState.query,
+          ...validated,
+        };
+        verificationState.hasQuery = true;
+      } else if (
+        adapters.returnAs === "String" &&
+        typeof validated == "string"
+      ) {
+        verificationState.query.push(validated);
+        verificationState.hasQuery = true;
+        verificationState.valid =
+          verificationState.query.length >= 1 ? true : verificationState.valid;
       }
     }
   });
-  console.log(verificationState.context);
   /* 
         check wether Context must be wrapped in a logic operator
   */
+  /*
+    Check for returnAs Object
+  */
   if (
-    verificationState.hasContext &&
-    Object.keys(verificationState.context).length >= 2
+    adapters.returnAs === "Object" &&
+    verificationState.hasQuery &&
+    Object.keys(verificationState.query).length >= 2
   ) {
     /* 
         Context must be applied to a OR logical operator
       */
     if (instructions.AnyValue) {
-      verificationState.context = adapters.operators.or(
-        verificationState.context
-      );
+      verificationState.query = adapters.operators.or(verificationState.query);
     } else {
       /* 
         Context must be applied to a AND logical operator,
         this line is required to make sure translation to languages other than MongoDB happens
       */
-      verificationState.context = adapters.operators.and(
-        verificationState.context
-      );
+      verificationState.query = adapters.operators.and(verificationState.query);
+    }
+  } else if (
+    /*
+    Check for returnAs String
+  */
+    adapters.returnAs === "String" &&
+    verificationState.hasQuery &&
+    verificationState.query.length >= 1
+  ) {
+    if (instructions.AnyValue) {
+      verificationState.query = adapters.operators.or(verificationState.query);
+    } else {
+      verificationState.query = adapters.operators.and(verificationState.query);
     }
   }
   return verificationState;

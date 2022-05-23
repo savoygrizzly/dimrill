@@ -177,4 +177,5 @@ module.exports = {
     and,
     explicitAnd,
   },
+  returnAs: "Object",
 };

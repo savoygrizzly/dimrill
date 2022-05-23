@@ -8,8 +8,8 @@ module.exports = function validateConditions(
   silent = false
 ) {
   const conditionsResults = {
-    hasContext: false,
-    context: {},
+    hasQuery: false,
+    query: adapters.returnAs == "String" ? "" : {},
     valid: true,
   };
   /* 
@@ -36,8 +36,8 @@ module.exports = function validateConditions(
 
       let setResults = {
         valid: false,
-        hasContext: false,
-        context: [],
+        hasQuery: false,
+        query: adapters.returnAs == "String" ? [] : [],
       };
       /*
         If its an array it means a logical OR is present 
@@ -55,25 +55,39 @@ module.exports = function validateConditions(
             context,
             adapters
           );
+
           /*
-              Merge valid and hasContext states
+              Merge valid and hasQuery states
             */
           setResults.valid = subSetResults.valid || setResults.valid;
-          setResults.hasContext =
-            subSetResults.hasContext || setResults.hasContext;
+          setResults.hasQuery = subSetResults.hasQuery || setResults.hasQuery;
 
-          subSetResults.context =
-            Object.values(subSetResults.context).length > 1
-              ? typeof adapters.operators.explicitAnd === "function"
-                ? adapters.operators.explicitAnd(subSetResults.context)
-                : adapters.operators.and(subSetResults.context)
-              : subSetResults.context;
-          setResults.context.push(subSetResults.context);
+          /*
+
+            For Obkect type queries
+            */
+          if (
+            adapters.returnAs === "Object" &&
+            typeof subSetResults.query === "object"
+          ) {
+            subSetResults.query =
+              Object.values(subSetResults.query).length > 1
+                ? typeof adapters.operators.explicitAnd === "function"
+                  ? adapters.operators.explicitAnd(subSetResults.query)
+                  : adapters.operators.and(subSetResults.query)
+                : subSetResults.query;
+            setResults.query.push(subSetResults.query);
+          } else if (
+            adapters.returnAs === "String" &&
+            typeof subSetResults.query === "string"
+          ) {
+            setResults.query.push(`(${subSetResults.query})`);
+          }
         });
         /*
-            apply the logical OR adapter if there is a context
+            apply the logical OR adapter if there is a query
           */
-        setResults.context = adapters.operators.or(setResults.context);
+        setResults.query = adapters.operators.or(setResults.query);
       } else {
         setResults = verifyOperator(
           getOperators(req, user, context, Object.keys(condition)[0]),
@@ -92,19 +106,30 @@ module.exports = function validateConditions(
         */
       conditionsResults.valid = setResults.valid && conditionsResults.valid;
       if (
-        typeof setResults.context === "object" &&
-        !Array.isArray(setResults.context) &&
-        setResults.context !== null &&
-        Object.keys(setResults.context).length >= 1
+        adapters.returnAs === "Object" &&
+        typeof setResults.query === "object" &&
+        !Array.isArray(setResults.query) &&
+        setResults.query !== null &&
+        Object.keys(setResults.query).length >= 1
       ) {
         /*
             Merge condition context results with others
           */
-        conditionsResults.hasContext = true;
-        conditionsResults.context = {
-          ...conditionsResults.context,
-          ...setResults.context,
+        conditionsResults.hasQuery = true;
+        conditionsResults.query = {
+          ...conditionsResults.query,
+          ...setResults.query,
         };
+      } else if (
+        adapters.returnAs === "String" &&
+        typeof setResults.query === "string"
+      ) {
+        conditionsResults.hasQuery = true;
+        if (conditionsResults.query != "") {
+          conditionsResults.query = `(${conditionsResults.query}) AND (${setResults.query})`;
+        } else {
+          conditionsResults.query = setResults.query;
+        }
       }
     }
   });

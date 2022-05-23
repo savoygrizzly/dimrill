@@ -8,6 +8,11 @@ function initialize(...args) {
   this.adapter = args[0].options
     ? Adapters[args[0].options.adapter] ?? Adapters.mongo
     : Adapters.mongo;
+  if (!["String", "Object"].includes(this.adapter.returnAs)) {
+    throw new Error(
+      `Adapter.returnAs property must be set to either "String" or "Object" (case sensitive); Value currently is "${this.adapter.returnAs}"`
+    );
+  }
   this.Schema = args[0].Schema;
   return this;
 }
@@ -49,7 +54,7 @@ function verifyCondition(statement, req, user, context) {
 function authorize(drna, policies, req, user, context) {
   const authorization = {
     valid: false,
-    query: {},
+    query: this.adapter.returnAs === "String" ? "" : {},
   };
   const statement = this.Schema.matchPolicy(
     this.Schema.synthetize(drna, req),
@@ -62,10 +67,10 @@ function authorize(drna, policies, req, user, context) {
     const condition = verifyCondition.call(this, statement, req, user, context); //pass down this to function
     if (condition.valid && statement.Effect == "Allow") {
       authorization.valid = true;
-      authorization.query = condition.context;
+      authorization.query = condition.query;
     } else {
       authorization.valid = false;
-      authorization.query = condition.context;
+      authorization.query = condition.query;
     }
   } else {
     authorization.valid = false;

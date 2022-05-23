@@ -138,20 +138,31 @@ const InArray = (leftOperator, rightOperator) => {
 };
 
 /*
-    Logiv^cal operators
+    Logical operators
 */
-const or = (object) => {
-  return Array.isArray(object)
-    ? { $or: object }
-    : {
-        $or: Object.entries(object).map((m) => ({ [m[0]]: m[1] })),
-      };
+const or = (str) => {
+  if (Array.isArray(str)) {
+    str = str.length > 1 ? str.join(" OR ") : str.join("");
+    return str;
+  } else {
+    return ` OR ${str}`;
+  }
 };
-const and = (object) => {
-  return object;
+const and = (str) => {
+  if (Array.isArray(str)) {
+    str = str.length > 1 ? str.join(" AND ") : str.join("");
+    return str;
+  } else {
+    return ` AND ${str}`;
+  }
 };
-const explicitAnd = (object) => {
-  return { $and: Object.entries(object).map((m) => ({ [m[0]]: m[1] })) };
+const explicitAnd = (str) => {
+  if (Array.isArray(str)) {
+    str = str.length > 1 ? str.join(" AND ") : str.join("");
+    return str;
+  } else {
+    return ` AND ${str}`;
+  }
 };
 
 module.exports = {
@@ -177,4 +188,5 @@ module.exports = {
     and,
     explicitAnd,
   },
+  returnAs: "String",
 };
