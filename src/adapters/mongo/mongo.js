@@ -132,7 +132,7 @@ const Bool = (leftOperator, rightOperator) => {
 const InArray = (leftOperator, rightOperator) => {
   return {
     [String(leftOperator)]: {
-      $in: Array.isArray(rightOperator) ? t : Array(rightOperator),
+      $in: Array.isArray(rightOperator) ? rightOperator : Array(rightOperator),
     },
   };
 };

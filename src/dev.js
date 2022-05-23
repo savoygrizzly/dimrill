@@ -37,21 +37,11 @@ const Policies = [
           "blackeye:newOrder:createOrder:*:other/nothere",
         ],
         Ressource: ["blackeye:newOrder:getSheet:pricelist/*"],
-        Condition: [
-          [
-            {
-              "ToContext:StringEquals": {
-                id: "${user:id}", //should match
-              },
-            },
-            {
-              "ToContext:StringEquals": {
-                name: "James John Bond",
-                something0: "something else",
-              },
-            },
-          ],
-        ],
+        Condition: {
+          "ToContext:InArray": {
+            action: "${user:rights}",
+          },
+        },
       },
     ],
   },
@@ -97,7 +87,7 @@ const extendedSchema = new Dimrill.Schema(
   },
   { debug: true }
 );
-Dimrill.initialize({ options: { adapter: "mongo" }, Schema: extendedSchema });
+Dimrill.initialize({ options: { adapter: "sql" }, Schema: extendedSchema });
 
 /*const drna = Schema.synthetize(
   "blackeye:newOrder:createOrder:createSmthg", //"blackeye:newOrder:createOrder:createSmthg"

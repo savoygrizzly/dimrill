@@ -144,7 +144,6 @@ module.exports = class Schema {
     if (!drna) {
       return false;
     }
-    console.log(drna);
     /*
         Cast drna param to string to prevent injections
     */

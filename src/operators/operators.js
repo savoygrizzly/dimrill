@@ -102,12 +102,13 @@ const verifyOperands = (
       if (silent) {
         return false;
       }
-      throw new Error(`Invalid context operator: ${error}`);
+      throw new Error(`Invalid adapter operator: ${error}`);
     }
   } else {
     /*
         validate condition
       */
+
     try {
       return typeof Conditions[instructions.condition] === "function"
         ? Conditions[instructions.condition](
