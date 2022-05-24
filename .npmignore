@@ -1,6 +1,8 @@
 #tests
-test
-coverage
+tests/
+
+#examples
+examples/
 
 #build tools
 .travis.yml
@@ -15,6 +17,4 @@ coverage
 #editor settings
 .idea
 .editorconfig
-src/examples
-src/tests
-.eslintrc.json 
+.vscode

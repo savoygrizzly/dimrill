@@ -1,7 +1,10 @@
 {
   "name": "dimrill",
   "repository": "https://github.com/sosickstudio/dimrill",
-  "version": "1.0.0-rc1",
+  "version": "1.0.1-rc1",
+  "directories": {
+    "lib": "./lib/dimrill"
+  },
   "main": "./index.js",
   "author": "Mateo Laporte",
   "license": "MIT",

@@ -17,15 +17,16 @@ const req = {
     /*
         Note that here, to keep this example reaaaally basic, req parameters are already extracted from req.body/req.query or whatever the case may be.
     */
-    agentId: "James bond",
+    agentId: "007",
     targetName: "Renard",
-    organizationId: "Bad guys",
+    organizationId: "09092",
   },
   user = {
-    agentId: "James bond",
+    agentId: "007",
     affiliation: "MI6",
     birthdate: "1988-01-05 08:17:51",
-    name: "James John Bond",
+    firstName: "James",
+    lastName: "Bond",
     rights: ["toKill", "toDrink"],
     weapons: {
       gun: "Beretta",
@@ -62,7 +63,7 @@ const Policies = [
             We only allow it if the agentId passed to the request is his
         */
         Action: [
-          "secretsystem:agents:updateAgentInformations:agentId/${user:agentId}",
+          "secretsystem:agents:updateAgentInformations:agentId/${req:agentId}",
         ],
         /* 
             To make sure he doesnt cheat we will add some conditions to that policy's statement.
