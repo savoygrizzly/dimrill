@@ -3,8 +3,15 @@ node_modules
 examples/express/node_modules
 examples/express/package-lock.json
 examples/express/yarn.lock
-# Serverless directories
-.DS_Store
-.vscode
+
+#.env
+examples/express/.env
+.env
+
+#lock files
 yarn.lock
 package-lock.json
+
+#Others
+.DS_Store
+.vscode
