@@ -1,7 +1,10 @@
 # package directories
 node_modules
 examples/express/node_modules
+examples/express/package-lock.json
+examples/express/yarn.lock
 # Serverless directories
 .DS_Store
 .vscode
 yarn.lock
+package-lock.json
