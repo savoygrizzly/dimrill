@@ -1,6 +1,10 @@
 const vm = require("vm");
 
 module.exports = class Schema {
+  /**
+   *
+   * @param  {...any} args - args[0] Contains the schemas to be used by Dimrill.
+   */
   constructor(...args) {
     this.debug = false;
     this.strictMode = false;
@@ -27,6 +31,10 @@ module.exports = class Schema {
       this.compile(args[0]);
     }
   }
+
+  /**
+   * @param {object} schema - An object describing the authorization schema.
+   */
   compile(schema) {
     function iterate(object) {
       for (const property in object) {
@@ -112,6 +120,13 @@ module.exports = class Schema {
     iterate(schema);
   }
   *compileExpression(expr) {}
+
+  /**
+   * This function matches the variables in the drna string described in the policies. @see {matchPolicy}
+   * @param {string} expression - String describing a drna path, can contains vafriables ${variable:property.subproperty}.
+   * @param {object} variables - An object containing the variables (req,user,context), from which variables in expression will be matched.
+   * @returns {string} - The final drna string.
+   */
   matchExpressionVariable(expression, variables) {
     const matches = expression.matchAll(/\$\{(..*?)\}/g);
     if (matches) {
@@ -140,6 +155,16 @@ module.exports = class Schema {
       return expression;
     }
   }
+
+  /**
+   * Attempts to match a the synthetized drna to the supplied policies. @see {synthetize}
+   * @param {string} drna - The drna string to be matched.
+   * @param {array} Policies - An array of policies (attached to a user).
+   * @param {object} req - The req object passed from the server.
+   * @param {object} user - The data associated to the user attempting to authorize.
+   * @param {object} context - An object containing additional informations to be used during the authorization process.
+   * @returns {array} - Returns an array of all matched policies.
+   */
   matchPolicy(drna, Policies, req, user, context) {
     if (!drna) {
       return false;
@@ -173,8 +198,8 @@ module.exports = class Schema {
             script.runInContext(vmContext, { timeout: 10 }); // milliseconds
           } catch (e) {
             /*
-                Attack has been detected, need to notify to take remedial actions
-              */
+                Possible Attack has been detected, need to notify to take remedial actions
+            */
           }
           if (sandbox.result) {
             return drna;
@@ -189,6 +214,13 @@ module.exports = class Schema {
     });
     return results.flat();
   }
+
+  /**
+   * Synthetizes a drna string from the parameters supplied to the Dimrill.authorize function.
+   * @param {array} drna - The array from which to synthetize the drna string ["Action/Ressource","string:to:match"].
+   * @param {object} req - The req object passed from the server.
+   * @returns {string} - The synthetozed drna string.
+   */
   synthetize(drna, req) {
     /* 
         Check if drna is an array, and has both required parameters (Action/Ressource, drnaString)
@@ -228,14 +260,15 @@ module.exports = class Schema {
     return [type, [...localPath, ...paramsMatched].join(":")];
   }
 
+  /**
+   * Extracts parameters from the schema and query and matches them.
+   * @param {String} type - The naure of what the user is trying to access, can be either Action or Ressource
+   * @param {object} params - The Paramters described in the Schema for the path of drna.
+   * @param {object} req - The req object passed from the server.
+   * @returns {string} - The matched parameters if any ParamKey/ParamValue.
+   */
   *paramsMatcher(type, params, req) {
     let reqValues = req;
-    /*if (req.body) {
-      reqValues = { ...req, ...req.body };
-    }
-    if (req.query) {
-      reqValues = { ...req, ...req.query };
-    }*/
     for (const parameter of params) {
       if (
         parameter.hasOwnProperty(type) &&

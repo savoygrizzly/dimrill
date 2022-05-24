@@ -1,5 +1,6 @@
 "use-strict";
 const mysql = require("mysql");
+
 const StringStrictlyEquals = (leftOperator, rightOperator) => {
   return `${mysql.escapeId(String(leftOperator))} = ${mysql.escape(
     String(rightOperator)

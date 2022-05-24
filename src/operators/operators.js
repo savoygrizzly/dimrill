@@ -1,4 +1,12 @@
 const Conditions = require("./list");
+/**
+ *
+ * @param {object} req - The req object passed from the server.
+ * @param {object} user - The data associated to the user attempting to authorize.
+ * @param {object} context - An object containing additional informations to be used during the authorization process.
+ * @param {string} condition - A string containing to condition from which to extract operators.
+ * @returns {object} - An object with keys: ToContext (Boolean), AnyValue (Boolean), EveryValue (Boolean), condition (String).
+ */
 const getOperators = (req, user, context, condition) => {
   const instructions = {
     ToContext: false,
@@ -12,6 +20,9 @@ const getOperators = (req, user, context, condition) => {
       typeof Conditions[String(e)] === "function" &&
       Conditions.hasOwnProperty(e)
     ) {
+      /*
+        Assign operator to instructions.condition
+      */
       instructions.condition = e;
     } else if (
       instructions[String(e)] !== undefined &&
@@ -24,7 +35,11 @@ const getOperators = (req, user, context, condition) => {
   });
   return instructions;
 };
-
+/**
+ * @param {array} operands - Array of string from which to extract operands, written in syntax: "${variable:property.subproperty}".
+ * @param {object} variables - Object containing req,user,context variables, from which the operands value will be matched.
+ * @returns {*} - The value matched on variable
+ */
 const matchVariables = (operands, variables) => {
   if (!Array.isArray(operands) || operands.length < 1) {
     return null;
@@ -62,11 +77,18 @@ const matchVariables = (operands, variables) => {
     }
   });
 };
-const verifyOperands = (
+/**
+ *
+ * @param {object} instructions - Object, @see {getOperators}
+ * @param {object} conditionOperands - Object, @see {matchVariables}
+ * @param {object} adapters - An object containings the functions for each operators to convert condition to DB query language, as well as a returnAs key to describe the type of data returend by {conditionsResults}.
+ * @param {boolean} silent - If set to true errors will not be thrown.
+ * @returns {boolean/string/object} - If instruction.toContext is true, will return an Object or a String according to returnAs specified in the adapter. Else, will return a boolean.
+ */
+const verifyCondition = (
   instructions,
   conditionOperands,
   adapters = {},
-  toContext = false,
   silent = false
 ) => {
   /*
@@ -84,7 +106,7 @@ const verifyOperands = (
   if (!conditionOperands) {
     return false;
   }
-  if (toContext) {
+  if (instructions.toContext) {
     /*
         Apply adapter
       */
@@ -127,6 +149,17 @@ const verifyOperands = (
     }
   }
 };
+/**
+ *
+ * @param {object} instructions - Object, @see {getOperators}
+ * @param {object} conditionOperands - Object, @see {matchVariables}
+ * @param {object} req - The req object passed from the server.
+ * @param {object} user - The data associated to the user attempting to authorize.
+ * @param {object} context - An object containing additional informations to be used during the authorization process.
+ * @param {object} adapters - An object containings the functions for each operators to convert condition to DB query language, as well as a returnAs key to describe the type of data returend by {conditionsResults}.
+ * @param {boolean} silent - If set to true errors will not throw an exception.
+ * @returns {object} - Object with keys: valid (Boolean), hasQuery (Boolean), query (Object/String).
+ */
 const verifyOperator = (
   instructions,
   conditionOperands,
@@ -162,7 +195,7 @@ const verifyOperator = (
       },
       false
     );
-    let validated = verifyOperands(
+    let validated = verifyCondition(
       instructions,
       OperandsArray,
       adapters,

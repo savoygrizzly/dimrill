@@ -16,7 +16,14 @@ function initialize(...args) {
   this.Schema = args[0].Schema;
   return this;
 }
-
+/**
+ *
+ * @param {object} statement - Object containing a Condition key with the condition to be validated.
+ * @param {object} req - The req object passed from the server.
+ * @param {object} user - The data associated to the user attempting to authorize.
+ * @param {object} context - An object containing additional informations to be used during the authorization process.
+ * @returns {validateConditions}
+ */
 function verifyCondition(statement, req, user, context) {
   if (typeof this.adapter !== "object") {
     throw new Error("Bolt is not initialized");
@@ -41,16 +48,23 @@ function verifyCondition(statement, req, user, context) {
     };
   } else {
     //validate
-    const condition = validateConditions(
+    return validateConditions(
       statement.Condition,
       req,
       user,
       context,
       this.adapter
     );
-    return condition;
   }
 }
+/**
+ * @param {array} drna - Array containing for index 0 the type (Action/Ressource) and index 1 the drna string to be matched.
+ * @param {array} policies - Array containing all policies.
+ * @param {object} req - The req object passed from the server.
+ * @param {object} user - The data associated to the user attempting to authorize.
+ * @param {object} context - An object containing additional informations to be used during the authorization process.
+ * @returns {object} - Object with keys valid (Boolean), query (Object)/(String).
+ */
 function authorize(drna, policies, req, user, context) {
   const authorization = {
     valid: false,

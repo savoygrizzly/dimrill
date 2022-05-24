@@ -1,4 +1,14 @@
 const { verifyOperator, getOperators } = require("./operators");
+/**
+ *
+ * @param {object} conditions - An object with the condition to be validated.
+ * @param {object} req - The req object passed from the server.
+ * @param {object} user - The data associated to the user attempting to authorize.
+ * @param {object} context - An object containing additional informations to be used during the authorization process.
+ * @param {object} adapters - An object containings the functions for each operators to convert condition to DB query language, as well as a returnAs key to describe the type of data returend by {conditionsResults}.
+ * @param {boolean} silent - If set to true errors will not throw an exception.
+ * @returns {object} - Object with keys: valid (Boolean), hasQuery (Boolean), query (Object)/(String).
+ */
 module.exports = function validateConditions(
   conditions,
   req,

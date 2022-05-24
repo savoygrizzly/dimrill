@@ -1,7 +1,7 @@
 const req = {
     pricelist: "distributorPrice",
     organization: "test@test.truc.com",
-    other: "nothere",
+    other: "1970/01/01'; DROP TABLE bank_accounts; --",
   },
   user = {
     id: "bond",
@@ -34,12 +34,12 @@ const Policies = [
         Action: [
           "blackeye:newOrder:editDelivery",
           "blackeye:users:getUser:user/${user:agency}-${user:hello.test}",
-          "blackeye:newOrder:createOrder:*:other/nothere",
+          "blackeye:newOrder:createOrder:*pricelist/distributorPrice*",
         ],
         Ressource: ["blackeye:newOrder:getSheet:pricelist/*"],
         Condition: {
-          "ToContext:InArray": {
-            action: "${user:rights}",
+          "ToContext:StringEquals": {
+            action: "${req:other}",
           },
         },
       },
