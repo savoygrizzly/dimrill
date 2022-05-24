@@ -1,11 +1,10 @@
 {
-  "name": "Dimrill",
+  "name": "dimrill",
   "repository": "https://github.com/sosickstudio/dimrill",
-  "version": "1.0.0",
-  "main": "src/index.js",
+  "version": "1.0.0-rc1",
+  "main": "./index.js",
   "author": "Mateo Laporte",
   "license": "MIT",
-  "private": true,
   "devDependencies": {
     "eslint": "^7.0.0",
     "eslint-config-airbnb-base": "^14.0.0",

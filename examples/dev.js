@@ -47,7 +47,7 @@ const Policies = [
   },
 ];
 
-const Dimrill = require("./index.js");
+const Dimrill = require("../index.js");
 const extendedSchema = new Dimrill.Schema(
   {
     blackeye: {
