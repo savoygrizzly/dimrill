@@ -1,5 +1,7 @@
 const vm = require("vm");
-
+/**
+ * The Schema Class
+ */
 module.exports = class Schema {
   /**
    *

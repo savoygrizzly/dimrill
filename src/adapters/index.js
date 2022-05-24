@@ -1,6 +1,7 @@
-const mongoAdapter = require("./mongo/mongo");
-const sqlAdapter = require("./sql/sql");
+/*
+  Export all adapters to be accessible using their namekey.
+*/
 module.exports = {
-  mongo: mongoAdapter,
-  sql: sqlAdapter,
+  mongo: require("./mongo/mongo"),
+  sql: require("./sql/sql"),
 };

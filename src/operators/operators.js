@@ -106,7 +106,7 @@ const verifyCondition = (
   if (!conditionOperands) {
     return false;
   }
-  if (instructions.toContext) {
+  if (instructions.ToContext) {
     /*
         Apply adapter
       */

@@ -1,4 +1,4 @@
-const Dimrill = require("./index.js");
+const Dimrill = require("../index.js");
 /*
  *
  *

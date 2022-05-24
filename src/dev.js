@@ -1,7 +1,7 @@
 const req = {
     pricelist: "distributorPrice",
     organization: "test@test.truc.com",
-    other: "1970/01/01'; DROP TABLE bank_accounts; --",
+    other: "test",
   },
   user = {
     id: "bond",

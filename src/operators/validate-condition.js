@@ -1,4 +1,5 @@
 const { verifyOperator, getOperators } = require("./operators");
+
 /**
  *
  * @param {object} conditions - An object with the condition to be validated.
