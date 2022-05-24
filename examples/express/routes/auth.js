@@ -26,15 +26,13 @@ router.route("/generateDummyToken").get((req, res) => {
         Statement: [
           {
             Effect: "Allow",
-            Action: [
-              "secretsystem:targets:createTarget:*:organizationId/09092",
-            ],
-            Ressource: ["secretsystem:targets:getTarget*"],
+            Action: ["system:targets:createTarget*:organizationId/09092"],
+            Ressource: ["system:targets:getTarget*"],
           },
           {
             Effect: "Allow",
             Action: [
-              "secretsystem:agents:updateAgentInformations:agentId/${req:agentId}",
+              "system:agents:updateAgentInformations:agentId/${req:agentId}",
             ],
             Condition: {
               StringEquals: {

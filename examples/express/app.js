@@ -13,6 +13,7 @@ mongoose
   .connect(process.env.URI)
   .then(() => {
     const routes = require("./routes/");
+    app.use(express.json());
     app.get("/public", (req, res) => {
       res.send("Hello World!");
     });

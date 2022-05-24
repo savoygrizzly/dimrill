@@ -3,10 +3,19 @@ const router = express.Router();
 const authorizeToken = require("../middlewares/auth");
 router
   .route("/createTarget")
-  .get(
-    authorizeToken(["Action", "secretsystem:targets:createTarget"]),
+  .post(
+    authorizeToken(["Action", "system:targets:createTarget"]),
     (req, res) => {
-      res.send("Hello Secret World!");
+      res.send("Target created");
+    }
+  );
+
+router
+  .route("/getTarget")
+  .get(
+    authorizeToken(["Ressource", "system:targets:getTarget"]),
+    (req, res) => {
+      res.send("Hello Target!");
     }
   );
 module.exports = router;
