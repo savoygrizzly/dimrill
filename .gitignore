@@ -1,6 +1,6 @@
 # package directories
 node_modules
-
+examples/express/node_modules
 # Serverless directories
 .DS_Store
 .vscode
