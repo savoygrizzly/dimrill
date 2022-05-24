@@ -7,72 +7,16 @@ const User = require("./models/user.model");
 
 const app = express();
 const port = 3000;
-const uri =
-  "mongodb+srv://testuser:hasEJLrx9rdPvJcg@cluster0.k2x4j.mongodb.net/?retryWrites=true&w=majority";
 
-const authorizeToken = require("./middlewares/auth");
 dotenv.config();
 mongoose
-  .connect(uri)
+  .connect(process.env.URI)
   .then(() => {
+    const routes = require("./routes/");
     app.get("/public", (req, res) => {
       res.send("Hello World!");
     });
-    app.get("/private", authorizeToken, (req, res) => {
-      res.send("Hello Secret World!");
-    });
-
-    app.post("/user/generateToken", (req, res) => {
-      // Validate User Here
-      // Then generate JWT Token
-
-      let jwtSecretKey = process.env.JWT_SECRET_KEY;
-      let data = {
-        sub: "007",
-        user: {
-          agentId: "007",
-          affiliation: "MI6",
-          birthdate: "1988-01-05 08:17:51",
-          firstName: "James",
-          lastName: "Bond",
-          rights: ["toKill", "toDrink"],
-          weapons: {
-            gun: "Beretta",
-            watch: "Rolex",
-          },
-        },
-        policies: [
-          {
-            Version: "2022-05-02",
-            Statement: [
-              {
-                Effect: "Allow",
-                Action: [
-                  "secretsystem:targets:createTarget:*:organizationId/09092",
-                ],
-                Ressource: ["secretsystem:targets:getTarget*"],
-              },
-              {
-                Effect: "Allow",
-                Action: [
-                  "secretsystem:agents:updateAgentInformations:agentId/${req:agentId}",
-                ],
-                Condition: {
-                  StringEquals: {
-                    "${req:agentId}": "${user:agentId}",
-                  },
-                  "ToContext:StringEquals": {
-                    agentId: "${user:agentId}",
-                  },
-                },
-              },
-            ],
-          },
-        ],
-      };
-      const token = jwt.sign(data, jwtSecretKey);
-      res.send({ token: token });
-    });
+    app.use(routes);
     /*
     app.post("/user/generateDBToken", async (req, res) => {
       // Validate User Here
