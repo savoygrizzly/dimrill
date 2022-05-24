@@ -1,19 +1,24 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 
-const User = require("../models/user.model");
+const User = require("./models/user.model");
 
 const app = express();
 const port = 3000;
-const uri = "mongodb://localhost/mongoose-shared-connection";
+const uri =
+  "mongodb+srv://testuser:hasEJLrx9rdPvJcg@cluster0.k2x4j.mongodb.net/?retryWrites=true&w=majority";
+
+const authorizeToken = require("./middlewares/auth");
+dotenv.config();
 mongoose
   .connect(uri)
   .then(() => {
-    app.get("/public", req, (res) => {
+    app.get("/public", (req, res) => {
       res.send("Hello World!");
     });
-    app.get("/private", authorizeToken(""), req, (res) => {
+    app.get("/private", authorizeToken, (req, res) => {
       res.send("Hello Secret World!");
     });
 
@@ -66,7 +71,7 @@ mongoose
         ],
       };
       const token = jwt.sign(data, jwtSecretKey);
-      res.send(token);
+      res.send({ token: token });
     });
     /*
     app.post("/user/generateDBToken", async (req, res) => {
