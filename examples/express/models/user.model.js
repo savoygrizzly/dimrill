@@ -56,10 +56,12 @@ const userSchema = mongoose.Schema(
           );
         }
       },
+      private: true, // used by the toJSON plugin
     },
     salt: {
       type: String,
       default: "salt",
+      private: true, // used by the toJSON plugin
     },
     policies: {
       type: Array,
@@ -70,6 +72,9 @@ const userSchema = mongoose.Schema(
     timestamps: true,
   }
 );
+// add plugin that converts mongoose to json
+userSchema.plugin(toJSON);
+
 userSchema.methods.isPasswordMatch = async function (password) {
   const user = this;
   return bcrypt.compare(user.salt + password, user.password);

@@ -19,7 +19,7 @@ or
 
 `npm install dimrill`
 
-We will use a simple expressJS example even though Dimrill isn't specifically as an express middleware, so you can use it with the framework or even deployment method of your choice.
+- We will use a simple expressJS example even though Dimrill isn't specifically as an express middleware, so you can use it with the framework or even deployment method of your choice.
 
 ```Javascript
 //app.js
