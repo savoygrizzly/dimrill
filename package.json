@@ -1,13 +1,21 @@
 {
   "name": "dimrill",
   "repository": "https://github.com/sosickstudio/dimrill",
-  "version": "1.2.0-rc1",
+  "version": "1.2.2-rc1",
   "directories": {
     "lib": "./lib/dimrill"
   },
   "main": "./index.js",
   "author": "Mateo Laporte",
   "license": "MIT",
+  "keywords": [
+    "authorization",
+    "authorizer",
+    "jwt",
+    "mongoose",
+    "sql",
+    "express"
+  ],
   "devDependencies": {
     "eslint": "^7.0.0",
     "eslint-config-airbnb-base": "^14.0.0",
