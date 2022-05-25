@@ -13,6 +13,9 @@ const agentsSchema = {
         Action: true,
       },
     ],
+    getAgentDetails: {
+      Ressource: true,
+    },
   },
 };
 module.exports = agentsSchema;

@@ -1,6 +1,7 @@
 const express = require("express");
 const authRoute = require("./auth");
 const targetRoute = require("./targets");
+const agentsRoute = require("./agents");
 
 const router = express.Router();
 
@@ -12,6 +13,10 @@ const defaultRoutes = [
   {
     path: "/targets",
     route: targetRoute,
+  },
+  {
+    path: "/agents",
+    route: agentsRoute,
   },
 ];
 defaultRoutes.forEach((route) => {

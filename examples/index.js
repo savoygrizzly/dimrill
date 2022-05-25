@@ -17,9 +17,16 @@ const req = {
     /*
         Note that here, to keep this example reaaaally basic, req parameters are already extracted from req.body/req.query or whatever the case may be.
     */
-    agentId: "007",
-    targetName: "Renard",
-    organizationId: "09092",
+    body: {
+      agentId: "007",
+      targetName: "Renard",
+      organizationId: "caseSensitive",
+    },
+    query: {
+      agentId: "007",
+    },
+    params: {},
+    method: "POST",
   },
   user = {
     agentId: "007",
@@ -53,7 +60,9 @@ const Policies = [
             We'll allow Bond to create any new target as long as the organization parameter is the one from Renard's (09092)
             We'll also allow him to see any targets in the system
         */
-        Action: ["secretsystem:targets:createTarget:*:organizationId/09092"],
+        Action: [
+          "secretsystem:targets:createTarget:*:organizationId/caseSensitive",
+        ],
         Ressource: ["secretsystem:targets:getTarget*"],
       },
       {
@@ -65,6 +74,7 @@ const Policies = [
         Action: [
           "secretsystem:agents:updateAgentInformations:agentId/${req:agentId}",
         ],
+        Ressource: ["secretsystem:agents:getAgentDetails"],
         /* 
             To make sure he doesnt cheat we will add some conditions to that policy's statement.
         */
@@ -73,7 +83,7 @@ const Policies = [
             First let's check that the agentId specified in the request matches the ones in bond's user object.
           */
           StringEquals: {
-            "${req:agentId}": "${user:agentId}",
+            "${req:query.agentId}": "${user:agentId}",
           },
           /*
             We could also add this line to the returned query. 
@@ -94,7 +104,11 @@ const Policies = [
   },
 ];
 
-Dimrill.initialize({ options: { adapter: "mongo" }, Schema: extendedSchema });
+Dimrill.initialize({
+  options: { adapter: "mongo" },
+  Schema: extendedSchema,
+  req: [],
+});
 
 let authorizer = Dimrill.authorize(
   ["Action", "secretsystem:targets:createTarget"],
@@ -106,7 +120,7 @@ let authorizer = Dimrill.authorize(
 console.log(authorizer);
 
 authorizer = Dimrill.authorize(
-  ["Action", "secretsystem:agents:updateAgentInformations"],
+  ["Ressource", "secretsystem:agents:getAgentDetails"],
   Policies,
   req,
   user,

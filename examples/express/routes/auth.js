@@ -31,9 +31,8 @@ router.route("/generateDummyToken").get((req, res) => {
           },
           {
             Effect: "Allow",
-            Action: [
-              "system:agents:updateAgentInformations:agentId/${req:agentId}",
-            ],
+            Action: ["system:agents:updateAgentInformations"],
+            Ressource: ["system:agents:getAgentDetails"],
             Condition: {
               StringEquals: {
                 "${req:agentId}": "${user:agentId}",
