@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-
+const { toJSON } = require("./plugins");
 const userSchema = mongoose.Schema(
   {
     agentId: {

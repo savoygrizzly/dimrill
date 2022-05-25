@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
 const router = express.Router();
+/*
+  Route to create a new user
+*/
 router.route("/createUser").post(async (req, res) => {
   const body = req.body;
   const user = await User.create(body);
@@ -12,9 +15,12 @@ router.route("/createUser").post(async (req, res) => {
     res.send({ error: "An error occured" });
   }
 });
-router.route("/generateDummyToken").post(async (req, res) => {
+/*
+  Route to create a new JWT token
+*/
+router.route("/generateToken").post(async (req, res) => {
   const body = req.body;
-  if (!body.usernam || body.password) {
+  if (!body.username || !body.password) {
     return res.send({ error: "Missing username or password" });
   }
 

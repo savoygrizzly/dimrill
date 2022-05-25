@@ -6,11 +6,15 @@ const app = express();
 const port = 3000;
 
 dotenv.config();
+/*
+  Let's connect to the DB
+*/
 mongoose
   .connect(process.env.URI)
   .then(() => {
     const routes = require("./routes/");
     app.use(express.json());
+
     app.get("/public", (req, res) => {
       res.send("Hello World!");
     });
