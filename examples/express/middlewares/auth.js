@@ -15,14 +15,18 @@ const authorizeToken = (drna_array) => {
       const policies = jwt_payload.policies,
         user = jwt_payload.user;
       /*
-        We might not need to pass the full req object to Dimrill, we will only pass the body if it's a post request,
-        otherwise we'll pass the query params.
+        We might not need to pass the full req object to Dimrill.
+        We can use the authorize Parameter extractor to achieve that.
+        We'll pass req as an array and give an array of parameters to extract from the req,
+        N.B by default those params and their values will be merged into a single object, if your request contains both a body 
+        and a query with properties sharing names and you wish to use both in policies, add an optional param set to true to keep the req body and query, properties.
+
+        See more on the Dimrill's wiki. https://github.com/sosickstudio/dimrill/wiki/Syntax#req
         */
-      const formattedReq = req.method == "POST" ? req.body : req.query;
       const authorizer = Dimrill.authorize(
         drna_array,
         policies,
-        formattedReq,
+        [["query"], req],
         user,
         {}
       );
@@ -40,6 +44,7 @@ const authorizeToken = (drna_array) => {
         /*
           Let's create a property "dimrillQuery" so we can access it later
         */
+
         res.locals.dimrill_query = authorizer.query;
       }
       next();
