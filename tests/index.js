@@ -15,10 +15,17 @@ const testSchema = new Dimrill.Schema(
           Ressource: true,
         },
       ],
+      geFileUpdate: [
+        {
+          name: "fileId",
+          Ressource: true,
+        },
+      ],
     },
     inventory: {
       createItem: {
         Action: true,
+        Ressource: true,
       },
       fetchItem: {
         Action: true,
@@ -29,7 +36,27 @@ const testSchema = new Dimrill.Schema(
 );
 
 Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
-
+const TestPolicies = [
+  {
+    $ref: "#/id:<df4f4>",
+    Version: "2022-05-02",
+    Statement: [
+      {
+        Effect: "Allow",
+        Ressource: [
+          "files:getSingleFile:fileId/*",
+          "files:geFileUpdate",
+          "files:newOrder:pricelist/distributor",
+        ],
+        Condition: {
+          "ToContext:StringEquals": {
+            creator_id: "${user:id}",
+          },
+        },
+      },
+    ],
+  },
+];
 const req = {
     body: {
       name: "James Bond",
@@ -54,7 +81,17 @@ const req = {
       dev: false,
     },
   };
-
+console.log(
+  Dimrill.createRessourcesMap(
+    [
+      "files:geFileUpdate",
+      "files:getSingleFile",
+      "files:newOrder:.*",
+      "files:newOrder:pricelist/distributor",
+    ],
+    TestPolicies
+  )
+);
 const results = {
   true: {},
 };
