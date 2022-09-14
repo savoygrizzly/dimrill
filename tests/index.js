@@ -39,6 +39,9 @@ Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
 const TestPolicies = [
   {
     $ref: "#/id:<df4f4>",
+  },
+  {
+    id: "df4f4",
     Version: "2022-05-02",
     Statement: [
       {
