@@ -36,6 +36,16 @@ const testSchema = new Dimrill.Schema(
 );
 
 Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
+
+const Model = {
+  findOne: (name) => {
+    return name;
+  },
+};
+const hookFunc = (arg1) => {
+  return Model.findOne(arg1);
+};
+Dimrill.addHook(hookFunc, { Model: Model, console: console });
 const TestPolicies = [
   {
     $ref: "#/id:<df4f4>",
