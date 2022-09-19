@@ -85,18 +85,7 @@ const req = {
       dev: false,
     },
   };
-console.log(Dimrill.getSitemap(TestPolicies));
-console.log(
-  Dimrill.createRessourcesMap(
-    [
-      "files:geFileUpdate",
-      "files:getSingleFile",
-      "files:newOrder:.*",
-      "files:newOrder:pricelist/distributor",
-    ],
-    TestPolicies
-  )
-);
+
 const results = {
   true: {},
 };
