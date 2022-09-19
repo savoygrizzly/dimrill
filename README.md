@@ -1,5 +1,13 @@
 # Dimrill Authorization system
 
+**1.1.0 UPDATE**
+
+Dimrill now supports external policy via `$ref`.
+
+`Dimrill.createRessourcesMap([Array: pages],[Array: policies])` has been added to create a partial match against rdna paths. Thus making is easy to create a sitemap of accessible ressources for given policies.
+
+## Introduction
+
 Dimrill is a policy based authorization module for JS backends, in short it is designed to decide whether or not a certain user has the rights to access ressources or to perfom action in an Authorization flow.
 It is meant to be added after the authentification of the request has taken place, (after you checked for a valid JWT for example).
 
