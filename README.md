@@ -1,8 +1,8 @@
 # Dimrill Authorization system
 
-**1.1.0 UPDATE**
+**1.1.5 UPDATE**
 
-Dimrill now supports external policy via `$ref`.
+Fixed broken Dimrill hooks, now supporting fully async custom functions as hooks.
 
 `Dimrill.createRessourcesMap([Array: pages],[Array: policies])` has been added to create a partial match against rdna paths. Thus making is easy to create a sitemap of accessible ressources for given policies.
 
