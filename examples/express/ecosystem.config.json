@@ -1,15 +1,16 @@
 {
-    "apps": [
-      {
-        "name": "app",
-        "script": "app.js",
-        "instances": 1,
-        "autorestart": true,
-        "watch": true,
-        "time": true,
-        "env": {
-          "NODE_ENV": "devlopment"
-        }
+  "apps": [
+    {
+      "name": "app",
+      "script": "app.js",
+      "instances": 1,
+      "autorestart": true,
+      "watch": true,
+      "time": true,
+      "port": 3100,
+      "env": {
+        "NODE_ENV": "devlopment"
       }
-    ]
-  }
+    }
+  ]
+}

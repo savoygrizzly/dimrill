@@ -23,31 +23,31 @@ const authorizeToken = (drna_array) => {
 
         See more on the Dimrill's wiki. https://github.com/sosickstudio/dimrill/wiki/Syntax#req
         */
-      const authorizer = Dimrill.authorize(
-        drna_array,
-        policies,
-        [["query"], req],
-        user,
-        {}
-      );
-      if (authorizer.valid !== true) {
-        return res.sendStatus(403);
-      }
-      /*
-        If authorizer returns valid check if it has a query and attach it to res.locals to be used subsequently
-      */
-      if (
-        typeof authorizer.query === "string" ||
-        (typeof authorizer.query === "object" &&
-          Object.keys(authorizer.query).length >= 1)
-      ) {
-        /*
-          Let's create a property "dimrillQuery" so we can access it later
+      let authorizer = {};
+      Dimrill.authorize(drna_array, policies, [["query"], req], user, {})
+        .then((authorizer) => {
+          if (authorizer.valid !== true) {
+            return res.sendStatus(403);
+          }
+          /*
+          If authorizer returns valid check if it has a query and attach it to res.locals to be used subsequently
         */
+          if (
+            typeof authorizer.query === "string" ||
+            (typeof authorizer.query === "object" &&
+              Object.keys(authorizer.query).length >= 1)
+          ) {
+            /*
+            Let's create a property "dimrillQuery" so we can access it later
+          */
 
-        res.locals.dimrill_query = authorizer.query;
-      }
-      next();
+            res.locals.dimrill_query = authorizer.query;
+          }
+          next();
+        })
+        .catch((error) => {
+          return res.sendStatus(403);
+        });
     });
   };
 };

@@ -36,7 +36,6 @@ const testSchema = new Dimrill.Schema(
 );
 
 Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
-
 const TestPolicies = [
   {
     id: "df4f4",
@@ -44,16 +43,8 @@ const TestPolicies = [
     Statement: [
       {
         Effect: "Allow",
-        Ressource: [
-          "files:getSingleFile:fileId/*",
-          "files:geFileUpdate",
-          "files:newOrder:pricelist/distributor",
-        ],
-        Condition: {
-          "ToContext:StringEquals": {
-            creator_id: "${user:id}",
-          },
-        },
+        Ressource: ["*"],
+        Action: ["*"],
       },
     ],
   },

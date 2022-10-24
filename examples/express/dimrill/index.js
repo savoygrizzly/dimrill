@@ -1,5 +1,6 @@
 const Dimrill = require("../../../lib");
 
+const { context, findPolicyById } = require("./hooks/getPolicies");
 /*
   Let's import all our schemas
 */
@@ -34,6 +35,7 @@ Dimrill.initialize({
   options: { adapter: "mongo" },
   Schema: Schema,
 });
+Dimrill.addHook(findPolicyById, context);
 /*
   And finally we export it so we can use it
 */
