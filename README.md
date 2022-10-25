@@ -1,8 +1,11 @@
 # Dimrill Authorization system
 
-**1.1.5 UPDATE**
+**1.1.6 UPDATE**
 
 Fixed broken Dimrill hooks, now supporting fully async custom functions as hooks.
+Minor code fixes.
+
+Added `Dimrill.generateCompiledPolicies([Array: policies])`
 
 `Dimrill.createRessourcesMap([Array: pages],[Array: policies])` has been added to create a partial match against rdna paths. Thus making is easy to create a sitemap of accessible ressources for given policies.
 
