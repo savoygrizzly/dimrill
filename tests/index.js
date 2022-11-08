@@ -38,13 +38,12 @@ const testSchema = new Dimrill.Schema(
 Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
 const TestPolicies = [
   {
-    id: "df4f4",
     Version: "2022-05-02",
     Statement: [
       {
         Effect: "Allow",
-        Ressource: ["*"],
         Action: ["*"],
+        Ressource: ["*"],
       },
     ],
   },
@@ -73,7 +72,17 @@ const req = {
       dev: false,
     },
   };
-
+async function zesz() {
+  const result = await Dimrill.authorize(
+    ["Ressource", "files:geFileUpdate"],
+    TestPolicies,
+    req,
+    user,
+    context
+  );
+  console.log(result);
+}
+zesz();
 /*
 Returns
   [

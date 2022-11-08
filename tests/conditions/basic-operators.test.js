@@ -4,7 +4,7 @@ const { req, user, context, Dimrill } = require("../index");
     Test all basic operators to return true or false
 */
 
-test("Test for a simple StringEquals statement to return true", () => {
+test("Test for a simple StringEquals statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -22,7 +22,7 @@ test("Test for a simple StringEquals statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -35,7 +35,7 @@ test("Test for a simple StringEquals statement to return true", () => {
   });
 });
 
-test("Test for a simple StringNotEquals statement to return true", () => {
+test("Test for a simple StringNotEquals statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -53,7 +53,7 @@ test("Test for a simple StringNotEquals statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -66,7 +66,7 @@ test("Test for a simple StringNotEquals statement to return true", () => {
   });
 });
 
-test("Test for a simple NumericEquals statement to return true", () => {
+test("Test for a simple NumericEquals statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -85,7 +85,7 @@ test("Test for a simple NumericEquals statement to return true", () => {
   ];
 
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -98,7 +98,7 @@ test("Test for a simple NumericEquals statement to return true", () => {
   });
 });
 
-test("Test for a simple NumericNotEquals statement to return true", () => {
+test("Test for a simple NumericNotEquals statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -116,7 +116,7 @@ test("Test for a simple NumericNotEquals statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -129,7 +129,7 @@ test("Test for a simple NumericNotEquals statement to return true", () => {
   });
 });
 
-test("Test for a simple NumericLessThan statement to return false", () => {
+test("Test for a simple NumericLessThan statement to return false", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -147,7 +147,7 @@ test("Test for a simple NumericLessThan statement to return false", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -160,7 +160,7 @@ test("Test for a simple NumericLessThan statement to return false", () => {
   });
 });
 
-test("Test for a simple NumericLessThan statement to return true", () => {
+test("Test for a simple NumericLessThan statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -178,7 +178,7 @@ test("Test for a simple NumericLessThan statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -191,7 +191,7 @@ test("Test for a simple NumericLessThan statement to return true", () => {
   });
 });
 
-test("Test for a simple NumericLessThanEquals statement to return true", () => {
+test("Test for a simple NumericLessThanEquals statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -209,7 +209,7 @@ test("Test for a simple NumericLessThanEquals statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -222,7 +222,7 @@ test("Test for a simple NumericLessThanEquals statement to return true", () => {
   });
 });
 
-test("Test for a simple NumericGreaterThan statement to return false", () => {
+test("Test for a simple NumericGreaterThan statement to return false", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -240,7 +240,7 @@ test("Test for a simple NumericGreaterThan statement to return false", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -252,7 +252,7 @@ test("Test for a simple NumericGreaterThan statement to return false", () => {
     valid: false,
   });
 });
-test("Test for a simple NumericGreaterThan statement to return true", () => {
+test("Test for a simple NumericGreaterThan statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -270,7 +270,7 @@ test("Test for a simple NumericGreaterThan statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -282,7 +282,7 @@ test("Test for a simple NumericGreaterThan statement to return true", () => {
     valid: true,
   });
 });
-test("Test for a simple NumericGreaterThanEquals statement to return true with a Number as right parameter", () => {
+test("Test for a simple NumericGreaterThanEquals statement to return true with a Number as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -300,7 +300,7 @@ test("Test for a simple NumericGreaterThanEquals statement to return true with a
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -313,7 +313,7 @@ test("Test for a simple NumericGreaterThanEquals statement to return true with a
   });
 });
 
-test("Test for a simple DateEquals statement to return true with a Date object as right parameter", () => {
+test("Test for a simple DateEquals statement to return true with a Date object as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -331,7 +331,7 @@ test("Test for a simple DateEquals statement to return true with a Date object a
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -344,7 +344,7 @@ test("Test for a simple DateEquals statement to return true with a Date object a
   });
 });
 
-test("Test for a simple DateEquals statement to return true with a string as right parameter", () => {
+test("Test for a simple DateEquals statement to return true with a string as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -362,7 +362,7 @@ test("Test for a simple DateEquals statement to return true with a string as rig
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -375,7 +375,7 @@ test("Test for a simple DateEquals statement to return true with a string as rig
   });
 });
 
-test("Test for a simple DateNotEquals statement to return true with a Date object as right parameter", () => {
+test("Test for a simple DateNotEquals statement to return true with a Date object as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -393,7 +393,7 @@ test("Test for a simple DateNotEquals statement to return true with a Date objec
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -406,7 +406,7 @@ test("Test for a simple DateNotEquals statement to return true with a Date objec
   });
 });
 
-test("Test for a simple DateLessThan statement to return false with a Date object as right parameter", () => {
+test("Test for a simple DateLessThan statement to return false with a Date object as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -424,7 +424,7 @@ test("Test for a simple DateLessThan statement to return false with a Date objec
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -437,7 +437,7 @@ test("Test for a simple DateLessThan statement to return false with a Date objec
   });
 });
 
-test("Test for a simple DateLessThanEquals statement to return true with a Date object as right parameter", () => {
+test("Test for a simple DateLessThanEquals statement to return true with a Date object as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -455,7 +455,7 @@ test("Test for a simple DateLessThanEquals statement to return true with a Date 
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -468,7 +468,7 @@ test("Test for a simple DateLessThanEquals statement to return true with a Date 
   });
 });
 
-test("Test for a simple DateGreaterThan statement to return false with a Date object as right parameter", () => {
+test("Test for a simple DateGreaterThan statement to return false with a Date object as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -486,7 +486,7 @@ test("Test for a simple DateGreaterThan statement to return false with a Date ob
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -499,7 +499,7 @@ test("Test for a simple DateGreaterThan statement to return false with a Date ob
   });
 });
 
-test("Test for a simple DateGreaterThanEquals statement to return false with a Date object as right parameter", () => {
+test("Test for a simple DateGreaterThanEquals statement to return false with a Date object as right parameter", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -517,7 +517,7 @@ test("Test for a simple DateGreaterThanEquals statement to return false with a D
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -530,7 +530,7 @@ test("Test for a simple DateGreaterThanEquals statement to return false with a D
   });
 });
 
-test("Test for a simple Bool statement to return true ", () => {
+test("Test for a simple Bool statement to return true ", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -548,7 +548,7 @@ test("Test for a simple Bool statement to return true ", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
@@ -560,7 +560,7 @@ test("Test for a simple Bool statement to return true ", () => {
     valid: true,
   });
 });
-test("Test for a simple InArray statement to return true", () => {
+test("Test for a simple InArray statement to return true", async () => {
   const Policies = [
     {
       Version: "2022-05-02",
@@ -578,7 +578,7 @@ test("Test for a simple InArray statement to return true", () => {
     },
   ];
   expect(
-    Dimrill.authorize(
+    await Dimrill.authorize(
       ["Action", "files:createFile"],
       Policies,
       req,
