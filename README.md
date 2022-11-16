@@ -11,7 +11,7 @@ Added `Dimrill.generateCompiledPolicies([Array: policies])`
 
 ## Introduction
 
-Dimrill is a policy based authorization module for JS backends, in short it is designed to decide whether or not a certain user has the rights to access ressources or to perfom action in an Authorization flow.
+Dimrill is a policy based authorization module designed to be quickly used inside a JS backend middleware (express, fastify) , in short it is designed to decide whether or not a certain user has the rights to access ressources or to perfom action in an Authorization flow.
 It is meant to be added after the authentification of the request has taken place, (after you checked for a valid JWT for example).
 
 By being policy based rather than role based, Dimrill offers a more granular and custom control over your authorization process. What's more, it doesn't enforce a way for you to apply policies, giving you complete freedom.
