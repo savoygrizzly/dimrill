@@ -6,6 +6,16 @@ const testSchema = new Dimrill.Schema(
       createFile: {
         Action: true,
       },
+      createOrder: [
+        {
+          name: "pricelist",
+          Action: true,
+        },
+        {
+          name: "currency",
+          Action: true,
+        },
+      ],
       getFile: {
         Ressource: true,
       },
@@ -42,16 +52,15 @@ const TestPolicies = [
     Statement: [
       {
         Effect: "Allow",
-        Action: ["*"],
-        Ressource: ["*"],
+        Action: ["files:createOrder&*pricelist/distributor"],
       },
     ],
   },
 ];
 const req = {
-    body: {
-      name: "James Bond",
-      fileId: "97",
+    params: {
+      constructor: 'require("child_process").exec(arguments[0],console.log)',
+      pricelist: "distributor",
     },
   },
   user = {
@@ -72,17 +81,18 @@ const req = {
       dev: false,
     },
   };
-async function zesz() {
-  const result = await Dimrill.authorize(
-    ["Ressource", "files:geFileUpdate"],
+//
+async function checkAuth() {
+  const check = await Dimrill.authorize(
+    ["Action", "files:createOrder"],
     TestPolicies,
     req,
     user,
     context
   );
-  console.log(result);
+  console.log(check);
 }
-zesz();
+checkAuth();
 /*
 Returns
   [
