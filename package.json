@@ -1,7 +1,7 @@
 {
   "name": "dimrill",
   "repository": "https://github.com/sosickstudio/dimrill",
-  "version": "1.1.8",
+  "version": "2.0.0",
   "directories": {
     "lib": "./lib/dimrill"
   },

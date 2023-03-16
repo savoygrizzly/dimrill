@@ -1,7 +1,7 @@
 const Dimrill = require("../index");
 
-const testSchema = new Dimrill.Schema(
-  {
+const testSchema = new Dimrill.Schema({
+  schema: {
     files: {
       createFile: {
         Action: true,
@@ -42,8 +42,9 @@ const testSchema = new Dimrill.Schema(
       },
     },
   },
-  { debug: true, strict: true }
-);
+  debug: true,
+  strict: true,
+});
 
 Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
 const TestPolicies = [
@@ -52,15 +53,16 @@ const TestPolicies = [
     Statement: [
       {
         Effect: "Allow",
-        Action: ["files:createOrder&*pricelist/distributor"],
+        Action: ["files:createOrder&*pricelist/distributor*"],
+        Ressource: ["files:createOrder&currency/*"],
       },
     ],
   },
 ];
 const req = {
     params: {
-      constructor: 'require("child_process").exec(arguments[0],console.log)',
       pricelist: "distributor",
+      currency: "chf",
     },
   },
   user = {
@@ -90,6 +92,7 @@ async function checkAuth() {
     user,
     context
   );
+
   console.log(check);
 }
 checkAuth();

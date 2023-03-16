@@ -1,9 +1,10 @@
 # Dimrill Authorization system
 
-**1.1.6 UPDATE**
+**2.0.0 UPDATE**
 
-Fixed broken Dimrill hooks, now supporting fully async custom functions as hooks.
-Minor code fixes.
+Parameters syntax changed. Now defined as follow `service:subService&paramter1/value&parameter2/*&param3/something`.
+
+Params are now self reordering to match any other params if a wild card is defined: `service:subService&paramter1/forcedValue&*` or `service:subService*&paramter1/forcedValue`, fixing many issues that could disregard policies and are now fully usable.
 
 Added `Dimrill.generateCompiledPolicies([Array: policies])`
 
@@ -65,7 +66,7 @@ const Policies = [
     Statement: [
       {
         Effect: "Allow",
-        Action: ["files:createFile:*fileName/Mission-Report"],
+        Action: ["files:createFile&fileName/Mission-Report"],
         Ressource: ["files:getFile"],
         Condition: {
           StringEquals: {
