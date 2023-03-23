@@ -92,7 +92,6 @@ async function checkAuth() {
     user,
     context
   );
-
   console.log(check);
 }
 checkAuth();

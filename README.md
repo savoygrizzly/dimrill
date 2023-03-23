@@ -115,15 +115,18 @@ Dimrill.initialize({
 /*
   Voilà ! We can now use Dimrill as follow
 */
+async function authorize() {
+  let authorizer = await Dimrill.authorize(
+    ["Action", "files:createFile"],
+    Policies,
+    req,
+    user,
+    context
+    );
+  return authorizer;
+}
 
-let authorizer = Dimrill.authorize(
-  ["Action", "files:createFile"],
-  Policies,
-  req,
-  user,
-  context
-);
-console.log(authorizer); //{valid:true, query:{}}
+console.log(authorize()); //{valid:true, query:{}}
 
 ```
 
