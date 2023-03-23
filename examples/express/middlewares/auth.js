@@ -23,7 +23,6 @@ const authorizeToken = (drna_array) => {
 
         See more on the Dimrill's wiki. https://github.com/sosickstudio/dimrill/wiki/Syntax#req
         */
-      let authorizer = {};
       Dimrill.authorize(drna_array, policies, [["query"], req], user, {})
         .then((authorizer) => {
           if (authorizer.valid !== true) {
