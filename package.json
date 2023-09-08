@@ -32,7 +32,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "isolated-vm": "^4.6.0",
     "sqlstring": "^2.3.3"
   }
 }
