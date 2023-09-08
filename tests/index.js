@@ -47,7 +47,6 @@ const testSchema = new Dimrill.Schema(
   }
 );
 Dimrill.initialize({
-  options: { adapter: "mongo" },
   Schema: testSchema,
 });
 
