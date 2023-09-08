@@ -1,7 +1,6 @@
 const Dimrill = require("../index");
-
-const testSchema = new Dimrill.Schema({
-  schema: {
+const testSchema = new Dimrill.Schema(
+  {
     files: {
       createFile: {
         Action: true,
@@ -42,13 +41,25 @@ const testSchema = new Dimrill.Schema({
       },
     },
   },
-  debug: true,
-  strict: true,
+  {
+    debug: true,
+    strict: true,
+  }
+);
+Dimrill.initialize({
+  options: { adapter: "mongo" },
+  Schema: testSchema,
 });
 
-Dimrill.initialize({ options: { adapter: "mongo" }, Schema: testSchema });
+/*
+  Now let's add our hook
+*/
+const findPolicy = require("./test");
+Dimrill.addHook(findPolicy, {});
+
 const TestPolicies = [
   {
+    id: "1",
     Version: "2022-05-02",
     Statement: [
       {
@@ -57,6 +68,9 @@ const TestPolicies = [
         Ressource: ["files:createOrder&currency/*"],
       },
     ],
+  },
+  {
+    $ref: "#/findPolicy/id:<123>",
   },
 ];
 const req = {

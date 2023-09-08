@@ -1,7 +1,7 @@
 {
   "name": "dimrill",
   "repository": "https://github.com/sosickstudio/dimrill",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "directories": {
     "lib": "./lib/dimrill"
   },
@@ -32,7 +32,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "sqlstring": "^2.3.3",
-    "vm2": "^3.9.11"
+    "isolated-vm": "^4.6.0",
+    "sqlstring": "^2.3.3"
   }
 }
