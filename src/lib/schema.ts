@@ -81,11 +81,6 @@ class Schema {
       if (schemaArguments[key].dataFrom === null) {
         throw new Error(`Missing schema argument dataFrom for: ${key}`);
       }
-      if (schemaArguments[key].type === "string") {
-        if (schemaArguments[key].enum !== null) {
-          throw new Error(`Invalid schema argument enum for: ${key}`);
-        }
-      }
     });
     return schemaArguments;
   }
@@ -177,6 +172,7 @@ class Schema {
           parameters[key] = Number(injectedDrnaParams.get(key));
         } else {
           if (
+            schema.Arguments[key].enum === null ||
             schema.Arguments[key].enum?.includes(
               String(injectedDrnaParams.get(key))
             ) === true ||
@@ -198,9 +194,10 @@ class Schema {
           validatedObjectValue &&
           (schema.Arguments[key].type === "number" ||
             (schema.Arguments[key].type === "string" &&
-              schema.Arguments[key].enum?.includes(
-                String(validatedObjectValue)
-              ) === true))
+              schema.Arguments[key].enum === null) ||
+            schema.Arguments[key].enum?.includes(
+              String(validatedObjectValue)
+            ) === true)
         ) {
           parameters[key] = _get(
             validatedObjects,
