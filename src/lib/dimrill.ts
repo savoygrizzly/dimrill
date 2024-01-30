@@ -61,7 +61,7 @@ class Dimrill {
       schemaExists as PathSchema,
       validatedObjects
     );
-
+    console.log(synthetizedMatch);
     return {
       valid: true, // or false
       query: {},

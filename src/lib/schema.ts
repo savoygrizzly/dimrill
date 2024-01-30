@@ -212,7 +212,7 @@ class Schema {
   public mapInjectedParams(
     drnaParams: string[],
     options = {
-      removeWildcards: false,
+      removeWildcards: true,
     }
   ): Map<string, string> {
     const injectedDrnaParams = new Map<string, string>(
@@ -236,7 +236,7 @@ class Schema {
     drna: string,
     schema: PathSchema,
     validatedObjects: object
-  ): string {
+  ): object {
     // match the schema arguments with the request, user and context objects
     // return the drna with the arguments values
 
@@ -249,12 +249,11 @@ class Schema {
     );
 
     // join the parameters to the drna
-    const drnaWithParams = Object.keys(parameters).reduce((acc, key) => {
-      return `${acc}&${key}/${parameters[key]}`;
-    }, sanitizedDrna[0]);
-    console.log(drnaWithParams);
 
-    return drnaWithParams;
+    return {
+      drnaPaths: sanitizedDrna[0].split(":"),
+      parameters,
+    };
   }
 }
 export default Schema;
