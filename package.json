@@ -1,0 +1,28 @@
+{
+  "name": "dimrill-v2",
+  "version": "1.0.0",
+  "description": "Dimrill V2, Typescript and total rewrite",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "commonjs",
+  "author": "Mateo Laporte",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "eslint": "^8.56.0",
+    "eslint-config-standard-with-typescript": "^43.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.1.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "isolated-vm": "^4.7.2",
+    "lodash": "^4.17.21"
+  }
+}
