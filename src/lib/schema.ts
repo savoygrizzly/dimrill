@@ -4,7 +4,7 @@ import {
   SchemaOperators,
   SchemaConditionValues,
 } from "../constants";
-
+import util from "util";
 import {
   type ArgumentSchema,
   type ConditionSchema,
@@ -17,7 +17,8 @@ import {
 
 import CompiledSchemaObject from "./compiledSchema";
 import Ajv from "ajv";
-
+import _get from "lodash/get";
+import _set from "lodash/set";
 class Schema {
   constructor() {
     this.schema = {};
@@ -166,6 +167,32 @@ class Schema {
       throw new Error(`Invalid data`);
     }
     return data;
+  }
+
+  public extendSchema(path: string): {
+    set: (value: string | string[] | object) => void;
+    push: (value: string | string[]) => void;
+  } {
+    const objectAtPath = _get(this.schema, path);
+    return {
+      set: (value: string | string[] | object) => {
+        if (objectAtPath !== undefined) {
+          console.log(path, value);
+          _set(this.schema, path, value);
+          console.log(util.inspect(this.schema, false, null, true));
+        }
+      },
+      push: (value: string | string[]) => {
+        if (objectAtPath !== undefined && Array.isArray(objectAtPath)) {
+          const newArray = [
+            ...objectAtPath,
+            ...(Array.isArray(value) ? value : [value]),
+          ];
+          _set(this.schema, path, newArray);
+          console.log(util.inspect(this.schema, false, null, true));
+        }
+      },
+    };
   }
 }
 export default Schema;

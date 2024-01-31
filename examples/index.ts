@@ -16,5 +16,8 @@ import path from "path";
 const gateKeeper = new GateKeeper();
 
 gateKeeper.autoloadSchemas(path.join(__dirname, "schemas")).then(() => {
+  gateKeeper
+    .extendSchema("files.createOrder.Arguments.pricelist.enum")
+    .push("test");
   console.log("done");
 });

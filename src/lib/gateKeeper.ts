@@ -44,6 +44,20 @@ class GateKeeper {
     this.schema.compileSchema(schemaSet);
   }
 
+  public extendSchema(path: string): {
+    set: (value: string | string[] | object) => void;
+    push: (value: string | string[]) => void;
+  } {
+    return {
+      set: (value) => {
+        this.schema.extendSchema(path).set(value);
+      },
+      push: (value) => {
+        this.schema.extendSchema(path).push(value);
+      },
+    };
+  }
+
   public authorize(
     drna: string[],
     req: object,
