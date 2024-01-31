@@ -4,12 +4,15 @@ import {
   type validatedDataObjects,
 } from "../types/custom";
 import type Schema from "./schema";
+import type DRNA from "./drna";
 class Policies {
-  private readonly schema: Schema;
+  private readonly DRNA: DRNA;
+
   private isolatedVm: any;
   public isolatedVmContext: any;
-  constructor(schema: Schema) {
-    this.schema = schema;
+
+  constructor(DRNA: DRNA) {
+    this.DRNA = DRNA;
     this.isolatedVm = null;
     this.isolatedVmContext = null;
   }
@@ -25,13 +28,13 @@ class Policies {
     this.isolatedVmContext = null;
   }
 
-  private parsePolicyDrna(
+  private sanitizePolicyDrna(
     drna: string,
     schema: PathSchema,
     validatedObjects: validatedDataObjects
-  ): string {
-    const rawParameters = this.schema.matchParametersToSchema(
-      this.schema.mapInjectedParams(drna.split("&").slice(1), {
+  ): object {
+    const rawParameters = this.DRNA.matchParametersToSchema(
+      this.DRNA.mapInjectedParams(drna.split("&").slice(1), {
         removeWildcards: true,
       }),
       schema,
@@ -45,20 +48,18 @@ class Policies {
     */
     const parameters = Object.entries(rawParameters).reduce(
       (acc: Record<string, string>, [key, value]) => {
-        const parsedKey: string = this.isolatedVmContext.evalSync(
-          "`" + key + "`"
-        );
         const parsedValue: string = this.isolatedVmContext.evalSync(
           "`" + value + "`"
         );
-        acc[parsedKey] = parsedValue;
+        acc[String(key)] = parsedValue;
         return acc;
       },
       {}
     );
-    /*
-      Replace the parameters in the DRNA
-    */
+    return {
+      path: drna.split("&")[0],
+      parameters,
+    };
   }
 
   public matchPolicy(
@@ -77,9 +78,9 @@ class Policies {
     policies.map((policy) => {
       const matchedPolicy = policy.Statement.reduce((results, statement) => {
         if (statement[drnaType]) {
-          const matchedStatement = statement[drnaType].find((elem) => {
+          const matchedStatement = statement[drnaType].find((elem: string) => {
             // parse elem
-            const sanitizedDrna = this.parsePolicyDrna(
+            const sanitizedDrna = this.sanitizePolicyDrna(
               String(elem),
               schema,
               validatedObjects

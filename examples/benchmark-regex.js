@@ -31,3 +31,31 @@ for (let i = 0; i < TRIES; i++) {
   });
 }
 console.timeEnd("regex");
+
+const conds = [
+  "ToContext",
+  "StringStrictlyEquals",
+  "StringEquals",
+  "StringNotEquals",
+  "NumericEquals",
+  "NumericNotEquals",
+  "NumericLessThan",
+  "NumericLessThanEquals",
+  "NumericGreaterThan",
+  "NumericGreaterThanEquals",
+  "DateEquals",
+  "DateNotEquals",
+  "DateLessThan",
+  "DateLessThanEquals",
+  "DateGreaterThan",
+  "DateGreaterThanEquals",
+  "Bool",
+  "InArray",
+  "AnyValues",
+  "EveryValues",
+];
+const operators = "ToContext:InArray";
+const splitOperators = operators.split(":");
+if (splitOperators.length > 3 || !conds.every((i) => conds.includes(i))) {
+  throw new Error("Invalid operators");
+}

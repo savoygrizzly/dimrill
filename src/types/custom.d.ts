@@ -26,7 +26,7 @@ export type ArgumentSchema = Record<
 export interface ConditionSchema {
   [key: string]: string[] | any; // or the appropriate type for your condition values
   // Existing definitions...
-  Enforce?: any; // Adjust the type as needed
+  Enforce?: ConditionEnforceSchema; // Adjust the type as needed
   Operators?: string[];
   ContextOperators?: string[];
 }
@@ -39,6 +39,8 @@ export interface Constants {
   SchemaConditionKeys: string[];
   SchemaOperators: string[];
 }
+
+export type ConditionEnforceSchema = Record<string, Record<string, string>>;
 
 export interface Policy {
   id?: string; // Optional, as it's not present in all policies

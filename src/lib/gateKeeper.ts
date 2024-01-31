@@ -1,23 +1,56 @@
-import { type PathSchema } from "../types/custom";
+import { type RootSchema, type PathSchema } from "../types/custom";
 import Schema from "./schema";
+import DRNA from "./drna";
 import Policies from "./policies";
+
+import fs from "fs";
+import path from "path";
 import ivm from "isolated-vm";
-class Dimrill {
+const fsp = fs.promises;
+class GateKeeper {
   constructor() {
     this.schema = new Schema();
-    this.policies = new Policies(this.schema);
+    this.DRNA = new DRNA();
+    this.policies = new Policies(this.DRNA);
   }
 
+  private readonly DRNA: DRNA;
   private readonly policies: Policies;
   public schema: Schema;
 
-  authorize(
+  private async readFiles(
+    dirname: string
+  ): Promise<Record<string, RootSchema>> {
+    const data: Record<string, RootSchema> = {};
+    const files = await fsp.readdir(dirname);
+    await Promise.all(
+      files.map(async (filename) => {
+        const fileType = path.extname(filename);
+        const full = path.join(dirname, filename);
+        if (fileType !== ".dmrl") return;
+        const content = await fsp.readFile(full, { encoding: "utf8" });
+        data[filename] = JSON.parse(content);
+      })
+    );
+    return data;
+  }
+
+  public async autoloadSchemas(directory: string): Promise<void> {
+    const schemas = await this.readFiles(directory);
+    const schemaSet = new Map<string, RootSchema>();
+    Object.entries(schemas).forEach(([key, value]) => {
+      schemaSet.set(key, this.schema.validateSchema(value));
+    });
+    this.schema.compileSchema(schemaSet);
+  }
+
+  public authorize(
     drna: string[],
     req: object,
     user: object,
     context: object
   ): object {
-    const schemaExists = this.schema.matchDrnaFromSchema(drna);
+    const schemaExists = this.DRNA.matchDrnaFromSchema(drna);
 
     if (schemaExists === false) {
       throw new Error(`Invalid DRNA path: ${drna.join(":")}`);
@@ -56,7 +89,7 @@ class Dimrill {
     /*
         Parse the DRNA to match the policy
     */
-    const synthetizedMatch = this.schema.synthetizeDrnaFromSchema(
+    const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
       drna[1],
       schemaExists as PathSchema,
       validatedObjects
@@ -68,3 +101,4 @@ class Dimrill {
     };
   }
 }
+export default GateKeeper;

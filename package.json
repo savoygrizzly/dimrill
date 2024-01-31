@@ -4,7 +4,10 @@
   "description": "Dimrill V2, Typescript and total rewrite",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "devbc": "tsc --build && node ./examples/index.js && tsc --build --clean",
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
   },
   "type": "commonjs",
   "author": "Mateo Laporte",
