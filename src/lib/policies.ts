@@ -2,6 +2,7 @@ import {
   type PathSchema,
   type Policy,
   type validatedDataObjects,
+  type synthetizedDRNAMatch,
 } from "../types/custom";
 import type Schema from "./schema";
 import type DRNA from "./drna";
@@ -32,7 +33,7 @@ class Policies {
     drna: string,
     schema: PathSchema,
     validatedObjects: validatedDataObjects
-  ): object {
+  ): synthetizedDRNAMatch {
     const rawParameters = this.DRNA.matchParametersToSchema(
       this.DRNA.mapInjectedParams(drna.split("&").slice(1), {
         removeWildcards: true,
@@ -57,14 +58,14 @@ class Policies {
       {}
     );
     return {
-      path: drna.split("&")[0],
+      drnaPaths: drna.split("&")[0].split(":"),
       parameters,
     };
   }
 
   public matchPolicy(
     drnaType: string,
-    drnaToMatch: string,
+    drnaToMatch: synthetizedDRNAMatch,
     schema: PathSchema,
     policies: Policy[],
     validatedObjects: validatedDataObjects
@@ -85,6 +86,14 @@ class Policies {
               schema,
               validatedObjects
             );
+
+            const valid = this.DRNA.checkDrnaAccess(
+              drnaToMatch.drnaPaths,
+              drnaToMatch.parameters,
+              sanitizedDrna.drnaPaths,
+              sanitizedDrna.parameters
+            );
+            console.log("split says", valid);
           });
         }
         return results;

@@ -42,22 +42,25 @@
         ]
       },
       "Variables": {
-        "req": {
-          "type": "object",
-          "properties": {
-            "body": {
-              "type": "object",
-              "properties": {
-                "arg1": {
-                  "type": "string"
-                },
-                "arg2": {
-                  "type": "number"
-                },
-                "arg3": {
-                  "type": "array",
-                  "items": {
+        "type": "object",
+        "properties": {
+          "req": {
+            "type": "object",
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {
+                  "arg1": {
                     "type": "string"
+                  },
+                  "arg2": {
+                    "type": "number"
+                  },
+                  "arg3": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }

@@ -18,7 +18,10 @@ interface Argument {
 // Modified ArgumentSchema using conditional types
 export type ArgumentSchema = Record<
   string,
-  Argument & (Argument extends { type: "string" } ? { enum: string[] } : {})
+  Argument &
+    (Argument extends { type: "string" }
+      ? { enum: string[]; sectionType?: () => string }
+      : { sectionType?: () => string })
 >;
 // Schema for Arguments
 
@@ -29,6 +32,7 @@ export interface ConditionSchema {
   Enforce?: ConditionEnforceSchema; // Adjust the type as needed
   Operators?: string[];
   ContextOperators?: string[];
+  sectionType?: () => string;
 }
 
 // Schema for Variables (like 'req', 'user', 'context')
@@ -60,4 +64,10 @@ export interface validatedDataObjects {
   req: object;
   user: object;
   context: object;
+}
+
+export type drnaParameters = Record<string, string | number | undefined>;
+export interface synthetizedDRNAMatch {
+  drnaPaths: string[];
+  parameters: drnaParameters;
 }

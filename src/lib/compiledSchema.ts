@@ -36,7 +36,7 @@ class CompiledSchemaObject {
         value !== null &&
         !Array.isArray(value)
       ) {
-        acc[key] = { ...value, fromFile: () => fileName };
+        acc[key] = { ...value };
       } else {
         acc[key] = value;
       }

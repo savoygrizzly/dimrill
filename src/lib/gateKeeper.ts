@@ -1,4 +1,4 @@
-import { type RootSchema, type PathSchema } from "../types/custom";
+import { type RootSchema, type PathSchema, type Policy } from "../types/custom";
 import Schema from "./schema";
 import DRNA from "./drna";
 import Policies from "./policies";
@@ -35,7 +35,7 @@ class GateKeeper {
     return data;
   }
 
-  public async autoloadSchemas(directory: string): Promise<void> {
+  public async autoload(directory: string): Promise<void> {
     const schemas = await this.readFiles(directory);
     const schemaSet = new Map<string, RootSchema>();
     Object.entries(schemas).forEach(([key, value]) => {
@@ -60,25 +60,31 @@ class GateKeeper {
 
   public authorize(
     drna: string[],
-    req: object,
-    user: object,
-    context: object
+    policies: Policy[],
+    { req = {}, user = {}, context = {} },
+    options = {
+      validateData: true,
+    }
   ): object {
-    const schemaExists = this.DRNA.matchDrnaFromSchema(drna);
+    const schemaExists = this.DRNA.matchDrnaFromSchema(
+      drna,
+      this.schema.returnSchema()
+    );
 
     if (schemaExists === false) {
       throw new Error(`Invalid DRNA path: ${drna.join(":")}`);
     }
     const validatedObjects = this.schema.castObjectsToSchemaTypes(
-      schemaExists as PathSchema,
+      (schemaExists as PathSchema)?.Variables ?? {},
       req,
       user,
-      context
+      context,
+      options
     );
     /*
         Create an Isolate and a Context to prevent code injection
     */
-    const isolate = new ivm.Isolate({ memoryLimit: 1 });
+    const isolate = new ivm.Isolate({ memoryLimit: 8 });
     const isolateContext = isolate.createContextSync();
     const jail = isolateContext.global;
     /*
@@ -108,7 +114,18 @@ class GateKeeper {
       schemaExists as PathSchema,
       validatedObjects
     );
-    console.log(synthetizedMatch);
+
+    /*
+        Match the policy
+    */
+    const matchedPolicy = this.policies.matchPolicy(
+      drna[0],
+      synthetizedMatch,
+      schemaExists as PathSchema,
+      policies,
+      validatedObjects
+    );
+
     return {
       valid: true, // or false
       query: {},

@@ -15,9 +15,27 @@ import GateKeeper from "../src/lib/gateKeeper";
 import path from "path";
 const gateKeeper = new GateKeeper();
 
-gateKeeper.autoloadSchemas(path.join(__dirname, "schemas")).then(() => {
-  gateKeeper
-    .extendSchema("files.createOrder.Arguments.pricelist.enum")
-    .push("test");
+async function run() {
+  await gateKeeper.autoload(path.join(__dirname, "schemas"));
   console.log("done");
-});
+  gateKeeper.authorize(
+    ["Action", "files:createOrder&pricelist/distributor"],
+    [
+      {
+        Version: "1.0",
+        Statement: [
+          {
+            Effect: "Allow",
+            Action: ["files:createOrder&*"],
+            Resource: ["files:createOrder&pricelist/distributor"],
+          },
+        ],
+      },
+    ],
+    {},
+    {
+      validateData: false,
+    }
+  );
+}
+run();

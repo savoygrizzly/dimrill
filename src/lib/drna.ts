@@ -5,8 +5,8 @@ import {
   type ConditionSchema,
   type RootSchema,
   type PathSchema,
-  type VariableSchema,
-  type validatedDataObjects,
+  type drnaParameters,
+  type synthetizedDRNAMatch,
 } from "../types/custom";
 
 import Ajv from "ajv";
@@ -16,22 +16,29 @@ class DRNA extends Schema {
     super();
   }
 
-  public matchDrnaFromSchema(drna: string[]): object | boolean {
+  public matchDrnaFromSchema(
+    drna: string[],
+    schema: RootSchema
+  ): object | boolean {
     if (drna.length < 2) {
       return false; // DRNA must have at least two parts: Type and the path
     }
     const type = drna[0];
     const drnaPath = drna[1].split(":");
     /* remove params and wildcard from the last path */
-
-    let currentSchema: RootSchema | PathSchema = this.schema;
-
+    if (drnaPath[drnaPath.length - 1].includes("&")) {
+      drnaPath[drnaPath.length - 1] =
+        drnaPath[drnaPath.length - 1].split("&")[0];
+    }
+    let currentSchema: RootSchema | PathSchema = schema;
     for (const part of drnaPath) {
+      console.log(part in currentSchema);
       if (typeof currentSchema === "object" && part in currentSchema) {
         const nextSchema: RootSchema | PathSchema = currentSchema[part];
         if (typeof nextSchema === "object") {
           currentSchema = nextSchema;
         } else {
+          console.log("nextSchema", nextSchema);
           return false;
         }
       } else {
@@ -132,7 +139,7 @@ class DRNA extends Schema {
     drna: string,
     schema: PathSchema,
     validatedObjects: object
-  ): object {
+  ): synthetizedDRNAMatch {
     // match the schema arguments with the request, user and context objects
     // return the drna with the arguments values
 
@@ -150,6 +157,89 @@ class DRNA extends Schema {
       drnaPaths: sanitizedDrna[0].split(":"),
       parameters,
     };
+  }
+
+  public checkDrnaAccess(
+    path: string[],
+    parameters: drnaParameters,
+    policyPath: string[],
+    policyParams: drnaParameters
+  ): boolean {
+    const pathStr = path.join(":");
+    const policyPathStr = policyPath.join(":");
+    // Check if the policy path matches the input path or has a wildcard
+    if (this.policyPathMatches(policyPathStr, pathStr)) {
+      // Return true immediately if the policy path ends with a wildcard
+      if (policyPathStr.endsWith("*")) {
+        return true;
+      }
+
+      // If policy has no parameters, match only if parameters are also empty
+      if (policyParams.length === 0) {
+        return Object.keys(parameters).length === 0;
+      }
+
+      for (const param of Object.keys(policyParams)) {
+        /*
+        const splitParam = param.split("/");
+
+        if (splitParam.length !== 2) {
+          return false;
+        }
+
+        const [key, value] = splitParam;
+        */
+        const value = policyParams[param];
+        const key = param;
+        if (
+          key === "*" ||
+          (parameters[key] !== undefined &&
+            (value === "*" || parameters[key] === value))
+        ) {
+          continue;
+        }
+
+        return false; // Parameter not matched or not present
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private policyPathMatches(policyPath: string, inputPath: string): boolean {
+    // Handle global wildcard
+    if (policyPath === "*") {
+      return true;
+    }
+
+    // Check for incorrect wildcard usage (like "files*")
+    if (
+      policyPath.endsWith("*") &&
+      inputPath.charAt(policyPath.length - 1) === ":"
+    ) {
+      return false;
+    }
+
+    // Handle wildcard at the end of the policy path
+    if (policyPath.endsWith("*")) {
+      // Check that the base path (excluding the wildcard) is a prefix of the input path
+      const basePolicyPath = policyPath.slice(0, -1); // Remove the wildcard
+
+      if (inputPath.startsWith(basePolicyPath)) {
+        // Ensure that the wildcard does not lead to a partial match of a path segment
+        if (
+          basePolicyPath.endsWith(":") ||
+          inputPath.charAt(basePolicyPath.length) === ":"
+        ) {
+          return true;
+        }
+      }
+      return false;
+    }
+    // Exact match
+    return policyPath === inputPath;
   }
 }
 export default DRNA;
