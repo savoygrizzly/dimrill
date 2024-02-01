@@ -31,7 +31,7 @@ export const SchemaOperators = [
 ] as string[];
 const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
 export const SchemaConditionValues = [
-  "ToContext",
+  "ToQuery",
   ...SchemaOperators,
   ...SchemaOperands,
 ] as string[];

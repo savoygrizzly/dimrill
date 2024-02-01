@@ -57,9 +57,10 @@ interface Statement {
   Effect: "Allow" | "Deny"; // Assuming only "Allow" or "Deny" are valid
   Action?: string[]; // Optional
   Ressource?: string[]; // Optional
-  Condition?: Record<string, string>;
+  Condition?: StatementCondition;
 }
 
+export type StatementCondition = Record<string, Record<string, string>>;
 export interface validatedDataObjects {
   req: object;
   user: object;

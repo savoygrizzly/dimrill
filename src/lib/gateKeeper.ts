@@ -2,7 +2,7 @@ import { type RootSchema, type PathSchema, type Policy } from "../types/custom";
 import Schema from "./schema";
 import DRNA from "./drna";
 import Policies from "./policies";
-
+import Operators from "./operators/operators";
 import fs from "fs";
 import path from "path";
 import ivm from "isolated-vm";
@@ -58,14 +58,14 @@ class GateKeeper {
     };
   }
 
-  public authorize(
+  public async authorize(
     drna: string[],
     policies: Policy[],
     { req = {}, user = {}, context = {} },
     options = {
       validateData: true,
     }
-  ): object {
+  ): Promise<object> {
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       drna,
       this.schema.returnSchema()
@@ -85,21 +85,44 @@ class GateKeeper {
         Create an Isolate and a Context to prevent code injection
     */
     const isolate = new ivm.Isolate({ memoryLimit: 8 });
-    const isolateContext = isolate.createContextSync();
+    const isolateContext = await isolate.createContext();
     const jail = isolateContext.global;
     /*
         Pass the validated objects to the Isolate
     */
-    jail.setSync("req", new ivm.ExternalCopy(validatedObjects.req).copyInto());
-    jail.setSync(
+    await jail.set(
+      "req",
+      new ivm.ExternalCopy(validatedObjects.req).copyInto()
+    );
+    await jail.set(
       "user",
       new ivm.ExternalCopy(validatedObjects.user).copyInto()
     );
-    jail.setSync(
+    await jail.set(
       "context",
       new ivm.ExternalCopy(validatedObjects.context).copyInto()
     );
-    jail.setSync("global", jail.derefInto());
+    await jail.set("log", function (...args: any) {
+      console.log(...args);
+    });
+
+    const operatorsClass = new Operators();
+
+    await jail.set(
+      "__operatorsClass__",
+      new ivm.Reference(function (fn: any, a: any, b: any) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        const result = operatorsClass[fn](a, b);
+        return new ivm.ExternalCopy(result).copyInto();
+      }).deref()
+    );
+
+    await jail.set("Operators", operatorsClass, {
+      reference: true,
+    });
+
+    await jail.set("global", jail.derefInto());
 
     /*
         Pass the Isolate and the Context to the Policies class

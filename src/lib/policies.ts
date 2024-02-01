@@ -3,16 +3,19 @@ import {
   type Policy,
   type validatedDataObjects,
   type synthetizedDRNAMatch,
+  type drnaParameters,
+  type Statement,
 } from "../types/custom";
 import type Schema from "./schema";
-import type DRNA from "./drna";
+import DRNA from "./drna";
+
 class Policies {
   private readonly DRNA: DRNA;
 
   private isolatedVm: any;
   public isolatedVmContext: any;
 
-  constructor(DRNA: DRNA) {
+  constructor() {
     this.DRNA = DRNA;
     this.isolatedVm = null;
     this.isolatedVmContext = null;
@@ -29,11 +32,11 @@ class Policies {
     this.isolatedVmContext = null;
   }
 
-  private sanitizePolicyDrna(
+  private async sanitizePolicyDrna(
     drna: string,
     schema: PathSchema,
     validatedObjects: validatedDataObjects
-  ): synthetizedDRNAMatch {
+  ): Promise<synthetizedDRNAMatch> {
     const rawParameters = this.DRNA.matchParametersToSchema(
       this.DRNA.mapInjectedParams(drna.split("&").slice(1), {
         removeWildcards: true,
@@ -43,63 +46,89 @@ class Policies {
       { allowWildcards: true }
     );
 
-    /*
-      Iterate over parameters to replace the template strings with the actual values using an Isolate
-      Doing so prevents potential code injection and parameters tampering via the validateObject
-    */
-    const parameters = Object.entries(rawParameters).reduce(
-      (acc: Record<string, string>, [key, value]) => {
-        const parsedValue: string = this.isolatedVmContext.evalSync(
-          "`" + value + "`"
-        );
-        acc[String(key)] = parsedValue;
-        return acc;
-      },
-      {}
-    );
+    const parameters = await this.processParameters(rawParameters);
     return {
       drnaPaths: drna.split("&")[0].split(":"),
       parameters,
     };
   }
 
-  public matchPolicy(
+  private async processParameters(
+    rawParameters: Record<string, string | number | undefined>
+  ): Promise<drnaParameters> {
+    const acc: Record<string, string | number | undefined> = {}; // This will be the accumulator object
+
+    for (const [key, value] of Object.entries(rawParameters)) {
+      // Assuming isolatedVmContext.eval is an async function
+      const parsedValue = await this.isolatedVmContext.eval("`" + value + "`");
+      acc[String(key)] = parsedValue;
+    }
+
+    return acc;
+  }
+
+  private async processPolicy(
+    drnaType: string,
+    policy: Policy,
+    drnaToMatch: synthetizedDRNAMatch,
+    schema: PathSchema,
+    validatedObjects: validatedDataObjects
+  ): Promise<object | boolean> {
+    for (const statement of policy.Statement) {
+      if (statement[drnaType] !== null) {
+        for (const elem of statement[drnaType]) {
+          const sanitizedDrna = await this.sanitizePolicyDrna(
+            String(elem),
+            schema,
+            validatedObjects
+          );
+
+          const valid = this.DRNA.checkDrnaAccess(
+            drnaToMatch.drnaPaths,
+            drnaToMatch.parameters,
+            sanitizedDrna.drnaPaths,
+            sanitizedDrna.parameters
+          );
+
+          if (valid) {
+            return {
+              valid: true, // or false, depending on your logic
+              query: {}, // or the object/string you need
+            };
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public async matchPolicy(
     drnaType: string,
     drnaToMatch: synthetizedDRNAMatch,
     schema: PathSchema,
     policies: Policy[],
     validatedObjects: validatedDataObjects
-  ): object | boolean {
+  ): Promise<object | boolean> {
     if (policies.length === 0) {
       return {
         valid: false,
         query: {},
       };
     }
-    policies.map((policy) => {
-      const matchedPolicy = policy.Statement.reduce((results, statement) => {
-        if (statement[drnaType]) {
-          const matchedStatement = statement[drnaType].find((elem: string) => {
-            // parse elem
-            const sanitizedDrna = this.sanitizePolicyDrna(
-              String(elem),
-              schema,
-              validatedObjects
-            );
+    const promises = await Promise.all(
+      policies.map(
+        async (policy) =>
+          await this.processPolicy(
+            drnaType,
+            policy,
+            drnaToMatch,
+            schema,
+            validatedObjects
+          )
+      )
+    );
+    console.log(promises);
 
-            const valid = this.DRNA.checkDrnaAccess(
-              drnaToMatch.drnaPaths,
-              drnaToMatch.parameters,
-              sanitizedDrna.drnaPaths,
-              sanitizedDrna.parameters
-            );
-            console.log("split says", valid);
-          });
-        }
-        return results;
-      }, []);
-      return matchedPolicy ?? false;
-    });
     return false;
   }
 }
