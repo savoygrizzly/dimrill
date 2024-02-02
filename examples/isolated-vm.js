@@ -1,5 +1,7 @@
-const results = [true, false, false];
+const InArray = (leftOperator, rightOperator) => {
+  return (
+    Array.isArray(rightOperator) ? rightOperator : Array(rightOperator)
+  ).includes(leftOperator);
+};
 
-const test =
-  results.filter((result) => result === true).length === results.length;
-console.log(test);
+console.log(InArray(2, [1, 2, 3])); // true

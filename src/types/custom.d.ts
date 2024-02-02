@@ -60,7 +60,7 @@ interface Statement {
   Condition?: StatementCondition;
 }
 
-export type StatementCondition = Record<string, Record<string, string>>;
+export type StatementCondition = Record<string, Record<string, string | any[]>>;
 export interface validatedDataObjects {
   req: object;
   user: object;

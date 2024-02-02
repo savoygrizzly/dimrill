@@ -3,6 +3,7 @@ import Schema from "./schema";
 import DRNA from "./drna";
 import Policies from "./policies";
 import Operators from "./operators/operators";
+import Condition from "./conditions";
 import fs from "fs";
 import path from "path";
 import ivm from "isolated-vm";
@@ -11,7 +12,8 @@ class GateKeeper {
   constructor() {
     this.schema = new Schema();
     this.DRNA = new DRNA();
-    this.policies = new Policies(this.DRNA);
+
+    this.policies = new Policies(this.DRNA, new Condition());
   }
 
   private readonly DRNA: DRNA;

@@ -30,25 +30,28 @@ async function run() {
             Action: ["files:createOrder&*"],
             Resource: ["files:createOrder&pricelist/distributor"],
             Condition: {
-              "ToQuery:StringEquals": {
-                pricelist: "${req.body.pricelist}",
-                currency: "chf",
-              },
-              StringNotEquals: {
-                pricelist: "public",
+              InArray: {
+                "${req.body.pricelist}": "${req.body.test)}",
               },
             },
           },
         ],
       },
     ],
-    {},
+    {
+      req: {
+        body: {
+          pricelist: "distributor",
+          test: ["1", "hehe"],
+        },
+      },
+    },
     {
       validateData: false,
     }
   );
 }
-// run();
+run();
 
 async function testVm() {
   const isolate = new ivm.Isolate({ memoryLimit: 8 });
@@ -207,4 +210,4 @@ async function testVm() {
   console.log(script);
   // await script.run(isolateContext, { reference: true, promise: true });
 }
-testVm();
+// testVm();

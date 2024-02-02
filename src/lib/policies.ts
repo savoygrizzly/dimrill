@@ -6,17 +6,19 @@ import {
   type drnaParameters,
   type Statement,
 } from "../types/custom";
-import type Schema from "./schema";
-import DRNA from "./drna";
+import type Condition from "./conditions";
+import type DRNA from "./drna";
 
 class Policies {
   private readonly DRNA: DRNA;
+  private readonly Conditions: Condition;
 
   private isolatedVm: any;
   public isolatedVmContext: any;
 
-  constructor() {
+  constructor(DRNA: DRNA, Conditions: Condition) {
     this.DRNA = DRNA;
+    this.Conditions = Conditions;
     this.isolatedVm = null;
     this.isolatedVmContext = null;
   }
@@ -24,12 +26,14 @@ class Policies {
   public setVm(isolatedVm: any, context: any): void {
     this.isolatedVm = isolatedVm;
     this.isolatedVmContext = context;
+    this.Conditions.setVm(context);
   }
 
   public destroyVm(): void {
     this.isolatedVm.dispose();
     this.isolatedVm = null;
     this.isolatedVmContext = null;
+    this.Conditions.unsetVm();
   }
 
   private async sanitizePolicyDrna(
@@ -91,10 +95,7 @@ class Policies {
           );
 
           if (valid) {
-            return {
-              valid: true, // or false, depending on your logic
-              query: {}, // or the object/string you need
-            };
+            await this.Conditions.runConditions(statement.Condition, schema);
           }
         }
       }

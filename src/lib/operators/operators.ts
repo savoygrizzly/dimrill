@@ -1,6 +1,4 @@
-import def from "ajv/dist/vocabularies/discriminator";
-
-class Operators {
+export default class Operators {
   public StringStrictlyEquals = (
     leftOperator: string,
     rightOperator: string
@@ -29,42 +27,42 @@ class Operators {
     return String(leftOperator) !== String(rightOperator);
   };
 
-  public NumericEquals = (
+  public NumberEquals = (
     leftOperator: number,
     rightOperator: number
   ): boolean => {
     return Number(leftOperator) === Number(rightOperator);
   };
 
-  public NumericNotEquals = (
+  public NumberNotEquals = (
     leftOperator: number,
     rightOperator: number
   ): boolean => {
     return Number(leftOperator) !== Number(rightOperator);
   };
 
-  public NumericLessThan = (
+  public NumberLessThan = (
     leftOperator: number,
     rightOperator: number
   ): boolean => {
     return Number(leftOperator) < Number(rightOperator);
   };
 
-  public NumericLessThanEquals = (
+  public NumberLessThanEquals = (
     leftOperator: number,
     rightOperator: number
   ): boolean => {
     return Number(leftOperator) <= Number(rightOperator);
   };
 
-  public NumericGreaterThan = (
+  public NumberGreaterThan = (
     leftOperator: number,
     rightOperator: number
   ): boolean => {
     return Number(leftOperator) > Number(rightOperator);
   };
 
-  public NumericGreaterThanEquals = (
+  public NumberGreaterThanEquals = (
     leftOperator: number,
     rightOperator: number
   ): boolean => {
@@ -158,8 +156,7 @@ class Operators {
 
   public InArray = (leftOperator: any[], rightOperator: any[]): boolean => {
     return (
-      Array.isArray(leftOperator) ? leftOperator : Array(leftOperator)
-    ).includes(rightOperator);
+      Array.isArray(rightOperator) ? rightOperator : Array(rightOperator)
+    ).includes(leftOperator);
   };
 }
-export default Operators;
