@@ -1,9 +1,10 @@
 export default class Operators {
-  public StringStrictlyEquals = (
-    leftOperator: string,
-    rightOperator: string
-  ): boolean => {
-    return String(leftOperator) === String(rightOperator);
+  public Equals = (leftOperator: any, rightOperator: any): boolean => {
+    return leftOperator === rightOperator;
+  };
+
+  public NotEquals = (leftOperator: any, rightOperator: any): boolean => {
+    return leftOperator !== rightOperator;
   };
 
   public StringEquals = (
@@ -11,13 +12,6 @@ export default class Operators {
     rightOperator: string
   ): boolean => {
     return String(leftOperator) === String(rightOperator);
-  };
-
-  public StringStrictlyNotEquals = (
-    leftOperator: string,
-    rightOperator: string
-  ): boolean => {
-    return String(leftOperator) !== String(rightOperator);
   };
 
   public StringNotEquals = (

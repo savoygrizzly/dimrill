@@ -30,8 +30,8 @@ async function run() {
             Action: ["files:createOrder&*"],
             Resource: ["files:createOrder&pricelist/distributor"],
             Condition: {
-              InArray: {
-                "${req.body.pricelist}": "${req.body.test)}",
+              "ToQuery:InArray": {
+                hehe: "{{req:body:test}}",
               },
             },
           },
@@ -42,7 +42,7 @@ async function run() {
       req: {
         body: {
           pricelist: "distributor",
-          test: ["1", "hehe"],
+          test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
       },
     },

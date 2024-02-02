@@ -6,16 +6,17 @@ import Operators from "./operators/operators";
 import Condition from "./conditions";
 import fs from "fs";
 import path from "path";
-import ivm from "isolated-vm";
+import IvmSandbox from "./ivmSandbox";
 const fsp = fs.promises;
 class GateKeeper {
   constructor() {
     this.schema = new Schema();
     this.DRNA = new DRNA();
-
+    this.ivmSandbox = new IvmSandbox();
     this.policies = new Policies(this.DRNA, new Condition());
   }
 
+  private readonly ivmSandbox: IvmSandbox;
   private readonly DRNA: DRNA;
   private readonly policies: Policies;
   public schema: Schema;
@@ -83,53 +84,15 @@ class GateKeeper {
       context,
       options
     );
-    /*
-        Create an Isolate and a Context to prevent code injection
-    */
-    const isolate = new ivm.Isolate({ memoryLimit: 8 });
-    const isolateContext = await isolate.createContext();
-    const jail = isolateContext.global;
-    /*
-        Pass the validated objects to the Isolate
-    */
-    await jail.set(
-      "req",
-      new ivm.ExternalCopy(validatedObjects.req).copyInto()
-    );
-    await jail.set(
-      "user",
-      new ivm.ExternalCopy(validatedObjects.user).copyInto()
-    );
-    await jail.set(
-      "context",
-      new ivm.ExternalCopy(validatedObjects.context).copyInto()
-    );
-    await jail.set("log", function (...args: any) {
-      console.log(...args);
-    });
-
-    const operatorsClass = new Operators();
-
-    await jail.set(
-      "__operatorsClass__",
-      new ivm.Reference(function (fn: any, a: any, b: any) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        const result = operatorsClass[fn](a, b);
-        return new ivm.ExternalCopy(result).copyInto();
-      }).deref()
-    );
-
-    await jail.set("Operators", operatorsClass, {
-      reference: true,
-    });
-
-    await jail.set("global", jail.derefInto());
-
+    await this.ivmSandbox.create();
+    await this.ivmSandbox.setup(validatedObjects);
     /*
         Pass the Isolate and the Context to the Policies class
     */
-    this.policies.setVm(isolate, isolateContext);
+    this.policies.setVm(
+      this.ivmSandbox.get().isolate,
+      this.ivmSandbox.get().context
+    );
 
     /*
         Parse the DRNA to match the policy

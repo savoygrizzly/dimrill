@@ -18,10 +18,7 @@ interface Argument {
 // Modified ArgumentSchema using conditional types
 export type ArgumentSchema = Record<
   string,
-  Argument &
-    (Argument extends { type: "string" }
-      ? { enum: string[]; sectionType?: () => string }
-      : { sectionType?: () => string })
+  Argument & (Argument extends { type: "string" } ? { enum: string[] } : {})
 >;
 // Schema for Arguments
 
@@ -54,13 +51,16 @@ export interface Policy {
 
 interface Statement {
   [key: string];
-  Effect: "Allow" | "Deny"; // Assuming only "Allow" or "Deny" are valid
+  Effect: "Allow" | "Deny";
   Action?: string[]; // Optional
   Ressource?: string[]; // Optional
   Condition?: StatementCondition;
 }
 
-export type StatementCondition = Record<string, Record<string, string | any[]>>;
+export type StatementCondition = Record<
+  string,
+  Record<string, string | boolean | number | string[] | boolean[] | number[]>
+>;
 export interface validatedDataObjects {
   req: object;
   user: object;

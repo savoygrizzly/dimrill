@@ -31,7 +31,7 @@ class Schema {
   public compiledSchema: CompiledSchemaObject | null;
   public validateSchema(schema: RootSchema): RootSchema {
     this.validateSchemaObject(schema, []);
-    console.log(util.inspect(schema, false, null, true));
+    // console.log(util.inspect(schema, false, null, true));
     return schema;
   }
 

@@ -32,13 +32,11 @@ class DRNA extends Schema {
     }
     let currentSchema: RootSchema | PathSchema = schema;
     for (const part of drnaPath) {
-      console.log(part in currentSchema);
       if (typeof currentSchema === "object" && part in currentSchema) {
         const nextSchema: RootSchema | PathSchema = currentSchema[part];
         if (typeof nextSchema === "object") {
           currentSchema = nextSchema;
         } else {
-          console.log("nextSchema", nextSchema);
           return false;
         }
       } else {

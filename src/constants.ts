@@ -29,7 +29,20 @@ export const SchemaOperators = [
   "Bool",
   "InArray",
 ] as string[];
-const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
+export const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
+export const SchemaCastTypes = [
+  "toString",
+  "toNumber",
+  "toObjectId",
+  "toObjectIdArray",
+  "toArray",
+  "toDate",
+] as string[];
+export const SchemaModifiers = [
+  ...SchemaOperands,
+  ...SchemaCastTypes,
+  "ToQuery",
+] as string[];
 export const SchemaConditionValues = [
   "ToQuery",
   ...SchemaOperators,

@@ -26,7 +26,7 @@ class Policies {
   public setVm(isolatedVm: any, context: any): void {
     this.isolatedVm = isolatedVm;
     this.isolatedVmContext = context;
-    this.Conditions.setVm(context);
+    this.Conditions.setVm(isolatedVm, context);
   }
 
   public destroyVm(): void {
@@ -77,7 +77,10 @@ class Policies {
     drnaToMatch: synthetizedDRNAMatch,
     schema: PathSchema,
     validatedObjects: validatedDataObjects
-  ): Promise<object | boolean> {
+  ): Promise<{
+    valid: boolean;
+    query: object | string;
+  }> {
     for (const statement of policy.Statement) {
       if (statement[drnaType] !== null) {
         for (const elem of statement[drnaType]) {
@@ -95,12 +98,18 @@ class Policies {
           );
 
           if (valid) {
-            await this.Conditions.runConditions(statement.Condition, schema);
+            return await this.Conditions.runConditions(
+              statement.Condition,
+              schema
+            );
           }
         }
       }
     }
-    return false;
+    return {
+      valid: false,
+      query: {},
+    };
   }
 
   public async matchPolicy(
