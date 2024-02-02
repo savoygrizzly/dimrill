@@ -7,18 +7,19 @@ import {
   SchemaOperands,
   SchemaCastTypes,
 } from "../constants";
-import ivm from "isolated-vm";
-import * as operators from "./operators/operators";
-import Policies from "./policies";
+import util from "util";
+import TypeCasters from "./operators/typeCasters";
 class Condition {
   constructor(
     options = {
       adapter: "mongodb",
     }
   ) {
+    this.typeCasters = new TypeCasters();
     this.options = options;
   }
 
+  private readonly typeCasters: TypeCasters;
   private isolatedVmContext: any;
   private isolatedVm: any;
   private readonly options: {
@@ -138,19 +139,13 @@ class Condition {
   private mergeObjectQueries(
     queries: Array<Record<string, any>>
   ): Record<string, any> {
-    const mergedQuery: Record<string, any> = {};
-    for (const query of queries) {
-      for (const key in query) {
-        if (mergedQuery.hasOwnProperty(key)) {
-          // If the key already exists, combine the values. Here, we're simply overwriting,
-          // but you might want to merge or concatenate, depending on your needs.
-          mergedQuery[key] = [...new Set([...mergedQuery[key], ...query[key]])];
-        } else {
-          mergedQuery[key] = query[key];
-        }
-      }
-    }
-    return mergedQuery;
+    return queries.reduce((acc, currentArray) => {
+      currentArray.forEach((obj: any) => {
+        // Merge each object into the accumulator
+        Object.assign(acc, obj);
+      });
+      return acc;
+    }, {});
   }
 
   private mergeStringQueries(queries: string[]) {
@@ -181,7 +176,12 @@ class Condition {
           return await this.runAdapter(mainOperator, variables);
         })
       );
-      console.log("Results", results);
+      if (modifiers.castType !== undefined) {
+        // cast results to correct type
+        returnValue.query = this.castQuery(results, modifiers.castType);
+      } else {
+        returnValue.query = results;
+      }
     } else {
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
@@ -198,6 +198,40 @@ class Condition {
         results.filter((result) => result).length === results.length;
     }
     return returnValue;
+  }
+
+  private castQuery(
+    results: any[],
+    castType: string
+  ): string | Record<string, any> {
+    return results.map((result) => {
+      if (typeof result === "string") {
+        return result; // Directly return the string if the result is a string
+      } else if (typeof result === "object" && result !== null) {
+        // Process each key-value pair in the object
+        return Object.entries(result).reduce(
+          (acc: Record<string, any>, [key, value]) => {
+            // Check if value is a direct object or a MongoDB query object
+            if (
+              typeof value === "object" &&
+              value !== null &&
+              !Array.isArray(value)
+            ) {
+              Object.entries(value).forEach(([queryKey, queryValue]) => {
+                const castedValue =
+                  this.typeCasters[castType as keyof TypeCasters](queryValue);
+                if (!acc[key]) acc[key] = {};
+                acc[key][queryKey] = castedValue;
+              });
+            } else {
+              acc[key] = this.typeCasters[castType as keyof TypeCasters](value);
+            }
+            return acc;
+          },
+          {}
+        );
+      }
+    });
   }
 
   private async runAdapter(
@@ -252,7 +286,6 @@ class Condition {
     ));
     })()
     `);
-    console.log("VM condition says", result);
     return result;
   }
 }

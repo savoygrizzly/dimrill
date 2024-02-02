@@ -13,8 +13,8 @@ export default class MongoDbOperators {
   public StringEquals = (
     field: string,
     value: string
-  ): Record<string, object> => {
-    return { [field]: { $eq: String(value) } };
+  ): Record<string, string> => {
+    return { [field]: String(value) };
   };
 
   // StringNotEquals

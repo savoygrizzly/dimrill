@@ -30,8 +30,11 @@ async function run() {
             Action: ["files:createOrder&*"],
             Resource: ["files:createOrder&pricelist/distributor"],
             Condition: {
-              "ToQuery:InArray": {
+              "toObjectIdArray:ToQuery:InArray": {
                 hehe: "{{req:body:test}}",
+              },
+              "toObjectId:ToQuery:Equals": {
+                user_id: "{{user:id}}",
               },
             },
           },
@@ -44,6 +47,9 @@ async function run() {
           pricelist: "distributor",
           test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
+      },
+      user: {
+        id: "5e56e254f4d3f1a832358c5c",
       },
     },
     {

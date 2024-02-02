@@ -11,6 +11,8 @@ export const SchemaConditionKeys = [
   "ContextOperators",
 ] as string[];
 export const SchemaOperators = [
+  "Equals",
+  "NotEquals",
   "StringStrictlyEquals",
   "StringEquals",
   "StringNotEquals",
