@@ -2,7 +2,6 @@
   "orders": {
     "createOrder": {
       "Type": [
-        "Action",
         "Ressource"
       ]
     }

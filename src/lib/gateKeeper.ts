@@ -49,14 +49,22 @@ class GateKeeper {
 
   public extendSchema(path: string): {
     set: (value: string | string[] | object) => void;
+    unset: (value: string | object) => void;
     push: (value: string | string[]) => void;
+    remove: (value: string) => void;
   } {
     return {
       set: (value) => {
         this.schema.extendSchema(path).set(value);
       },
+      unset: (value) => {
+        this.schema.extendSchema(path).unset(value);
+      },
       push: (value) => {
         this.schema.extendSchema(path).push(value);
+      },
+      remove: (value) => {
+        this.schema.extendSchema(path).remove(value);
       },
     };
   }

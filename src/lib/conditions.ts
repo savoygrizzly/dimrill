@@ -101,7 +101,8 @@ class Condition {
         return await this.processCondition(
           mainOperator,
           { operand, toQuery, castType },
-          value
+          value,
+          schema
         );
       })
     );
@@ -159,7 +160,8 @@ class Condition {
       toQuery: string | undefined;
       castType: string | undefined;
     },
-    values: object
+    values: object,
+    schema: ConditionSchema
   ): Promise<{
     valid: boolean;
     query: object | string;
@@ -169,7 +171,11 @@ class Condition {
       query: {},
     };
 
-    if (modifiers.toQuery) {
+    if (
+      modifiers.toQuery &&
+      (!schema.ContextOperators ||
+        schema?.ContextOperators.includes(mainOperator))
+    ) {
       returnValue.valid = true;
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
@@ -182,7 +188,7 @@ class Condition {
       } else {
         returnValue.query = results;
       }
-    } else {
+    } else if (!schema.Operators || schema?.Operators.includes(mainOperator)) {
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
           return await this.runCondition(mainOperator, variables);

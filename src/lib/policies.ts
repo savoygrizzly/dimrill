@@ -64,7 +64,11 @@ class Policies {
 
     for (const [key, value] of Object.entries(rawParameters)) {
       // Assuming isolatedVmContext.eval is an async function
-      const parsedValue = await this.isolatedVmContext.eval("`" + value + "`");
+      const parsedValue = await this.isolatedVmContext.eval(
+        `(function() {return formatValue(${JSON.stringify(
+          value
+        )},groupedContext)})()`
+      );
       acc[String(key)] = parsedValue;
     }
 

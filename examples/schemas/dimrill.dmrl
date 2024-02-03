@@ -2,7 +2,6 @@
   "files": {
     "createOrder": {
       "Type": [
-        "Action",
         "Ressource"
       ],
       "Arguments": {

@@ -19,7 +19,9 @@ const gateKeeper = new GateKeeper();
 async function run() {
   await gateKeeper.autoload(path.join(__dirname, "schemas"));
   console.log("done");
-  gateKeeper.authorize(
+
+  gateKeeper.extendSchema("files.createOrder.Arguments").unset("discount");
+  /* gateKeeper.authorize(
     ["Action", "files:createOrder&pricelist/distributor"],
     [
       {
@@ -27,7 +29,7 @@ async function run() {
         Statement: [
           {
             Effect: "Allow",
-            Action: ["files:createOrder&*"],
+            Action: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
             Resource: ["files:createOrder&pricelist/distributor"],
             Condition: {
               "toObjectIdArray:ToQuery:InArray": {
@@ -55,7 +57,7 @@ async function run() {
     {
       validateData: false,
     }
-  );
+  ); */
 }
 run();
 
