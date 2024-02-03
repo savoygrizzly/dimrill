@@ -148,7 +148,7 @@ class Condition {
     }, {});
   }
 
-  private mergeStringQueries(queries: string[]) {
+  private mergeStringQueries(queries: string[]): string {
     return queries.join("; "); // Using '; ' as a delimiter
   }
 
@@ -255,11 +255,11 @@ class Condition {
           arguments: { copy: true },
         }
         );
-      return JSON.stringify(query);
+      return JSON.stringify(query); //make transferable
     })()
     `);
 
-    return JSON.parse(result as string);
+    return JSON.parse(result as string); // quick hack to pass thru the sandbox
   }
 
   private async runCondition(
