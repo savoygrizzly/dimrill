@@ -4,14 +4,11 @@ import {
   SchemaOperators,
   SchemaConditionValues,
 } from "../constants";
-import util from "util";
 import {
   type ArgumentSchema,
   type ConditionSchema,
   type ConditionEnforceSchema,
   type RootSchema,
-  type PathSchema,
-  type VariableSchema,
   type validatedDataObjects,
 } from "../types/custom";
 

@@ -2,13 +2,12 @@ import { type RootSchema, type PathSchema, type Policy } from "../types/custom";
 import Schema from "./schema";
 import DRNA from "./drna";
 import Policies from "./policies";
-import Operators from "./operators/operators";
 import Condition from "./conditions";
 import fs from "fs";
 import path from "path";
 import IvmSandbox from "./ivmSandbox";
 const fsp = fs.promises;
-class GateKeeper {
+class Dimrill {
   constructor() {
     this.schema = new Schema();
     this.DRNA = new DRNA();
@@ -128,4 +127,4 @@ class GateKeeper {
     };
   }
 }
-export default GateKeeper;
+export default Dimrill;

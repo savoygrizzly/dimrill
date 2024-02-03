@@ -1,15 +1,12 @@
 import _get from "lodash/get";
 
 import {
-  type ArgumentSchema,
-  type ConditionSchema,
   type RootSchema,
   type PathSchema,
   type drnaParameters,
   type synthetizedDRNAMatch,
 } from "../types/custom";
 
-import Ajv from "ajv";
 import Schema from "./schema";
 class DRNA extends Schema {
   constructor() {
