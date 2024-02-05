@@ -2,11 +2,16 @@
   "name": "dimrill-v2",
   "version": "1.0.0",
   "description": "Dimrill V2, Typescript and total rewrite",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "devbc": "tsc --build && node ./examples/index.js && tsc --build --clean",
-    "build": "tsc --build",
+    "dev": "tsc --build && node ./examples/index.js && tsc --build --clean",
+    "build": "tsup",
     "clean": "tsc --build --clean"
   },
   "type": "commonjs",
@@ -27,6 +32,7 @@
     "ajv": "^8.12.0",
     "bson": "^6.3.0",
     "isolated-vm": "^4.7.2",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "tsup": "^8.0.1"
   }
 }

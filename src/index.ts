@@ -3,15 +3,16 @@ import {
   type CompilationResults,
   type PathSchema,
   type Policy,
-} from "../types/custom";
-import Schema from "./schema";
-import PoliciesCompiler from "./policiesCompiler";
-import DRNA from "./drna";
-import Policies from "./policies";
-import Condition from "./conditions";
+} from "./types/custom";
+import Schema from "./lib/schema";
+import PoliciesCompiler from "./lib/policiesCompiler";
+import DRNA from "./lib/drna";
+import Policies from "./lib/policies";
+import Condition from "./lib/conditions";
 import fs from "fs";
 import path from "path";
-import IvmSandbox from "./ivmSandbox";
+import IvmSandbox from "./lib/ivmSandbox";
+import { fileExtensionName } from "./constants";
 const fsp = fs.promises;
 class Dimrill {
   constructor() {
@@ -22,6 +23,7 @@ class Dimrill {
     this.policiesCompiler = new PoliciesCompiler(this.DRNA, this.schema);
   }
 
+  private readonly schemaLoadingList: Record<string, RootSchema> = {};
   private readonly policiesCompiler: PoliciesCompiler;
   private readonly ivmSandbox: IvmSandbox;
   private readonly DRNA: DRNA;
@@ -37,9 +39,13 @@ class Dimrill {
       files.map(async (filename) => {
         const fileType = path.extname(filename);
         const full = path.join(dirname, filename);
-        if (fileType !== ".dmrl") return;
-        const content = await fsp.readFile(full, { encoding: "utf8" });
-        data[filename] = JSON.parse(content);
+        if (!fileExtensionName.includes(fileType)) return;
+        try {
+          const content = await fsp.readFile(full, { encoding: "utf8" });
+          data[filename] = JSON.parse(content);
+        } catch (e) {
+          throw new Error(`Error reading file: ${full}`);
+        }
       })
     );
     return data;
@@ -49,6 +55,38 @@ class Dimrill {
     const schemas = await this.readFiles(directory);
     const schemaSet = new Map<string, RootSchema>();
     Object.entries(schemas).forEach(([key, value]) => {
+      schemaSet.set(key, this.schema.validateSchema(value));
+    });
+    this.schema.compileSchema(schemaSet);
+  }
+
+  public async preloadSchema(paths: string | string[]): Promise<void> {
+    if (!Array.isArray(paths)) paths = [paths];
+    await Promise.all(
+      paths.map(async (filename) => {
+        const fileType = path.extname(filename);
+        if (!fileExtensionName.includes(fileType)) {
+          throw new Error(
+            `Invalid file type: ${filename}, extension must be: ${fileExtensionName.join(
+              ", "
+            )}`
+          );
+        }
+        try {
+          const content = await fsp.readFile(filename, { encoding: "utf8" });
+          this.schemaLoadingList[filename] = JSON.parse(content);
+        } catch (error) {
+          throw new Error(
+            `Error reading file, file may not exist: ${filename}`
+          );
+        }
+      })
+    );
+  }
+
+  public compilePreloadedSchemas(): void {
+    const schemaSet = new Map<string, RootSchema>();
+    Object.entries(this.schemaLoadingList).forEach(([key, value]) => {
       schemaSet.set(key, this.schema.validateSchema(value));
     });
     this.schema.compileSchema(schemaSet);

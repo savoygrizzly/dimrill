@@ -11,14 +11,19 @@ const schemaObject: object = JSON.parse(schemaString);
 
 schema.validateSchema(schemaObject); */
 
-import GateKeeper from "../src/lib/gateKeeper";
+import Dimrill from "../src";
 import path from "path";
 import ivm from "isolated-vm";
 import Operators from "./operators";
 import util from "util";
-const gateKeeper = new GateKeeper();
+const gateKeeper = new Dimrill();
 async function run() {
-  await gateKeeper.autoload(path.join(__dirname, "schemas"));
+  // await gateKeeper.autoload(path.join(__dirname, "schemas"));
+  await gateKeeper.preloadSchema([
+    path.join(__dirname, "schemas", "dimrill.dmrl"),
+    path.join(__dirname, "schemas", "test.dmrls"),
+  ]);
+  gateKeeper.compilePreloadedSchemas();
   console.log("done");
   const compiled = gateKeeper.compilePolicies([
     {

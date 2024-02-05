@@ -33,12 +33,12 @@ export const SchemaOperators = [
 ] as string[];
 export const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
 export const SchemaCastTypes = [
-  "toString",
-  "toNumber",
-  "toObjectId",
-  "toObjectIdArray",
-  "toArray",
-  "toDate",
+  "ToString",
+  "ToNumber",
+  "ToObjectId",
+  "ToObjectIdArray",
+  "ToArray",
+  "ToDate",
 ] as string[];
 export const SchemaModifiers = [
   ...SchemaOperands,
@@ -50,3 +50,5 @@ export const SchemaConditionValues = [
   ...SchemaOperators,
   ...SchemaOperands,
 ] as string[];
+
+export const fileExtensionName = [".dmrl"];

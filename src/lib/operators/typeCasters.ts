@@ -1,30 +1,30 @@
 import { ObjectId } from "bson";
 export default class TypeCasters {
-  public toNumber(value: any): number {
+  public ToNumber(value: any): number {
     return Number(value);
   }
 
-  public toString(value: any): string {
+  public ToString(value: any): string {
     return String(value);
   }
 
-  public toBoolean(value: any): boolean {
+  public ToBoolean(value: any): boolean {
     return Boolean(value);
   }
 
-  public toArray(value: any): any[] {
+  public ToArray(value: any): any[] {
     return Array.isArray(value) ? value : [value];
   }
 
-  public toDate(value: string): Date {
+  public ToDate(value: string): Date {
     return new Date(value);
   }
 
-  public toObjectId(value: string): ObjectId {
+  public ToObjectId(value: string): ObjectId {
     return new ObjectId(value);
   }
 
-  public toObjectIdArray(value: string[]): ObjectId[] {
+  public ToObjectIdArray(value: string[]): ObjectId[] {
     return value.map((id) => new ObjectId(id)).filter((id) => id);
   }
 }
