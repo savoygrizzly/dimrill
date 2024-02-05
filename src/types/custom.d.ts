@@ -72,3 +72,12 @@ export interface synthetizedDRNAMatch {
   drnaPaths: string[];
   parameters: drnaParameters;
 }
+export interface CompilatorReturnFormat {
+  valid: boolean;
+  message: Record<string, string>;
+}
+export interface CompilationResults {
+  effects: string[];
+  drna: CompilatorReturnFormat[];
+  conditions: CompilatorReturnFormat[][];
+}

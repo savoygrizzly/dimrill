@@ -10,7 +10,7 @@ import type Condition from "./conditions";
 import type DRNA from "./drna";
 
 class Policies {
-  private readonly DRNA: DRNA;
+  public DRNA: DRNA;
   private readonly Conditions: Condition;
 
   private isolatedVm: any;
@@ -35,7 +35,7 @@ class Policies {
     this.Conditions.unsetVm();
   }
 
-  private async sanitizePolicyDrna(
+  public async sanitizePolicyDrna(
     drna: string,
     schema: PathSchema,
     validatedObjects: validatedDataObjects
@@ -95,7 +95,6 @@ class Policies {
             schema,
             validatedObjects
           );
-          console.log(sanitizedDrna);
           const valid = this.DRNA.checkDrnaAccess(
             drnaToMatch.drnaPaths,
             drnaToMatch.parameters,

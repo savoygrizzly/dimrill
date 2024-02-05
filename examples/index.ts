@@ -15,21 +15,43 @@ import GateKeeper from "../src/lib/gateKeeper";
 import path from "path";
 import ivm from "isolated-vm";
 import Operators from "./operators";
+import util from "util";
 const gateKeeper = new GateKeeper();
 async function run() {
   await gateKeeper.autoload(path.join(__dirname, "schemas"));
   console.log("done");
-
-  gateKeeper.authorize(
-    ["Ressource", "files:createOrder"],
+  const compiled = gateKeeper.compilePolicies([
+    {
+      Version: "1.0",
+      Statement: [
+        {
+          Effect: "Allow",
+          Ressource: [
+            "files:createOrder&pricelist/{{req:body:pricelist}}&currency/USD",
+            "files:createOrder&pricelist/{{req:body:pricelist}}&currency/EUR",
+          ],
+          Condition: {
+            StringEquals: {
+              distributor: "{{req:body:pricelist}}",
+            },
+            StringEcuals: {
+              distributor: "{{req:body:pricelist}}",
+            },
+          },
+        },
+      ],
+    },
+  ]);
+  console.log(util.inspect(compiled, false, null, true));
+  /* gateKeeper.authorize(
+    ["Ressource", "files:createOrder&pricelist/{{req:body:pricelist}}"],
     [
       {
         Version: "1.0",
         Statement: [
           {
             Effect: "Allow",
-            Action: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
-            Ressource: ["files:createOrder"],
+            Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
           },
         ],
       },
@@ -37,6 +59,7 @@ async function run() {
     {
       req: {
         body: {
+          pricelist: "distributor",
           test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
       },
@@ -48,7 +71,7 @@ async function run() {
       validateData: false,
       pathOnly: true,
     }
-  );
+  ); */
 }
 run();
 

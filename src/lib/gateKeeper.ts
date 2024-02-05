@@ -1,5 +1,11 @@
-import { type RootSchema, type PathSchema, type Policy } from "../types/custom";
+import {
+  type RootSchema,
+  type CompilationResults,
+  type PathSchema,
+  type Policy,
+} from "../types/custom";
 import Schema from "./schema";
+import PoliciesCompiler from "./policiesCompiler";
 import DRNA from "./drna";
 import Policies from "./policies";
 import Condition from "./conditions";
@@ -13,8 +19,10 @@ class Dimrill {
     this.DRNA = new DRNA();
     this.ivmSandbox = new IvmSandbox();
     this.policies = new Policies(this.DRNA, new Condition());
+    this.policiesCompiler = new PoliciesCompiler(this.DRNA, this.schema);
   }
 
+  private readonly policiesCompiler: PoliciesCompiler;
   private readonly ivmSandbox: IvmSandbox;
   private readonly DRNA: DRNA;
   private readonly policies: Policies;
@@ -68,6 +76,10 @@ class Dimrill {
     };
   }
 
+  public compilePolicies(policies: Policy[]): Map<number, CompilationResults> {
+    return this.policiesCompiler.compilePolicies(policies);
+  }
+
   public async authorizePathOnly(
     drna: string[],
     policies: Policy[],
@@ -97,7 +109,6 @@ class Dimrill {
       drna,
       this.schema.returnSchema()
     );
-
     if (schemaExists === false) {
       throw new Error(`Invalid DRNA path: ${drna.join(":")}`);
     }
@@ -144,7 +155,6 @@ class Dimrill {
       Merge the results
     */
     const results = this.policies.mergePoliciesResults(matchedPolicy);
-    console.log(results);
     this.ivmSandbox.destroy();
     this.policies.destroyVm();
 

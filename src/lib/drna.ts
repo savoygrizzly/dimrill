@@ -13,12 +13,37 @@ class DRNA extends Schema {
     super();
   }
 
+  private removeDynamicValuesFromDrna(drnaString: string): string {
+    // Split the DRNA string into base and parameters
+    const [baseDrna, ...params] = drnaString.split("&");
+
+    // Process each parameter to remove dynamic values, retaining only the parameter name
+    const processedParams = params.map((param) => {
+      const paramNameEndIndex = param.indexOf("/");
+      // If there's no slash, it means there's no dynamic value part, return the param as is
+      if (paramNameEndIndex === -1) return param;
+      // Otherwise, return the parameter name followed by a slash
+      return param.substring(0, paramNameEndIndex + 1);
+    });
+
+    // Reassemble the DRNA string
+    return [baseDrna, ...processedParams].join("&");
+  }
+
   public matchDrnaFromSchema(
     drna: string[],
-    schema: RootSchema
+    schema: RootSchema,
+    options: {
+      removeDynamicParameters: boolean;
+    } = {
+      removeDynamicParameters: false,
+    }
   ): object | boolean {
     if (drna.length < 2) {
       return false; // DRNA must have at least two parts: Type and the path
+    }
+    if (options.removeDynamicParameters) {
+      drna[1] = this.removeDynamicValuesFromDrna(drna[1]);
     }
     const type = drna[0];
     const drnaPath = drna[1].split(":");
@@ -137,7 +162,6 @@ class DRNA extends Schema {
   ): synthetizedDRNAMatch {
     // match the schema arguments with the request, user and context objects
     // return the drna with the arguments values
-
     const sanitizedDrna = this.sanitizeDrnaString(drna).split("&");
 
     const parameters = this.matchParametersToSchema(
@@ -145,7 +169,6 @@ class DRNA extends Schema {
       schema,
       validatedObjects
     );
-
     // join the parameters to the drna
 
     return {
