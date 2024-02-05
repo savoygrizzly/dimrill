@@ -20,9 +20,8 @@ async function run() {
   await gateKeeper.autoload(path.join(__dirname, "schemas"));
   console.log("done");
 
-  gateKeeper.extendSchema("files.createOrder.Arguments").unset("discount");
-  /* gateKeeper.authorize(
-    ["Action", "files:createOrder&pricelist/distributor"],
+  gateKeeper.authorize(
+    ["Ressource", "files:createOrder"],
     [
       {
         Version: "1.0",
@@ -30,15 +29,7 @@ async function run() {
           {
             Effect: "Allow",
             Action: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
-            Resource: ["files:createOrder&pricelist/distributor"],
-            Condition: {
-              "toObjectIdArray:ToQuery:InArray": {
-                hehe: "{{req:body:test}}",
-              },
-              "toObjectId:ToQuery:Equals": {
-                user_id: "{{user:id}}",
-              },
-            },
+            Ressource: ["files:createOrder"],
           },
         ],
       },
@@ -46,7 +37,6 @@ async function run() {
     {
       req: {
         body: {
-          pricelist: "distributor",
           test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
       },
@@ -56,8 +46,9 @@ async function run() {
     },
     {
       validateData: false,
+      pathOnly: true,
     }
-  ); */
+  );
 }
 run();
 

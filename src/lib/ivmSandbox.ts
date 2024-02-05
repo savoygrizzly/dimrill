@@ -37,6 +37,14 @@ class IvmSandbox {
     return { isolate: this.isolate, context: this.context };
   }
 
+  public destroy(): void {
+    if (this.isolate !== null) {
+      this.isolate.dispose();
+      this.isolate = null;
+    }
+    this.context = null;
+  }
+
   /**
    *  Setup the Isolate with the validated objects and relevant classes
    *

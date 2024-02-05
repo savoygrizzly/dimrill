@@ -68,12 +68,29 @@ class Dimrill {
     };
   }
 
+  public async authorizePathOnly(
+    drna: string[],
+    policies: Policy[],
+    options: {
+      validateData: boolean;
+      pathOnly?: boolean;
+    } = {
+      validateData: true,
+    }
+  ): Promise<object> {
+    return await this.authorize(drna, policies, {});
+  }
+
   public async authorize(
     drna: string[],
     policies: Policy[],
     { req = {}, user = {}, context = {} },
-    options = {
+    options: {
+      validateData: boolean;
+      pathOnly?: boolean;
+    } = {
       validateData: true,
+      pathOnly: false,
     }
   ): Promise<object> {
     const schemaExists = this.DRNA.matchDrnaFromSchema(
@@ -107,24 +124,31 @@ class Dimrill {
     const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
       drna[1],
       schemaExists as PathSchema,
-      validatedObjects
+      options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects
     );
-
     /*
         Match the policy
     */
-    const matchedPolicy = this.policies.matchPolicy(
+    const matchedPolicy = await this.policies.matchPolicy(
       drna[0],
       synthetizedMatch,
       schemaExists as PathSchema,
       policies,
-      validatedObjects
+      options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
+      {
+        pathOnly: options.pathOnly ? options.pathOnly : false,
+      }
     );
 
-    return {
-      valid: true, // or false
-      query: {},
-    };
+    /*
+      Merge the results
+    */
+    const results = this.policies.mergePoliciesResults(matchedPolicy);
+    console.log(results);
+    this.ivmSandbox.destroy();
+    this.policies.destroyVm();
+
+    return results;
   }
 }
 export default Dimrill;

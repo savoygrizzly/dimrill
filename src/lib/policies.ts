@@ -30,7 +30,6 @@ class Policies {
   }
 
   public destroyVm(): void {
-    this.isolatedVm.dispose();
     this.isolatedVm = null;
     this.isolatedVmContext = null;
     this.Conditions.unsetVm();
@@ -80,20 +79,23 @@ class Policies {
     policy: Policy,
     drnaToMatch: synthetizedDRNAMatch,
     schema: PathSchema,
-    validatedObjects: validatedDataObjects
+    validatedObjects: validatedDataObjects,
+    options: {
+      pathOnly: boolean;
+    }
   ): Promise<{
     valid: boolean;
     query: object | string;
   }> {
     for (const statement of policy.Statement) {
-      if (statement[drnaType] !== null) {
+      if (statement[drnaType]) {
         for (const elem of statement[drnaType]) {
           const sanitizedDrna = await this.sanitizePolicyDrna(
             String(elem),
             schema,
             validatedObjects
           );
-
+          console.log(sanitizedDrna);
           const valid = this.DRNA.checkDrnaAccess(
             drnaToMatch.drnaPaths,
             drnaToMatch.parameters,
@@ -121,13 +123,18 @@ class Policies {
     drnaToMatch: synthetizedDRNAMatch,
     schema: PathSchema,
     policies: Policy[],
-    validatedObjects: validatedDataObjects
-  ): Promise<object | boolean> {
+    validatedObjects: validatedDataObjects,
+    options: {
+      pathOnly: boolean;
+    }
+  ): Promise<Array<{ valid: boolean; query: object | string }>> {
     if (policies.length === 0) {
-      return {
-        valid: false,
-        query: {},
-      };
+      return [
+        {
+          valid: false,
+          query: {},
+        },
+      ];
     }
     const promises = await Promise.all(
       policies.map(
@@ -137,13 +144,40 @@ class Policies {
             policy,
             drnaToMatch,
             schema,
-            validatedObjects
+            validatedObjects,
+            options
           )
       )
     );
-    console.log(promises);
 
-    return false;
+    return promises;
+  }
+
+  public mergePoliciesResults(
+    results: Array<{ valid: boolean; query: object | string }>
+  ): {
+    valid: boolean;
+    query: object | string;
+  } {
+    const allValidResults = results.filter((result) => result.valid);
+    if (allValidResults.length === 0) {
+      return {
+        valid: false,
+        query: {},
+      };
+    }
+    const allQueries = [allValidResults.map((result) => result.query)];
+    // Merge queries based on their type
+    const mergedQuery =
+      typeof allQueries[0] === "object"
+        ? this.Conditions.mergeObjectQueries(
+            allQueries as Array<Record<string, any>>
+          )
+        : this.Conditions.mergeStringQueries(allQueries[0] as string[]);
+    return {
+      valid: true,
+      query: mergedQuery,
+    };
   }
 }
 export default Policies;

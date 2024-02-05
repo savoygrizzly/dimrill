@@ -137,7 +137,7 @@ class Condition {
     };
   }
 
-  private mergeObjectQueries(
+  public mergeObjectQueries(
     queries: Array<Record<string, any>>
   ): Record<string, any> {
     return queries.reduce((acc, currentArray) => {
@@ -149,7 +149,7 @@ class Condition {
     }, {});
   }
 
-  private mergeStringQueries(queries: string[]): string {
+  public mergeStringQueries(queries: string[]): string {
     return queries.join("; "); // Using '; ' as a delimiter
   }
 
