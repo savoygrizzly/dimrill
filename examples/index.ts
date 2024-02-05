@@ -21,7 +21,7 @@ async function run() {
   // await gateKeeper.autoload(path.join(__dirname, "schemas"));
   await gateKeeper.preloadSchema([
     path.join(__dirname, "schemas", "dimrill.dmrl"),
-    path.join(__dirname, "schemas", "test.dmrls"),
+    path.join(__dirname, "schemas", "test.dmrl"),
   ]);
   gateKeeper.compilePreloadedSchemas();
   console.log("done");

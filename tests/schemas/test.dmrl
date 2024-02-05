@@ -1,0 +1,9 @@
+{
+  "orders": {
+    "createOrder": {
+      "Type": [
+        "Ressource"
+      ]
+    }
+  }
+}

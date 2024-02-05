@@ -28,7 +28,7 @@ class Dimrill {
   private readonly ivmSandbox: IvmSandbox;
   private readonly DRNA: DRNA;
   private readonly policies: Policies;
-  public schema: Schema;
+  private readonly schema: Schema;
 
   private async readFiles(
     dirname: string
@@ -90,6 +90,10 @@ class Dimrill {
       schemaSet.set(key, this.schema.validateSchema(value));
     });
     this.schema.compileSchema(schemaSet);
+  }
+
+  public schemaHasLoaded(): boolean {
+    return this.schema.schemaHasLoaded();
   }
 
   public extendSchema(path: string): {

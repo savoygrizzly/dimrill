@@ -12,12 +12,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc --build && node ./examples/index.js && tsc --build --clean",
     "build": "tsup",
+    "test": "jest",
     "clean": "tsc --build --clean"
   },
   "type": "commonjs",
   "author": "Mateo Laporte",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
@@ -26,6 +28,8 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {

@@ -32,6 +32,10 @@ class Schema {
     return schema;
   }
 
+  public schemaHasLoaded(): boolean {
+    return this.compiledSchema !== null;
+  }
+
   private returnSchemaSectionPrototype(
     type: string,
     isEndpoint: boolean
