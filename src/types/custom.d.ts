@@ -28,7 +28,7 @@ export interface ConditionSchema {
   // Existing definitions...
   Enforce?: ConditionEnforceSchema; // Adjust the type as needed
   Operators?: string[];
-  ContextOperators?: string[];
+  QueryOperators?: string[];
   sectionType?: () => string;
 }
 

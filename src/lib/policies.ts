@@ -95,6 +95,7 @@ class Policies {
             schema,
             validatedObjects
           );
+
           const valid = this.DRNA.checkDrnaAccess(
             drnaToMatch.drnaPaths,
             drnaToMatch.parameters,

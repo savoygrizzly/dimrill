@@ -2,7 +2,8 @@
   "files": {
     "createOrder": {
       "Type": [
-        "Ressource"
+        "Ressource",
+        "Action"
       ],
       "Arguments": {
         "pricelist": {
@@ -26,20 +27,6 @@
           "dataFrom": "user.profile.discount"
         }
       },
-      "Condition": {
-        "Enforce": {
-          "ToContext:InArray": {
-            "organizations": "user:organizations"
-          }
-        },
-        "Operators": [
-          "StringEquals",
-          "InArray"
-        ],
-        "ContextOperators": [
-          "InArray"
-        ]
-      },
       "Variables": {
         "type": "object",
         "properties": {
@@ -49,17 +36,11 @@
               "body": {
                 "type": "object",
                 "properties": {
-                  "arg1": {
+                  "currency": {
                     "type": "string"
                   },
-                  "arg2": {
+                  "pricelist": {
                     "type": "number"
-                  },
-                  "arg3": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 }
               }

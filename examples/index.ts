@@ -24,59 +24,38 @@ async function run() {
     path.join(__dirname, "schemas", "test.dmrl"),
   ]);
   gateKeeper.compilePreloadedSchemas();
-  console.log("done");
-  const compiled = gateKeeper.compilePolicies([
-    {
-      Version: "1.0",
-      Statement: [
+
+  console.log(
+    await gateKeeper.authorize(
+      ["Action", "files:createOrder"],
+      [
         {
-          Effect: "Allow",
-          Ressource: [
-            "files:createOrder&pricelist/{{req:body:pricelist}}&currency/USD",
-            "files:createOrder&pricelist/{{req:body:pricelist}}&currency/EUR",
+          Version: "1.0",
+          Statement: [
+            {
+              Effect: "Allow",
+              Action: ["files:*"],
+            },
           ],
-          Condition: {
-            StringEquals: {
-              distributor: "{{req:body:pricelist}}",
-            },
-            StringEcuals: {
-              distributor: "{{req:body:pricelist}}",
-            },
-          },
         },
       ],
-    },
-  ]);
-  console.log(util.inspect(compiled, false, null, true));
-  /* gateKeeper.authorize(
-    ["Ressource", "files:createOrder&pricelist/{{req:body:pricelist}}"],
-    [
       {
-        Version: "1.0",
-        Statement: [
-          {
-            Effect: "Allow",
-            Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
+        req: {
+          body: {
+            pricelist: "distributor",
+            test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
           },
-        ],
-      },
-    ],
-    {
-      req: {
-        body: {
-          pricelist: "distributor",
-          test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
+        },
+        user: {
+          id: "5e56e254f4d3f1a832358c5c",
         },
       },
-      user: {
-        id: "5e56e254f4d3f1a832358c5c",
-      },
-    },
-    {
-      validateData: false,
-      pathOnly: true,
-    }
-  ); */
+      {
+        validateData: false,
+        pathOnly: true,
+      }
+    )
+  );
 }
 run();
 

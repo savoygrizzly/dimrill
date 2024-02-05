@@ -43,9 +43,12 @@ class Condition {
     valid: boolean;
     query: object | string;
   }> {
-    if (!condition) return { valid: true, query: {} };
-    if (schema.Enforce !== undefined) {
-      condition = { ...condition, ...schema.Enforce };
+    if (schema?.Condition?.Enforce) {
+      condition = { ...condition, ...schema?.Condition?.Enforce };
+      console.log("condition", condition);
+    }
+    if (!condition) {
+      return { valid: true, query: {} };
     }
     const results = await Promise.all(
       Object.entries(condition).map(async ([key, value]) => {
@@ -173,8 +176,8 @@ class Condition {
 
     if (
       modifiers.toQuery &&
-      (!schema.ContextOperators ||
-        schema?.ContextOperators.includes(mainOperator))
+      (!schema?.Condition?.QueryOperators ||
+        schema?.Condition?.QueryOperators.includes(mainOperator))
     ) {
       returnValue.valid = true;
       const results = await Promise.all(
@@ -188,7 +191,10 @@ class Condition {
       } else {
         returnValue.query = results;
       }
-    } else if (!schema.Operators || schema?.Operators.includes(mainOperator)) {
+    } else if (
+      !schema?.Condition?.Operators ||
+      schema?.Condition?.Operators.includes(mainOperator)
+    ) {
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
           return await this.runCondition(mainOperator, variables);

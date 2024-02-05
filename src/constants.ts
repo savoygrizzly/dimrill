@@ -8,7 +8,7 @@ export const SchemaGlobalKeys = [
 export const SchemaConditionKeys = [
   "Enforce",
   "Operators",
-  "ContextOperators",
+  "QueryOperators",
 ] as string[];
 export const SchemaOperators = [
   "Equals",
