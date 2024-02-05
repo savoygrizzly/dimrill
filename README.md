@@ -20,45 +20,78 @@ This is done by declaring a schema that let you define the what and the where:
 {
   "files": {
     "createOrder": {
-      "Type": ["Ressource"],
+      "Type": ["Ressource", "Action"],
       "Arguments": {
         "pricelist": {
           "type": "string",
           "enum": ["public", "distributor"],
           "dataFrom": "req.body.pricelist"
-        }
-      },
-      "Condition": {
-        "Enforce": {
-          "ToQuery:InArray": {
-            "organizations": "user:organizations"
-          }
         },
-        "Operators": ["StringEquals", "InArray"],
-        "ContextOperators": ["InArray"]
-      },
-      "Variables": {
-        "type": "object",
-        "properties": {
-          "req": {
-            "type": "object",
-            "properties": {
-              "body": {
-                "type": "object",
-                "properties": {
-                  "currency": {
-                    "type": "string"
-                  },
-                  "pricelist": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
+        "currency": {
+          "type": "string",
+          "enum": ["EUR", "USD"],
+          "dataFrom": "req.body.currency"
         }
       }
     }
   }
 }
 ```
+
+And a policy that lets you define who:
+
+```json
+[
+  {
+    "Version": "1.0",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["files:createOrder&pricelist/*"]
+      }
+    ]
+  }
+]
+```
+
+A user or entity with this policy attached will be allowed to create an order with whatever pricelist (note the wildcard after the parameter name `*`), and since no other parameters are defined, all values will be allowed (same as doing `files:createOrder&*`).
+
+If we wanted to restrict our user or entity to only create orders with a pricelist of distributor and in USD we could change that policy to:
+
+```json
+[
+  {
+    "Version": "1.0",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["files:createOrder&pricelist/distributor&currency/USD"]
+      }
+    ]
+  }
+]
+```
+
+If we wished to pass `req.body` to Dimrill we could also implement a condition like so:
+
+```json
+[
+  {
+    "Version": "1.0",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["files:createOrder&pricelist/distributor&currency/USD"]
+      }
+    ],
+    "Condition": {
+      "StringEquals": {
+        "{{req.body.pricelist}}": "distributor",
+        "{{req.body.currency}}": "USD"
+      }
+    }
+  }
+]
+```
+
+This assumes `pricelist` and `currency` are within the `req.body` and that the request body content is passed to dimrill.
