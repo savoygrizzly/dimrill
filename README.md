@@ -183,14 +183,16 @@ It's however strongly recommended to implement your own app validation logic and
 ## Dimrill methods
 
 ```
-Dimrill(
+new Dimrill(options?
     {
         validateData:boolean, default true //Validate the data passed to authorizers
         ivmTimeout: number, default 500 //timeout for the ivm in ms
-        ivmMemoryLimit: number, default 8, min //max ivm memory in mb, very low recommended in order to preserve Memory.
+        ivmMemoryLimit: number, default 8, min 8 //max ivm memory in Mb
     }
-)
+):Dimrill
 ```
+
+Initialize Dimrill.
 
 `autoload(directoryPath: string):Promise()`:
 
