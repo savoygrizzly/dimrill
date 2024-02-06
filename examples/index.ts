@@ -21,12 +21,7 @@ const gateKeeper = new Dimrill({
   ivmMemoryLimit: 8,
 });
 async function run() {
-  // await gateKeeper.autoload(path.join(__dirname, "schemas"));
-  await gateKeeper.loadSchema([
-    path.join(__dirname, "schemas", "dimrill.dmrl"),
-    path.join(__dirname, "schemas", "test.dmrl"),
-  ]);
-  gateKeeper.compileSchemas();
+  await gateKeeper.autoload(path.join(__dirname, "schemas"));
 
   console.log(
     await gateKeeper.authorize(
