@@ -86,49 +86,60 @@ class DRNA extends Schema {
   ): Record<string, string | number | undefined> {
     const parameters: Record<string, string | number | undefined> = {};
     // iterate over the schema arguments
-    Object.keys(schema.Arguments).forEach((key) => {
-      // if the arfument is in injectedDrnaParams
-      if (injectedDrnaParams.has(key)) {
-        // add the value to the parameters object
-        parameters[key] = injectedDrnaParams.get(key);
-        if (schema.Arguments[key].type === "number") {
-          parameters[key] = Number(injectedDrnaParams.get(key));
+    if (schema.Arguments) {
+      Object.keys(schema.Arguments).forEach((key) => {
+        // if the arfument is in injectedDrnaParams
+        if (injectedDrnaParams.has(key)) {
+          // add the value to the parameters object
+          parameters[key] = injectedDrnaParams.get(key);
+          if (schema.Arguments?.[key]?.type === "number") {
+            parameters[key] = Number(injectedDrnaParams.get(key));
+          } else {
+            if (
+              schema.Arguments?.[key]?.enum === null ||
+              schema.Arguments?.[key]?.enum?.includes(
+                String(injectedDrnaParams.get(key))
+              ) === true ||
+              (options.allowWildcards &&
+                String(injectedDrnaParams.get(key)) === "*")
+            ) {
+              parameters[key] = String(injectedDrnaParams.get(key));
+            }
+          }
         } else {
+          // if the argument is not in injectedDrnaParams
+          // add the default value to the parameters object
+          let validatedObjectValue = false;
+          if (schema.Arguments?.[key]?.value) {
+            validatedObjectValue = !!schema.Arguments?.[key]?.value;
+          } else if (schema.Arguments?.[key]?.dataFrom) {
+            validatedObjectValue = _get(
+              validatedObjects,
+              schema.Arguments?.[key]?.dataFrom!,
+              false
+            );
+          }
           if (
-            schema.Arguments[key].enum === null ||
-            schema.Arguments[key].enum?.includes(
-              String(injectedDrnaParams.get(key))
-            ) === true ||
-            (options.allowWildcards &&
-              String(injectedDrnaParams.get(key)) === "*")
+            validatedObjectValue &&
+            (schema.Arguments?.[key]?.type === "number" ||
+              (schema.Arguments?.[key]?.type === "string" &&
+                schema.Arguments?.[key]?.enum === null) ||
+              schema.Arguments?.[key]?.enum?.includes(
+                String(validatedObjectValue)
+              ) === true)
           ) {
-            parameters[key] = String(injectedDrnaParams.get(key));
+            if (schema.Arguments?.[key]?.value) {
+              parameters[key] = schema.Arguments?.[key]?.value;
+            } else if (schema.Arguments?.[key]?.dataFrom) {
+              parameters[key] = _get(
+                validatedObjects,
+                schema.Arguments?.[key]?.dataFrom!
+              );
+            }
           }
         }
-      } else {
-        // if the argument is not in injectedDrnaParams
-        // add the default value to the parameters object
-        const validatedObjectValue = _get(
-          validatedObjects,
-          schema.Arguments[key].dataFrom,
-          false
-        );
-        if (
-          validatedObjectValue &&
-          (schema.Arguments[key].type === "number" ||
-            (schema.Arguments[key].type === "string" &&
-              schema.Arguments[key].enum === null) ||
-            schema.Arguments[key].enum?.includes(
-              String(validatedObjectValue)
-            ) === true)
-        ) {
-          parameters[key] = _get(
-            validatedObjects,
-            schema.Arguments[key].dataFrom
-          );
-        }
-      }
-    });
+      });
+    }
     return parameters;
   }
 

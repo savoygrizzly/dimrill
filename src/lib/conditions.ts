@@ -144,6 +144,9 @@ class Condition {
     queries: Array<Record<string, any>>
   ): Record<string, any> {
     return queries.reduce((acc, currentArray) => {
+      if (!Array.isArray(currentArray)) {
+        return acc;
+      }
       currentArray.forEach((obj: any) => {
         // Merge each object into the accumulator
         Object.assign(acc, obj);
@@ -200,14 +203,13 @@ class Condition {
           return await this.runCondition(mainOperator, variables);
         })
       );
-
       // Process results
       if (modifiers.operand === "AnyValues") {
         returnValue.valid = results.filter((result) => result).length > 0;
+      } else {
+        returnValue.valid =
+          results.filter((result) => result).length === results.length;
       }
-
-      returnValue.valid =
-        results.filter((result) => result).length === results.length;
     }
     return returnValue;
   }

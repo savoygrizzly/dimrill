@@ -88,7 +88,7 @@ class Policies {
     query: object | string;
   }> {
     for (const statement of policy.Statement) {
-      if (statement[drnaType]) {
+      if (statement[drnaType] && statement.Effect === "Allow") {
         for (const elem of statement[drnaType]) {
           const sanitizedDrna = await this.sanitizePolicyDrna(
             String(elem),

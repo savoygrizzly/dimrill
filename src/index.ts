@@ -51,8 +51,8 @@ class Dimrill {
     return data;
   }
 
-  public async autoload(directory: string): Promise<void> {
-    const schemas = await this.readFiles(directory);
+  public async autoload(directoryPath: string): Promise<void> {
+    const schemas = await this.readFiles(directoryPath);
     const schemaSet = new Map<string, RootSchema>();
     Object.entries(schemas).forEach(([key, value]) => {
       schemaSet.set(key, this.schema.validateSchema(value));
@@ -60,7 +60,7 @@ class Dimrill {
     this.schema.compileSchema(schemaSet);
   }
 
-  public async preloadSchema(paths: string | string[]): Promise<void> {
+  public async loadSchema(paths: string | string[]): Promise<void> {
     if (!Array.isArray(paths)) paths = [paths];
     await Promise.all(
       paths.map(async (filename) => {
@@ -84,7 +84,7 @@ class Dimrill {
     );
   }
 
-  public compilePreloadedSchemas(): void {
+  public compileSchemas(): void {
     const schemaSet = new Map<string, RootSchema>();
     Object.entries(this.schemaLoadingList).forEach(([key, value]) => {
       schemaSet.set(key, this.schema.validateSchema(value));
@@ -92,7 +92,7 @@ class Dimrill {
     this.schema.compileSchema(schemaSet);
   }
 
-  public schemaHasLoaded(): boolean {
+  public schemaHasCompiled(): boolean {
     return this.schema.schemaHasLoaded();
   }
 
@@ -179,6 +179,7 @@ class Dimrill {
       schemaExists as PathSchema,
       options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects
     );
+
     /*
         Match the policy
     */

@@ -5,14 +5,15 @@ export type RootSchema = Record<string, PathSchema>;
 export interface PathSchema {
   [key: string];
   Type: Array<"Action" | "Ressource">;
-  Arguments: ArgumentSchema;
-  Condition: ConditionSchema;
-  Variables: VariableSchema;
+  Arguments?: ArgumentSchema;
+  Condition?: ConditionSchema;
+  Variables?: VariableSchema;
 }
 interface Argument {
   type: string | number;
   enum?: string[]; // enum is optional and only for string type
-  dataFrom: string;
+  dataFrom?: string;
+  value?: string | number;
 }
 
 // Modified ArgumentSchema using conditional types

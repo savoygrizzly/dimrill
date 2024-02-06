@@ -27,6 +27,15 @@
           "dataFrom": "user.profile.discount"
         }
       },
+      "Condition": {
+        "Operators": [
+          "StringEquals",
+          "InArray"
+        ],
+        "QueryOperators": [
+          "InArray"
+        ]
+      },
       "Variables": {
         "type": "object",
         "properties": {

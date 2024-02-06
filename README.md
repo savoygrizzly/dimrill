@@ -2,7 +2,7 @@
 
 **VERSION 3.00**
 
-Release notes
+Release notes:
 
 Wildcards `*` for parameters are now required to be specified as `&*`or`&*/*`. Wildcard for parameters on endpoints specified like so `files:createOrder:*`or`files:createOrder*`**are now invalid**. In order to specify any paramters for an endpoint use`files:createOrder:&*`.
 
@@ -72,7 +72,7 @@ If we wanted to restrict our user or entity to only create orders with a priceli
 ]
 ```
 
-If we wished to pass `req.body` to Dimrill we could also implement a condition like so:
+If we passed `req.body` to Dimrill we could also implement a condition like so:
 
 ```json
 [
@@ -95,3 +95,260 @@ If we wished to pass `req.body` to Dimrill we could also implement a condition l
 ```
 
 This assumes `pricelist` and `currency` are within the `req.body` and that the request body content is passed to dimrill.
+
+## Code Implementation
+
+To implement the example above, we just need to follow a few steps.
+
+Saving the schemas, make sure the schema(s) are valid JSON objects, and save them with the `.dmrl` extension
+
+Initialize Dimrill and autoload the schemas:
+
+```javascript
+const dimrill = require("dimrill");
+const path = require("path");
+const Dimrill = new Dimrill();
+
+await Dimrill.autoload(path.join(__dirname, "schemas")); // or a string pointing to the directory where schemas are saved
+/*
+    Dimrill will now iterate the directory and read all files ending with the .dmrl extension.
+    Files will then be compiled and the schema will be initialized
+*/
+
+const valid = await Dimrill.authorize(
+  [
+    "Action",
+    "files:createOrder",
+  ] /* The DRNA to be matched, composed of a Type of either Action or Ressource, and a string pointing to a schema endpoint. The string will be extended using the parameters defined in the schema using the values passed with {req, user, context } if a value is empty the parameter will be ignored.
+
+      In order to enforce the match of parameters, you can specify them, eg. "files:createOrder&pricelist/distributor" will only match if:
+        A policy Statement specifies a wildcard on a higher portion of the path eg: files:*
+        A policy Statement specifies a wildcard on parameters eg: files:createOrder&* or files:createOrder&*
+        A policy Statement specifies the exact same value on the parameter eg: files:createOrder&pricelist/distributor
+        The "dataFrom" key in Arguments portion of the Schema points to an object (req,user or context), holding the same String value
+      */,
+  /*
+
+        The policies array of the user, entity. Most likely fetched when authentifying the request.
+    */
+  [
+    {
+      Version: "1.0",
+      Statement: [
+        {
+          Effect: "Allow",
+          Action: ["files:*"],
+        },
+      ],
+    },
+  ],
+  {
+    req: {}, //you can pass an object to req, typically your own req object
+    user: {}, //the concerned user or object entity
+    context: {}, //other properties that might be useful
+  },
+  {
+    validateData: false /* By default this option is set to true, if a valid AJV schema is found under Variable when matching DRNA, the req, user, and context objects (if passed to dimrill); will be validated. Extra properties will be removed and type coerced. */,
+    pathOnly: false /* When this option is set to true, dimrill will ignore parameters that aren't hard coded in the DRNA to be matched ("files:createOrder&pricelist/distributor" will require the pricelist param to be equal to distributor;
+        "files:createOrder" will validate if a policy Statement specifies anything  with the path "files:createOrder" or a higher wildcard (* or files:*).
+
+        */,
+  }
+);
+/*
+Will return a value in the following format.
+{
+    valid: boolean
+    query: object
+}
+*/
+```
+
+All policies passed to `authorize` will be iterated, if a single one is matched and has conditions argument (that pass), `valid` will be true.
+
+The `query` operator will be populated by the conditions with a `ToQuery` modifier, adapted to the specified DB lamguage platform (currently only mongodb is supported). The query will hold a merge of all policy matched.
+
+Should a condition argument for a matched policy Statement, with all conditions containing the `ToQuery` modifier, valid will be true as the condition only contains a query that needs to be translated.
+
+## Dimrill methods
+
+`autoload(directoryPath: string):Promise()`:
+
+Autoload and compile all files ending with `.dmrl` in the specified directory as Schemas. The schema will then be initialized and other files cannot be added.
+
+`loadSchema(string | string[]):Promise()`:
+
+Loads files at the specified paths but does not initialize the Schemas.
+
+`compileSchemas():Promise()`:
+
+Compile schemas loaded with `loadSchema` and initialize the Schemas.
+
+`schemaHasCompiled():boolean`:
+
+Returns true if Schemas have been initialized.
+
+`extendSchema(path:string)`:
+
+Where path is a dot notation object path, eg: "files.createOrder".
+Has to be chained with one of the following methods:
+
+```
+.set(value: object)
+.push(value: array | string | number)
+.slice(value: string)
+.unset(value: string)
+```
+
+The `set` method will modify an endpoint (specified in) or its sub-properties.
+The `push` method will modify an endpoint or its sub-property array.
+The `slice` method will remove the specified value from an endpoint or its sub-property array.
+The `unset` method will remove the specified value from an endpoint or its sub-property object.
+
+All methods will trigger a re-validation of the modified portion of the Schema and throw an error should the validation fail.
+
+`authorize([ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} }, {validateData?:boolean, pathOnly?:boolean}):Promise({valid: boolean, query:{} })`:
+
+Authorize the request against provided DRNA Type and string, returns a Promise.
+
+`authorizePathOnly([ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} }, {validateData?:boolean, pathOnly:true}):Promise({valid: boolean, query:{} })`
+
+Equivalent to `authorize` with the `pathOnly` option set to `true`.
+
+## Schemas
+
+Schemas have to be designed using the following system:
+
+```
+topPortion
+    subPortion
+            ...
+            this is an endpoint
+                {
+                    Type:["Action" | "Ressource" | "Action","Ressource"]
+                    //Optional
+                    Arguments?:{
+                        argumentName:{
+                            type:"string" | "number" //the type of the argument value, note that as of now all args are cast as string.
+                            enum?:[string] //(optional) allowed values
+                            dataFrom?:string //The path of the value to retrieve inside of the objects passed to authorize (in dot notation), eg "req.body.pricelist"
+                            value?:string | number //the value to use, if present, will override dataFrom
+                        }
+                    },
+                    Condition?:{
+                        Enforce?:{
+                            //The conditions to enforce, will be added to each authorize regardless of the policy matched
+                        },
+                        Operators?:[
+                            string,
+                            //the Operators allowed to be run by the authorize process
+                        ],
+                        QueryOperators?:[
+                            string,
+                            //the Operators allowed to be used in query generation by the authorize process
+                        ]
+                    },
+                    Variables?:{
+                        "type": "object",
+                        "properties": {
+                            req:{},//AJV Schema, see AJV doc
+                            user:{}, //AJV Schema
+                            context:{} //AJV Schema
+                        }
+                    }
+                }
+    anotherSubPortion:
+        {
+            //this is another simpler endpoint
+            Type:["Action"]
+        }
+
+```
+
+## Conditions
+
+Conditions are defined as follow:
+
+`operator:operator:operator:castToType`
+
+Conditions key accept a maximum of 4 operators, case sensitive, with a limit to 1 of each type:
+
+Main-operator, define what operation to match, think of `==`, `!=`, `array.includes(...)`.
+The allowed main-operators are:
+
+```
+"Equals",
+"NotEquals",
+"StringStrictlyEquals",
+"StringEquals",
+"StringNotEquals",
+"NumericEquals",
+"NumericNotEquals",
+"NumericLessThan",
+"NumericLessThanEquals",
+"NumericGreaterThan",
+"NumericGreaterThanEquals",
+"DateEquals",
+"DateNotEquals",
+"DateLessThan",
+"DateLessThanEquals",
+"DateGreaterThan",
+"DateGreaterThanEquals",
+"Bool",
+"InArray",
+```
+
+Each operators accept 2 arguments `(left,right)`
+
+Note that `Equals`, `NotEquals` and `InArray` will not cast the 2 arguments to a specific type, hence the **STRONG** recommendation to validate your data, either in app or using the Variables property in the Schemas. This might otherwise return false for specific cases.
+
+A logical operator, either `AnyValues` or `EveryValues` (think and/or). When such operator is present it will check that either all or at least one of the values passed in the block returns true when validated against the main operator. `EveryValues` being the default behavior.
+**These operators are currently not implemented with `ToQuery`**
+
+A `ToQuery` Operator, if this operator is present the condition will not be verified but instead adapted in the specified DB query language (currently only mongodb is supported). The query will be returned in the `query` property of `authorize` response.
+
+A type caster operator, which will cast all the right side values in the block to the type specified by the operator.
+Allowed casting operators currently are:
+
+```
+"ToString",
+"ToNumber",
+"ToObjectId",
+"ToObjectIdArray",
+"ToArray",
+"ToDate",
+```
+
+## Policies
+
+Policies are valid JSON arrays of objects.
+
+```
+[
+    {
+        Version:string,
+        Statement:[
+            {
+                //One statement
+                Effect:"Allow" | "Deny",
+                Ressource?:[
+                    string //drna strings
+                ],
+                Action?:[string], //drna strings
+                Condition?:{
+                    "StringEquals":{
+                        ...
+                    },
+                    ...
+                }
+            },
+            {
+                //Another statement
+            },
+        ]
+    }
+]
+```
+
+For a Statement to be matched, it should hold a DRNA Type definition (Ressource or Action) with the same one as required by `authorize` and at least one of the drna strings it contains must match the DRNA required by `authorize`.
+If a statement has a Condition containing blocks without the operator `ToQuery`, the Condition should be valid for the Statement to be considered true.

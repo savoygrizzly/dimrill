@@ -19,22 +19,28 @@ import util from "util";
 const gateKeeper = new Dimrill();
 async function run() {
   // await gateKeeper.autoload(path.join(__dirname, "schemas"));
-  await gateKeeper.preloadSchema([
+  await gateKeeper.loadSchema([
     path.join(__dirname, "schemas", "dimrill.dmrl"),
     path.join(__dirname, "schemas", "test.dmrl"),
   ]);
-  gateKeeper.compilePreloadedSchemas();
+  gateKeeper.compileSchemas();
 
   console.log(
     await gateKeeper.authorize(
-      ["Action", "files:createOrder"],
+      ["Ressource", "files:createOrder&pricelist/distributor"],
       [
         {
           Version: "1.0",
           Statement: [
             {
               Effect: "Allow",
-              Action: ["files:*"],
+              Ressource: ["files:createOrder&pricelist/distributor"],
+              Condition: {
+                "AnyValues:StringEquals": {
+                  test: "noTest",
+                  pricelist: "pricelist",
+                },
+              },
             },
           ],
         },
@@ -52,7 +58,7 @@ async function run() {
       },
       {
         validateData: false,
-        pathOnly: true,
+        pathOnly: false,
       }
     )
   );
