@@ -7,13 +7,19 @@ import MongoDbOperators from "./operators/adapters/mongodb";
 class IvmSandbox {
   constructor(
     options = {
-      memoryLimit: 300,
+      memoryLimit: 8,
       timeout: 1000,
     }
   ) {
+    this.options = options;
     this.isolate = null;
     this.context = null;
   }
+
+  private readonly options: {
+    memoryLimit: number;
+    timeout: number;
+  };
 
   private isolate: ivm.Isolate | null;
   private context: ivm.Context | null;
@@ -24,8 +30,8 @@ class IvmSandbox {
    */
   public async create(
     options = {
-      memoryLimit: 300,
-      timeout: 1000,
+      memoryLimit: this.options.memoryLimit,
+      timeout: this.options.timeout,
     }
   ): Promise<{ isolate: ivm.Isolate; context: ivm.Context }> {
     if (this.isolate === null) {
@@ -122,7 +128,9 @@ class IvmSandbox {
               // Property not found or invalid; return undefined or handle as needed
             }
           }
-          
+          if (['&', '/', '*'].includes(current)) {
+            current = "";
+          }
           return current;
         }
     
@@ -140,6 +148,9 @@ class IvmSandbox {
               return accessProperty(parsedValue.slice(2, -2), context);
             }
             else {
+              if (['&', '/'].includes(parsedValue)) {
+                parsedValue = "";
+              }
               return parsedValue;
             }
           }

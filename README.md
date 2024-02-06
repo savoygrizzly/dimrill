@@ -11,8 +11,9 @@ Wildcards `*` for parameters are now required to be specified as `&*`or`&*/*`. W
 Dimrill is a policy based authorization platform, it doesnt replace your JWT token, nor does it replace your login logic.
 What it does is help you supplement a role based authorization (eg. an `admin` role for a user that can oversee eveyrthing, a `user` that can perform certain actions and then maybe a `manager` sitting in the middle of all that).
 
-It is intended for complex roles handling, and will allow you to define "roles" dynamically based on the ressources and action required.
-Thereofre Dimrill is using something called `DRNA` as in Dynamic Ressource Naming Authority, in a way it helps you define via a schema which **Ressource** _think `GET`_ and **Action**, _think `POST`_ you need to authorize, which arguments _think `parameters` or `request.body`_ are required to be passed, and helps you define conditions for extra validation.
+It is intended to act as an **authorization middleware** for complex roles handling, and will allow you to define "roles" dynamically based on the ressources and action required.
+
+Dimrill is using something called `DRNA` as in Dynamic Ressource Naming Authority, in a way it helps you define via schemas which _Ressource_ (think `GET`) and _Action_, (think `POST`) you need to authorize, which arguments (think `req.params` or `request.body`) are required to be passed, and helps you define conditions for extra validation.
 
 This is done by declaring a schema that let you define the what and the where:
 
@@ -96,7 +97,9 @@ If we passed `req.body` to Dimrill we could also implement a condition like so:
 
 This assumes `pricelist` and `currency` are within the `req.body` and that the request body content is passed to dimrill.
 
-## Code Implementation
+## Code example
+
+First install dimrill: `npm install dimrill`.
 
 To implement the example above, we just need to follow a few steps.
 
@@ -170,7 +173,24 @@ The `query` operator will be populated by the conditions with a `ToQuery` modifi
 
 Should a condition argument for a matched policy Statement, with all conditions containing the `ToQuery` modifier, valid will be true as the condition only contains a query that needs to be translated.
 
+## Security considerations
+
+Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install. Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
+
+Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data passed to the autorizer.
+It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill. If you know the data passed to Dimrill to be clean, you can disable it globally vwhen crrating the instance or case by case via the options on `authorize`.
+
 ## Dimrill methods
+
+```
+Dimrill(
+    {
+        validateData:boolean, default true //Validate the data passed to authorizers
+        ivmTimeout: number, default 500 //timeout for the ivm in ms
+        ivmMemoryLimit: number, default 8, min //max ivm memory in mb, very low recommended in order to preserve Memory.
+    }
+)
+```
 
 `autoload(directoryPath: string):Promise()`:
 
@@ -381,3 +401,26 @@ Policies are valid JSON arrays of objects.
 
 For a Statement to be matched, it should hold a DRNA Type definition (Ressource or Action) with the same one as required by `authorize` and at least one of the drna strings it contains must match the DRNA required by `authorize`.
 If a statement has a Condition containing blocks without the operator `ToQuery`, the Condition should be valid for the Statement to be considered true.
+
+## Dynamic parameters
+
+It is possible to use dynamic parameters directly in the policies statements.
+Dynamic parameters can be passed in drna strings as well as in conditions value (right one). Dynamic parameters will only have access to the `req`,`user`, and `context` objects passed to the authorizer. Paths must therefore start with one of these objects name.
+
+In order to specify a dynamic parameter the following syntax has to be used `"{{req:yourparam:subParam}}"`, the value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
+
+NB.
+**Dynamic parameters cannot be used in the authorizer**
+
+Examples:
+In a condition:
+
+```
+Condition:{
+    StringEquals:{
+        "distributor":"{{req:body:pricelist}}"
+    }
+}
+```
+
+In a drna string: `files:createOrder&pricelist/{{req:body:pricelist}}`.

@@ -16,7 +16,10 @@ import path from "path";
 import ivm from "isolated-vm";
 import Operators from "./operators";
 import util from "util";
-const gateKeeper = new Dimrill();
+const gateKeeper = new Dimrill({
+  validateData: false,
+  ivmMemoryLimit: 8,
+});
 async function run() {
   // await gateKeeper.autoload(path.join(__dirname, "schemas"));
   await gateKeeper.loadSchema([
@@ -34,11 +37,11 @@ async function run() {
           Statement: [
             {
               Effect: "Allow",
-              Ressource: ["files:createOrder&pricelist/distributor"],
+              Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
               Condition: {
                 "AnyValues:StringEquals": {
                   test: "noTest",
-                  pricelist: "pricelist",
+                  pricelist: "{{req:body:pricelist}}",
                 },
               },
             },
@@ -48,7 +51,7 @@ async function run() {
       {
         req: {
           body: {
-            pricelist: "distributor",
+            pricelist: "*",
             test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
           },
         },

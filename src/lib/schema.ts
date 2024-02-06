@@ -211,8 +211,8 @@ class Schema {
     req: object,
     user: object,
     context: object,
-    options = {
-      validateData: true,
+    options: {
+      validateData: boolean;
     }
   ): validatedDataObjects {
     const data = { req, user, context };

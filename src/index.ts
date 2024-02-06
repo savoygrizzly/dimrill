@@ -15,13 +15,40 @@ import IvmSandbox from "./lib/ivmSandbox";
 import { fileExtensionName } from "./constants";
 const fsp = fs.promises;
 class Dimrill {
-  constructor() {
+  constructor(
+    options: {
+      validateData?: boolean;
+      ivmMemoryLimit?: number;
+      ivmTimeout?: number;
+      persistantIvm?: boolean;
+    } = {}
+  ) {
+    this.opts = {
+      validateData: true,
+      ivmMemoryLimit: 8,
+      ivmTimeout: 500,
+      persistantIvm: false,
+      ...options,
+    };
+    if (Number(this.opts.ivmMemoryLimit) < 8) {
+      throw new Error("Minimum memory limit is 8MB");
+    }
     this.schema = new Schema();
     this.DRNA = new DRNA();
-    this.ivmSandbox = new IvmSandbox();
+    this.ivmSandbox = new IvmSandbox({
+      memoryLimit: this.opts.ivmMemoryLimit!,
+      timeout: this.opts.ivmTimeout!,
+    });
     this.policies = new Policies(this.DRNA, new Condition());
     this.policiesCompiler = new PoliciesCompiler(this.DRNA, this.schema);
   }
+
+  private readonly opts: {
+    validateData?: boolean;
+    ivmMemoryLimit?: number;
+    ivmTimeout?: number;
+    persistantIvm?: boolean;
+  };
 
   private readonly schemaLoadingList: Record<string, RootSchema> = {};
   private readonly policiesCompiler: PoliciesCompiler;
@@ -122,6 +149,18 @@ class Dimrill {
     return this.policiesCompiler.compilePolicies(policies);
   }
 
+  private async launchIvm(): Promise<void> {
+    await this.ivmSandbox.create();
+    // await this.ivmSandbox.setup(validatedObjects);
+    /*
+        Pass the Isolate and the Context to the Policies class
+    */
+    this.policies.setVm(
+      this.ivmSandbox.get().isolate,
+      this.ivmSandbox.get().context
+    );
+  }
+
   public async authorizePathOnly(
     drna: string[],
     policies: Policy[],
@@ -140,13 +179,16 @@ class Dimrill {
     policies: Policy[],
     { req = {}, user = {}, context = {} },
     options: {
-      validateData: boolean;
+      validateData?: boolean;
       pathOnly?: boolean;
     } = {
-      validateData: true,
       pathOnly: false,
     }
   ): Promise<object> {
+    if (!options.validateData) {
+      options.validateData = this.opts.validateData;
+    }
+
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       drna,
       this.schema.returnSchema()
@@ -159,7 +201,9 @@ class Dimrill {
       req,
       user,
       context,
-      options
+      {
+        validateData: options.validateData ?? true,
+      }
     );
     await this.ivmSandbox.create();
     await this.ivmSandbox.setup(validatedObjects);
