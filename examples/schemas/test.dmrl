@@ -1,6 +1,6 @@
 {
-  "orders": {
-    "createOrder": {
+  "files": {
+    "createFile": {
       "Type": [
         "Ressource"
       ]
