@@ -207,6 +207,35 @@ The `unset` method will remove the specified value from an endpoint or its sub-p
 
 All methods will trigger a re-validation of the modified portion of the Schema and throw an error should the validation fail.
 
+`compilePolicies([policies]):Map(number, CompilationResults)`:
+
+Validates all policies passed in array, the results will be mapped with the index of the policy in the passed array.
+Returned object have the following structure:
+
+```
+{
+  effects: [string],
+  drna: [
+    {
+        valid: boolean,
+         message: {
+            [drnaString]:Error message
+         }
+    }
+  ],
+  conditions: [
+        [
+            {
+                valid: boolean,
+                message: {
+                    [operators]:Error message
+                 };
+            }
+        ]
+  ],
+}
+```
+
 `authorize([ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} }, {validateData?:boolean, pathOnly?:boolean}):Promise({valid: boolean, query:{} })`:
 
 Authorize the request against provided DRNA Type and string, returns a Promise.
