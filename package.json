@@ -1,7 +1,7 @@
 {
-  "name": "dimrill-v2",
-  "version": "1.0.0",
-  "description": "Dimrill V2, Typescript and total rewrite",
+  "name": "dimrill",
+  "version": "3.0.0",
+  "description": "Dimrill V3, Typescript",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -9,15 +9,22 @@
     "dist"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc --build && node ./examples/index.js && tsc --build --clean",
     "build": "tsup",
     "test": "jest",
     "clean": "tsc --build --clean"
   },
+  "license": "MIT",
+  "keywords": [
+    "authorization",
+    "authorizer",
+    "jwt",
+    "mongoose",
+    "fastify",
+    "express"
+  ],
   "type": "commonjs",
   "author": "Mateo Laporte",
-  "license": "ISC",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/lodash": "^4.14.202",
