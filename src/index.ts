@@ -21,6 +21,7 @@ class Dimrill {
       ivmMemoryLimit?: number;
       ivmTimeout?: number;
       persistantIvm?: boolean;
+      schemaPrefix?: string;
     } = {}
   ) {
     this.opts = {
@@ -28,12 +29,13 @@ class Dimrill {
       ivmMemoryLimit: 8,
       ivmTimeout: 500,
       persistantIvm: false,
+      schemaPrefix: "",
       ...options,
     };
     if (Number(this.opts.ivmMemoryLimit) < 8) {
       throw new Error("Minimum memory limit is 8MB");
     }
-    this.schema = new Schema();
+    this.schema = new Schema({ prefix: this.opts.schemaPrefix });
     this.DRNA = new DRNA();
     this.ivmSandbox = new IvmSandbox({
       memoryLimit: this.opts.ivmMemoryLimit!,
@@ -44,6 +46,7 @@ class Dimrill {
   }
 
   private readonly opts: {
+    schemaPrefix: any;
     validateData?: boolean;
     ivmMemoryLimit?: number;
     ivmTimeout?: number;

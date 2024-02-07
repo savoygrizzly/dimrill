@@ -18,12 +18,14 @@ import _get from "lodash/get";
 import _set from "lodash/set";
 import _merge from "lodash/merge";
 class Schema {
-  constructor() {
+  constructor(options: { prefix: string } = { prefix: "" }) {
     this.schema = {};
     this.compiledSchema = null;
     this.ajv = new Ajv();
+    this.schemaPrefix = options.prefix;
   }
 
+  private readonly schemaPrefix: string;
   private readonly ajv: Ajv;
   public schema: RootSchema;
   public compiledSchema: RootSchema | null;
@@ -243,7 +245,11 @@ class Schema {
     schemaMap.forEach((value, key: string) => {
       mergedSchema = this.mergeSchemaObjects(mergedSchema, value, key);
     });
-
+    if (this.schemaPrefix !== "") {
+      mergedSchema = {
+        [String(this.schemaPrefix)]: mergedSchema,
+      };
+    }
     this.schema = mergedSchema;
     this.compiledSchema = mergedSchema;
   }

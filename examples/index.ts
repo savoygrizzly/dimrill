@@ -19,20 +19,22 @@ import util from "util";
 const gateKeeper = new Dimrill({
   validateData: false,
   ivmMemoryLimit: 8,
+  schemaPrefix: "test",
 });
 async function run() {
   await gateKeeper.autoload(path.join(__dirname, "schemas"));
 
   const value = await gateKeeper.authorize(
-    ["Ressource", "files:createOrder"],
+    ["Ressource", "test:files:createOrder"],
     [
       {
         Version: "1.0",
         Statement: [
           {
             Effect: "Allow",
-            Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
-            Condition: {},
+            Ressource: [
+              "test:files:createOrder&pricelist/{{req:body:pricelist}}",
+            ],
           },
         ],
       },
@@ -40,7 +42,7 @@ async function run() {
     {
       req: {
         body: {
-          pricelist: "distributor",
+          pricelist: "public",
           test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
       },
