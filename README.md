@@ -175,10 +175,49 @@ Should a condition argument for a matched policy Statement, with all conditions 
 
 ## Security considerations
 
+When usign Dimrill your authorization process will rely on the policies passed to the authorizer to define whether a user/entity is allowed to access a ressource or perform an action. It is therefore **imperative** to ensure that policies originate from a trusted source and cannot be corrupted or modified.
+If you intend to allow policies to be written by users you have to accept and understand the implications. **Dimrill currently does not provide any features other than Schema Conditions to limit what all users can perform.**
+Considering that if a user is given a wildcard policy, he will be able to access all paths specified, on the Drna Type on which this wildcard applies, for example:
+This policy will give a user/entity access to every available Action and Ressource.
+
+```json
+[
+  {
+    "Version": "1.0",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["*"],
+        "Ressource": ["*"]
+      }
+    ]
+  }
+]
+```
+
+And the following allows a user to access all schema portions for files, both for Action and Ressource.
+
+```json
+[
+  {
+    "Version": "1.0",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["files:*"],
+        "Ressource": ["files:*"]
+      }
+    ]
+  }
+]
+```
+
+The only cases in which this might not return true is where a Condition Enforce is defined in a schema and the user/entity does not meet the condition requirement, or is limited by the query returned by the adapter (if the enforced condition has a `ToQuery` modifier).
+
 Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install. Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
 
-Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data passed to the autorizer.
-It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill. If you know the data passed to Dimrill to be clean, you can disable it globally vwhen crrating the instance or case by case via the options on `authorize`.
+Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data objects passed to the autorizer.
+It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill. If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
 
 ## Dimrill methods
 
@@ -297,7 +336,13 @@ topPortion
                         QueryOperators?:[
                             string,
                             //the Operators allowed to be used in query generation by the authorize process
-                        ]
+                        ],
+                        "QueryEnforceTypeCast": {
+                        /*
+                            If specified each keys matched in a Condition with ToQuery (also applies to Enforced ones) will be cast to the specified type, this will override other specified casting types provided in a condition statement.
+                        */
+                             [key: string]: "Type" //See type casters list in Conditions for valid types
+                        }
                     },
                     Variables?:{
                         "type": "object",
