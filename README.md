@@ -4,7 +4,7 @@
 
 Release notes:
 
-Wildcards `*` for parameters are now required to be specified as `&*`or`&*/*`. Wildcard for parameters on endpoints specified like so `files:createOrder:*`or`files:createOrder*`**are now invalid**. In order to specify any paramters for an endpoint use`files:createOrder:&*`.
+Wildcards `*` for parameters are now required to be specified as `&*`or`&*/*`. Wildcard for parameters on endpoints specified like so `files:createOrder:*`or`files:createOrder*` **are now invalid**. In order to specify any paramters for an endpoint use`files:createOrder:&*`.
 
 ## What is Dimrill, and the philosophy behind it
 
