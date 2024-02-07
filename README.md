@@ -1,6 +1,6 @@
 # Dimrill
 
-**VERSION 3.00**
+**VERSION 3.0.2**
 
 Release notes:
 
