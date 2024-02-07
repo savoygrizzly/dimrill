@@ -237,8 +237,9 @@ class Condition {
               }
             }
             if (
+              SchemaCastTypes.includes(enforcedTypeCast) &&
               typeof this.typeCasters[enforcedTypeCast as keyof TypeCasters] ===
-              "function"
+                "function"
             ) {
               if (
                 typeof value === "object" &&
@@ -247,17 +248,17 @@ class Condition {
               ) {
                 Object.entries(value).forEach(([queryKey, queryValue]) => {
                   const castedValue =
-                    this.typeCasters[enforcedTypeCast as keyof TypeCasters](
-                      queryValue
-                    );
+                    this.typeCasters[
+                      String(enforcedTypeCast) as keyof TypeCasters
+                    ](queryValue);
                   if (!acc[key]) acc[key] = {};
                   acc[key][queryKey] = castedValue;
                 });
               } else {
                 acc[key] =
-                  this.typeCasters[enforcedTypeCast as keyof TypeCasters](
-                    value
-                  );
+                  this.typeCasters[
+                    String(enforcedTypeCast) as keyof TypeCasters
+                  ](value);
               }
             } else {
               acc[key] = value;
