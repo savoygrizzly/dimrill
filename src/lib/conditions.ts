@@ -45,7 +45,6 @@ class Condition {
   }> {
     if (schema?.Condition?.Enforce) {
       condition = { ...condition, ...schema?.Condition?.Enforce };
-      console.log("condition", condition);
     }
     if (!condition) {
       return { valid: true, query: {} };
@@ -231,11 +230,9 @@ class Condition {
         return Object.entries(result).reduce(
           (acc: Record<string, any>, [key, value]) => {
             // Check if value is a direct object or a MongoDB query object
-            console.log(enforceTypeCast);
             let enforcedTypeCast = castType;
             if (enforceTypeCast) {
               if (enforceTypeCast[key]) {
-                console.log(enforceTypeCast[key]);
                 enforcedTypeCast = enforceTypeCast[key];
               }
             }
@@ -257,7 +254,6 @@ class Condition {
                   acc[key][queryKey] = castedValue;
                 });
               } else {
-                console.log("single", enforcedTypeCast);
                 acc[key] =
                   this.typeCasters[enforcedTypeCast as keyof TypeCasters](
                     value

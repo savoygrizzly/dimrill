@@ -32,6 +32,11 @@
         }
       },
       "Condition": {
+        "Enforce": {
+          "ToQuery:InArray": {
+            "organizations": "{{user:id}}"
+          }
+        },
         "Operators": [
           "StringEquals",
           "InArray"
@@ -41,7 +46,7 @@
           "Equals"
         ],
         "QueryEnforceTypeCast": {
-          "user_id": "ToObjectId"
+          "organizations": "ToObjectId"
         }
       },
       "Variables": {

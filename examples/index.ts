@@ -23,43 +23,38 @@ const gateKeeper = new Dimrill({
 async function run() {
   await gateKeeper.autoload(path.join(__dirname, "schemas"));
 
-  console.log(
-    await gateKeeper.authorize(
-      ["Ressource", "files:createOrder"],
-      [
-        {
-          Version: "1.0",
-          Statement: [
-            {
-              Effect: "Allow",
-              Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
-              Condition: {
-                "ToQuery:Equals": {
-                  test: "noTest",
-                  user_id: "{{user:id}}",
-                },
-              },
-            },
-          ],
-        },
-      ],
+  const value = await gateKeeper.authorize(
+    ["Ressource", "files:createOrder"],
+    [
       {
-        req: {
-          body: {
-            pricelist: "distributor",
-            test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
+        Version: "1.0",
+        Statement: [
+          {
+            Effect: "Allow",
+            Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
+            Condition: {},
           },
-        },
-        user: {
-          id: "5e56e254f4d3f1a832358c5c",
+        ],
+      },
+    ],
+    {
+      req: {
+        body: {
+          pricelist: "distributor",
+          test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
       },
-      {
-        validateData: false,
-        pathOnly: false,
-      }
-    )
+      user: {
+        id: "5e56e254f4d3f1a832358c5c",
+      },
+    },
+    {
+      validateData: false,
+      pathOnly: false,
+    }
   );
+
+  console.log(util.inspect(value, false, null, true));
 }
 run();
 

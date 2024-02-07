@@ -102,13 +102,7 @@ class Policies {
             sanitizedDrna.drnaPaths,
             sanitizedDrna.parameters
           );
-          console.log(
-            drnaToMatch.drnaPaths,
-            drnaToMatch.parameters,
-            sanitizedDrna.drnaPaths,
-            sanitizedDrna.parameters,
-            valid
-          );
+
           if (valid) {
             return await this.Conditions.runConditions(
               statement.Condition,
