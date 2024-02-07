@@ -30,7 +30,7 @@ export interface ConditionSchema {
   Enforce?: ConditionEnforceSchema; // Adjust the type as needed
   Operators?: string[];
   QueryOperators?: string[];
-  sectionType?: () => string;
+  QueryEnforceTypeCast?: Record<string, string>;
 }
 
 // Schema for Variables (like 'req', 'user', 'context')

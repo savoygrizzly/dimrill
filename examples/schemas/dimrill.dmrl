@@ -25,16 +25,29 @@
         "discount": {
           "type": "number",
           "dataFrom": "user.profile.discount"
+        },
+        "user_id": {
+          "type": "string",
+          "dataFrom": "user.id"
         }
       },
       "Condition": {
+        "Enforce": {
+          "ToQuery:InArray": {
+            "organizations": "{{user:id}}"
+          }
+        },
         "Operators": [
           "StringEquals",
           "InArray"
         ],
         "QueryOperators": [
-          "InArray"
-        ]
+          "InArray",
+          "Equals"
+        ],
+        "QueryEnforceTypeCast": {
+          "organizations": "ToObjectId"
+        }
       },
       "Variables": {
         "type": "object",

@@ -21,50 +21,40 @@ const gateKeeper = new Dimrill({
   ivmMemoryLimit: 8,
 });
 async function run() {
-  // await gateKeeper.autoload(path.join(__dirname, "schemas"));
-  await gateKeeper.loadSchema([
-    path.join(__dirname, "schemas", "dimrill.dmrl"),
-    path.join(__dirname, "schemas", "test.dmrl"),
-  ]);
-  gateKeeper.compileSchemas();
+  await gateKeeper.autoload(path.join(__dirname, "schemas"));
 
-  console.log(
-    await gateKeeper.authorize(
-      ["Ressource", "files:createOrder&pricelist/distributor"],
-      [
-        {
-          Version: "1.0",
-          Statement: [
-            {
-              Effect: "Allow",
-              Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
-              Condition: {
-                "AnyValues:StringEquals": {
-                  test: "noTest",
-                  pricelist: "{{req:body:pricelist}}",
-                },
-              },
-            },
-          ],
-        },
-      ],
+  const value = await gateKeeper.authorize(
+    ["Ressource", "files:createOrder"],
+    [
       {
-        req: {
-          body: {
-            pricelist: "*",
-            test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
+        Version: "1.0",
+        Statement: [
+          {
+            Effect: "Allow",
+            Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
+            Condition: {},
           },
-        },
-        user: {
-          id: "5e56e254f4d3f1a832358c5c",
+        ],
+      },
+    ],
+    {
+      req: {
+        body: {
+          pricelist: "distributor",
+          test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
         },
       },
-      {
-        validateData: false,
-        pathOnly: false,
-      }
-    )
+      user: {
+        id: "5e56e254f4d3f1a832358c5c",
+      },
+    },
+    {
+      validateData: false,
+      pathOnly: false,
+    }
   );
+
+  console.log(util.inspect(value, false, null, true));
 }
 run();
 

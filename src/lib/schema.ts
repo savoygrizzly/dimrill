@@ -12,10 +12,11 @@ import {
   type validatedDataObjects,
 } from "../types/custom";
 
-import CompiledSchemaObject from "./compiledSchema";
+import type CompiledSchemaObject from "./compiledSchema";
 import Ajv from "ajv";
 import _get from "lodash/get";
 import _set from "lodash/set";
+import _merge from "lodash/merge";
 class Schema {
   constructor() {
     this.schema = {};
@@ -25,7 +26,7 @@ class Schema {
 
   private readonly ajv: Ajv;
   public schema: RootSchema;
-  public compiledSchema: CompiledSchemaObject | null;
+  public compiledSchema: RootSchema | null;
   public validateSchema(schema: RootSchema): RootSchema {
     this.validateSchemaObject(schema, []);
     // console.log(util.inspect(schema, false, null, true));
@@ -46,6 +47,14 @@ class Schema {
       },
       sectionName() {
         return type;
+      },
+    };
+  }
+
+  private returnSchemaFilePrototype(fileName: string): object {
+    return {
+      fromFile() {
+        return fileName;
       },
     };
   }
@@ -192,17 +201,50 @@ class Schema {
     return schemaCondition;
   }
 
-  public compileSchema(schemaMap: Map<string, RootSchema>): any {
-    const mergedSchema = new CompiledSchemaObject("global");
+  private mergeSchemaObjects(
+    obj1: Record<string, any>,
+    obj2: Record<string, any>,
+    fileName: string
+  ): Record<string, any> {
+    Object.keys(obj2).forEach((key) => {
+      // Ensure prototype is set for new keys in obj1
+      if (
+        !obj1.hasOwnProperty(key) &&
+        this.returnSchemaFilePrototype(fileName)
+      ) {
+        Object.setPrototypeOf(
+          obj2[key],
+          this.returnSchemaFilePrototype(fileName)
+        );
+      }
 
-    schemaMap.forEach((value, key) => {
-      const compiledSchema = new CompiledSchemaObject(key);
-      compiledSchema.assign(value);
-
-      // Merge the modified schema into the mergedSchema object
-      mergedSchema.assign(compiledSchema);
+      if (Array.isArray(obj1[key]) && Array.isArray(obj2[key])) {
+        // Combine arrays without duplicates
+        obj1[key] = Array.from(new Set([...obj1[key], ...obj2[key]]));
+      } else if (this.isObject(obj1[key]) && this.isObject(obj2[key])) {
+        // Recursively merge objects
+        obj1[key] = this.mergeSchemaObjects(obj1[key], obj2[key], fileName);
+      } else {
+        // For non-overlapping keys or primitive values, simply set/overwrite with obj2's value
+        obj1[key] = obj2[key];
+      }
     });
-    this.schema = mergedSchema.schema;
+
+    return obj1;
+  }
+
+  private isObject(item: any): boolean {
+    return item && typeof item === "object" && !Array.isArray(item);
+  }
+
+  public compileSchema(schemaMap: Map<string, RootSchema>): any {
+    let mergedSchema = {};
+
+    schemaMap.forEach((value, key: string) => {
+      mergedSchema = this.mergeSchemaObjects(mergedSchema, value, key);
+    });
+
+    this.schema = mergedSchema;
     this.compiledSchema = mergedSchema;
   }
 
