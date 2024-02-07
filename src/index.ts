@@ -223,7 +223,6 @@ class Dimrill {
       schemaExists as PathSchema,
       options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects
     );
-
     /*
         Match the policy
     */

@@ -25,7 +25,7 @@ async function run() {
 
   console.log(
     await gateKeeper.authorize(
-      ["Ressource", "files:createOrder&pricelist/distributor"],
+      ["Ressource", "files:createOrder"],
       [
         {
           Version: "1.0",
@@ -34,9 +34,9 @@ async function run() {
               Effect: "Allow",
               Ressource: ["files:createOrder&pricelist/{{req:body:pricelist}}"],
               Condition: {
-                "AnyValues:StringEquals": {
+                "ToQuery:Equals": {
                   test: "noTest",
-                  pricelist: "{{req:body:pricelist}}",
+                  user_id: "{{user:id}}",
                 },
               },
             },
@@ -46,7 +46,7 @@ async function run() {
       {
         req: {
           body: {
-            pricelist: "*",
+            pricelist: "distributor",
             test: ["5e56e254f4d3f1a832358c5c", "5e56e254f4d3f1a832358c5d"],
           },
         },

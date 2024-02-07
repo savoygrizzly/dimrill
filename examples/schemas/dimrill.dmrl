@@ -25,6 +25,10 @@
         "discount": {
           "type": "number",
           "dataFrom": "user.profile.discount"
+        },
+        "user_id": {
+          "type": "string",
+          "dataFrom": "user.id"
         }
       },
       "Condition": {
@@ -33,8 +37,12 @@
           "InArray"
         ],
         "QueryOperators": [
-          "InArray"
-        ]
+          "InArray",
+          "Equals"
+        ],
+        "QueryEnforceTypeCast": {
+          "user_id": "ToObjectId"
+        }
       },
       "Variables": {
         "type": "object",

@@ -9,6 +9,7 @@ export const SchemaConditionKeys = [
   "Enforce",
   "Operators",
   "QueryOperators",
+  "QueryEnforceTypeCast",
 ] as string[];
 export const SchemaOperators = [
   "Equals",

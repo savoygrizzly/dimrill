@@ -188,9 +188,13 @@ class Condition {
           return await this.runAdapter(mainOperator, variables);
         })
       );
-      if (modifiers.castType !== undefined) {
+      if (modifiers.castType || schema?.Condition?.QueryEnforceTypeCast) {
         // cast results to correct type
-        returnValue.query = this.castQuery(results, modifiers.castType);
+        returnValue.query = this.castQuery(
+          results,
+          modifiers.castType!,
+          schema?.Condition?.QueryEnforceTypeCast
+        );
       } else {
         returnValue.query = results;
       }
@@ -216,7 +220,8 @@ class Condition {
 
   private castQuery(
     results: any[],
-    castType: string
+    castType: string,
+    enforceTypeCast: Record<string, string> | undefined
   ): string | Record<string, any> {
     return results.map((result) => {
       if (typeof result === "string") {
@@ -226,19 +231,40 @@ class Condition {
         return Object.entries(result).reduce(
           (acc: Record<string, any>, [key, value]) => {
             // Check if value is a direct object or a MongoDB query object
+            console.log(enforceTypeCast);
+            let enforcedTypeCast = castType;
+            if (enforceTypeCast) {
+              if (enforceTypeCast[key]) {
+                console.log(enforceTypeCast[key]);
+                enforcedTypeCast = enforceTypeCast[key];
+              }
+            }
             if (
-              typeof value === "object" &&
-              value !== null &&
-              !Array.isArray(value)
+              typeof this.typeCasters[enforcedTypeCast as keyof TypeCasters] ===
+              "function"
             ) {
-              Object.entries(value).forEach(([queryKey, queryValue]) => {
-                const castedValue =
-                  this.typeCasters[castType as keyof TypeCasters](queryValue);
-                if (!acc[key]) acc[key] = {};
-                acc[key][queryKey] = castedValue;
-              });
+              if (
+                typeof value === "object" &&
+                value !== null &&
+                !Array.isArray(value)
+              ) {
+                Object.entries(value).forEach(([queryKey, queryValue]) => {
+                  const castedValue =
+                    this.typeCasters[enforcedTypeCast as keyof TypeCasters](
+                      queryValue
+                    );
+                  if (!acc[key]) acc[key] = {};
+                  acc[key][queryKey] = castedValue;
+                });
+              } else {
+                console.log("single", enforcedTypeCast);
+                acc[key] =
+                  this.typeCasters[enforcedTypeCast as keyof TypeCasters](
+                    value
+                  );
+              }
             } else {
-              acc[key] = this.typeCasters[castType as keyof TypeCasters](value);
+              acc[key] = value;
             }
             return acc;
           },
