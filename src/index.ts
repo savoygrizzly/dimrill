@@ -250,4 +250,4 @@ class Dimrill {
     return results;
   }
 }
-export default Dimrill;
+export = Dimrill;

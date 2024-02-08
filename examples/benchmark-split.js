@@ -1,5 +1,5 @@
 const fs = require("fs");
-
+const dimrill = require("../dist/index.js");
 const policies = JSON.parse(fs.readFileSync("fake_policies.json", "utf8"));
 
 policies.push("files:orders:createOrder&pricelist/distributor");
