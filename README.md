@@ -108,17 +108,17 @@ Saving the schemas, make sure the schema(s) are valid JSON objects, and save the
 Initialize Dimrill and autoload the schemas:
 
 ```javascript
-const dimrill = require("dimrill");
+const Dimrill = require("dimrill").default;
 const path = require("path");
-const Dimrill = new Dimrill();
+const DimrillAuthorizer = new Dimrill();
 
-await Dimrill.autoload(path.join(__dirname, "schemas")); // or a string pointing to the directory where schemas are saved
+await DimrillAuthorizer.autoload(path.join(__dirname, "schemas")); // or a string pointing to the directory where schemas are saved
 /*
     Dimrill will now iterate the directory and read all files ending with the .dmrl extension.
     Files will then be compiled and the schema will be initialized
 */
 
-const valid = await Dimrill.authorize(
+const valid = await DimrillAuthorizer.authorize(
   [
     "Action",
     "files:createOrder",

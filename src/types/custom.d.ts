@@ -3,7 +3,7 @@ export type RootSchema = Record<string, PathSchema>;
 
 // Schema for each path, like 'files:createOrder'
 export interface PathSchema {
-  [key: string];
+  [key: string]: any; // Add type annotation to the index signature
   Type: Array<"Action" | "Ressource">;
   Arguments?: ArgumentSchema;
   Condition?: ConditionSchema;
@@ -51,7 +51,7 @@ export interface Policy {
 }
 
 interface Statement {
-  [key: string];
+  [key: string]: any;
   Effect: "Allow" | "Deny";
   Action?: string[]; // Optional
   Ressource?: string[]; // Optional
