@@ -214,10 +214,12 @@ And the following allows a user to access all schema portions for files, both fo
 
 The only cases in which this might not return true is where a Condition Enforce is defined in a schema and the user/entity does not meet the condition requirement, or is limited by the query returned by the adapter (if the enforced condition has a `ToQuery` modifier).
 
-Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install. Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
+Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install.
+Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
 
 Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data objects passed to the autorizer.
-It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill. If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
+It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill.
+If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
 
 ## Dimrill methods
 
@@ -227,6 +229,7 @@ new Dimrill(options?
         validateData:boolean, default true //Validate the data passed to authorizers
         ivmTimeout: number, default 500 //timeout for the ivm in ms
         ivmMemoryLimit: number, default 8, min 8 //max ivm memory in Mb
+        schemaPrefix: string, prefix all schemas with provided prefix, default ""
     }
 ):Dimrill
 ```
@@ -235,7 +238,8 @@ Initialize Dimrill.
 
 `autoload(directoryPath: string):Promise()`:
 
-Autoload and compile all files ending with `.dmrl` in the specified directory as Schemas. The schema will then be initialized and other files cannot be added.
+Autoload and compile all files ending with `.dmrl` in the specified directory as Schemas.
+The schema will then be initialized and other files cannot be added.
 
 `loadSchema(string | string[]):Promise()`:
 
@@ -301,9 +305,14 @@ Returned object have the following structure:
 
 Authorize the request against provided DRNA Type and string, returns a Promise.
 
-`authorizePathOnly([ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} }, {validateData?:boolean, pathOnly:true}):Promise({valid: boolean, query:{} })`
+`authorizeBulk([ "Action"|"Ressource",drna:String ][], policies[], {ignoreConditions?:true}):Promise(string[])`
 
-Equivalent to `authorize` with the `pathOnly` option set to `true`.
+**This method is not meant to authorize access**
+
+Authorize an array of DRNA, by default this method **will not validate conditions, drna parameters, nor return generated queries**, it also does not currently accept validation objects (req, user, context).
+The goal of this method is to help _define_ what ressources a user _might_ have access to based on drna paths.
+
+This method might come in handy if say, you wanted to generate a menu dynamically, depending on a user or entity's policies.
 
 ## Schemas
 
