@@ -314,6 +314,8 @@ The goal of this method is to help _define_ what ressources a user _might_ have 
 
 This method might come in handy if say, you wanted to generate a menu dynamically, depending on a user or entity's policies.
 
+The method will retuyrn strings in the following format: `"Action | Ressource",drna:stringSupplied`.
+
 ## Schemas
 
 Schemas have to be designed using the following system:

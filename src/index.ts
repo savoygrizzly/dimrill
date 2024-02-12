@@ -227,7 +227,7 @@ class Dimrill {
         */
           const results = this.policies.mergePoliciesResults(matchedPolicy);
           if (results.valid) {
-            return String(drna[1]);
+            return String(drna[0]) + "," + String(drna[1]);
           }
         }
         return false;
