@@ -4,6 +4,7 @@ import {
   SchemaConditionKeys,
   SchemaOperators,
   SchemaConditionValues,
+  SchemaConditionsOnlyOperators,
   SchemaOperands,
   SchemaCastTypes,
 } from "../constants";
@@ -57,13 +58,17 @@ class Condition {
             SchemaOperators.includes(k) ||
             SchemaOperands.includes(k) ||
             SchemaCastTypes.includes(k) ||
+            SchemaConditionsOnlyOperators.includes(k) ||
             k === "ToQuery"
         );
 
         // Identify main operator, operand, ToQuery modifier, and castType
         const mainOperator = modifiers.find((modifier) =>
-          SchemaOperators.includes(modifier)
+          [...SchemaOperators, ...SchemaConditionsOnlyOperators].includes(
+            modifier
+          )
         );
+
         const operand = modifiers.find((modifier) =>
           SchemaOperands.includes(modifier)
         );
@@ -74,12 +79,25 @@ class Condition {
 
         if (!mainOperator) {
           throw new Error(
-            `Invalid condition key: ${key}. Main operator is missing.`
+            `Invalid condition key: ${String(key)}. Main operator is missing.`
           );
         }
-
-        const mainOperatorCount = modifiers.filter((modifier) =>
-          SchemaOperators.includes(modifier)
+        if (
+          SchemaConditionsOnlyOperators.includes(mainOperator) &&
+          toQuery !== undefined
+        ) {
+          throw new Error(
+            `Invalid condition query key: ${String(key)}. Operator ${String(
+              mainOperator
+            )} is not allowed to be used with the ToQuery modifier.`
+          );
+        }
+        const mainOperatorCount = modifiers.filter(
+          (modifier) =>
+            (toQuery !== undefined && SchemaOperators.includes(modifier)) ||
+            [...SchemaOperators, ...SchemaConditionsOnlyOperators].includes(
+              modifier
+            )
         ).length;
         const operandCount = modifiers.filter((modifier) =>
           SchemaOperands.includes(modifier)
@@ -178,6 +196,7 @@ class Condition {
 
     if (
       modifiers.toQuery &&
+      SchemaOperators.includes(mainOperator) &&
       (!schema?.Condition?.QueryOperators ||
         schema?.Condition?.QueryOperators.includes(mainOperator))
     ) {
@@ -189,6 +208,7 @@ class Condition {
       );
       if (modifiers.castType || schema?.Condition?.QueryEnforceTypeCast) {
         // cast results to correct type
+
         returnValue.query = this.castQuery(
           results,
           modifiers.castType!,
@@ -312,6 +332,7 @@ class Condition {
       valueArray[1]
     )}, groupedContext);
     
+   
     
     return  (__operatorsClass__.apply(
       undefined, 

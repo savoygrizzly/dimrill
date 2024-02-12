@@ -1,7 +1,7 @@
 {
   "name": "dimrill",
-  "version": "3.0.61",
-  "description": "Dimrill V3, Typescript",
+  "version": "3.0.7",
+  "description": "Dimrill V3",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.mjs",
   "types": "./dist/types/src/index.d.ts",

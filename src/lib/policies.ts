@@ -82,6 +82,7 @@ class Policies {
     validatedObjects: validatedDataObjects,
     options: {
       pathOnly: boolean;
+      ignoreConditions: boolean;
     }
   ): Promise<{
     valid: boolean;
@@ -100,10 +101,15 @@ class Policies {
             drnaToMatch.drnaPaths,
             drnaToMatch.parameters,
             sanitizedDrna.drnaPaths,
-            sanitizedDrna.parameters
+            sanitizedDrna.parameters,
+            options.pathOnly
           );
-
-          if (valid) {
+          if (valid && options.ignoreConditions) {
+            return {
+              valid,
+              query: {},
+            };
+          } else if (valid) {
             return await this.Conditions.runConditions(
               statement.Condition,
               schema
@@ -126,6 +132,7 @@ class Policies {
     validatedObjects: validatedDataObjects,
     options: {
       pathOnly: boolean;
+      ignoreConditions: boolean;
     }
   ): Promise<Array<{ valid: boolean; query: object | string }>> {
     if (policies.length === 0) {

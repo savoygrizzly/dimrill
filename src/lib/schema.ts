@@ -3,6 +3,7 @@ import {
   SchemaConditionKeys,
   SchemaOperators,
   SchemaConditionValues,
+  SchemaConditionsOnlyOperators,
 } from "../constants";
 import {
   type ArgumentSchema,
@@ -31,7 +32,6 @@ class Schema {
   public compiledSchema: RootSchema | null;
   public validateSchema(schema: RootSchema): RootSchema {
     this.validateSchemaObject(schema, []);
-    // console.log(util.inspect(schema, false, null, true));
     return schema;
   }
 
@@ -175,8 +175,21 @@ class Schema {
       }
       if (key === "Operators" || key === "ContextOperators") {
         schemaCondition[key]?.forEach((operator: string) => {
-          if (!SchemaOperators.includes(operator)) {
-            throw new Error(`Invalid schema operator: ${operator} for ${key}`);
+          if (
+            key === "Operators" &&
+            !SchemaOperators.includes(operator) &&
+            !SchemaConditionsOnlyOperators.includes(operator)
+          ) {
+            throw new Error(
+              `Invalid schema condition operator: ${operator} for ${key}`
+            );
+          } else if (
+            key === "ContextOperators" &&
+            !SchemaOperators.includes(operator)
+          ) {
+            throw new Error(
+              `Invalid schema context operator: ${operator} for ${key}`
+            );
           }
         });
       } else {

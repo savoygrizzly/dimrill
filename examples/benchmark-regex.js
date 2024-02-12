@@ -32,15 +32,10 @@ for (let i = 0; i < TRIES; i++) {
 }
 console.timeEnd("regex");
 
-const object = {
-  "ToQuery:InArray": {
-    aValue: "bValue",
-    cValue: "bValue",
-  },
-};
-const results = Object.entries(object).map(async ([key, value]) => {
-  // parse values
-  Object.entries(value).map(async ([leftVariable, rightVariable]) => {
-    console.log(leftVariable, rightVariable);
-  });
-});
+const arra = ["test", 1];
+const arrb = ["jello", 3];
+function intersect(a, b) {
+  var setB = new Set(b);
+  return [...new Set(a)].filter((x) => setB.has(x));
+}
+console.log(intersect(arra, arrb).length > 0);

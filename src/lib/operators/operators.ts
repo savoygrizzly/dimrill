@@ -148,9 +148,20 @@ export default class Operators {
     return Boolean(leftOperator) === Boolean(rightOperator);
   };
 
-  public InArray = (leftOperator: any[], rightOperator: any[]): boolean => {
+  public InArray = (leftOperator: any, rightOperator: any[]): boolean => {
     return (
       Array.isArray(rightOperator) ? rightOperator : Array(rightOperator)
     ).includes(leftOperator);
+  };
+
+  public ArraysIntersect = (
+    leftOperator: any[],
+    rightOperator: any[]
+  ): boolean => {
+    const rightOperatorSet = new Set(rightOperator);
+    return (
+      [...new Set(leftOperator)].filter((x) => rightOperatorSet.has(x)).length >
+      0
+    );
   };
 }

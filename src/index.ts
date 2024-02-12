@@ -164,17 +164,76 @@ class Dimrill {
     );
   }
 
-  public async authorizePathOnly(
-    drna: string[],
+  public async authorizeBulk(
+    drnaArray: string[][],
     policies: Policy[],
     options: {
-      validateData: boolean;
-      pathOnly?: boolean;
+      ignoreConditions?: boolean;
     } = {
-      validateData: true,
+      ignoreConditions: true,
     }
-  ): Promise<object> {
-    return await this.authorize(drna, policies, {});
+  ): Promise<string[]> {
+    const validatedObjects = {
+      req: {},
+      user: {},
+      context: {},
+    };
+
+    await this.ivmSandbox.create();
+    await this.ivmSandbox.setup(validatedObjects);
+
+    /*
+        Pass the Isolate and the Context to the Policies class
+    */
+    this.policies.setVm(
+      this.ivmSandbox.get().isolate,
+      this.ivmSandbox.get().context
+    );
+
+    const returnedDRNA: Array<string | boolean> = await Promise.all(
+      drnaArray.map(async (drna) => {
+        const schemaExists = this.DRNA.matchDrnaFromSchema(
+          drna,
+          this.schema.returnSchema()
+        );
+        if (schemaExists !== false) {
+          const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
+            drna[1],
+            schemaExists as PathSchema,
+            validatedObjects
+          );
+
+          /*
+            Match the policy
+          */
+          const matchedPolicy = await this.policies.matchPolicy(
+            drna[0],
+            synthetizedMatch,
+            schemaExists as PathSchema,
+            policies,
+            validatedObjects,
+            {
+              pathOnly: true,
+              ignoreConditions: Boolean(options.ignoreConditions),
+            }
+          );
+
+          /*
+          Merge the results
+        */
+          const results = this.policies.mergePoliciesResults(matchedPolicy);
+          if (results.valid) {
+            return String(drna[1]);
+          }
+        }
+        return false;
+      })
+    );
+
+    this.ivmSandbox.destroy();
+    this.policies.destroyVm();
+
+    return returnedDRNA.filter((v) => v) as string[];
   }
 
   public async authorize(
@@ -237,6 +296,7 @@ class Dimrill {
       options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
       {
         pathOnly: options.pathOnly ? options.pathOnly : false,
+        ignoreConditions: false,
       }
     );
 

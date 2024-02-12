@@ -192,7 +192,8 @@ class DRNA extends Schema {
     path: string[],
     parameters: drnaParameters,
     policyPath: string[],
-    policyParams: drnaParameters
+    policyParams: drnaParameters,
+    pathOnly = false
   ): boolean {
     const pathStr = path.join(":");
     const policyPathStr = policyPath.join(":");
@@ -202,7 +203,10 @@ class DRNA extends Schema {
       if (policyPathStr.endsWith("*")) {
         return true;
       }
-
+      // Return true immediately if the pathOnly option is set to true
+      if (pathOnly) {
+        return true;
+      }
       // If policy has no parameters, match only if parameters are also empty
       if (policyParams.length === 0) {
         return Object.keys(parameters).length === 0;

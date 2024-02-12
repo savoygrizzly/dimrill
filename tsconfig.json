@@ -12,5 +12,12 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "outDir": "./dist"
   },
-  "exclude": ["examples", "tests", "node_modules", "tsup.config.ts", "scripts"]
+  "exclude": [
+    "dist",
+    "examples",
+    "tests",
+    "node_modules",
+    "tsup.config.ts",
+    "scripts"
+  ]
 }

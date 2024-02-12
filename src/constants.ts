@@ -32,6 +32,7 @@ export const SchemaOperators = [
   "Bool",
   "InArray",
 ] as string[];
+export const SchemaConditionsOnlyOperators = ["ArraysIntersect"] as string[];
 export const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
 export const SchemaCastTypes = [
   "ToString",
@@ -50,6 +51,7 @@ export const SchemaConditionValues = [
   "ToQuery",
   ...SchemaOperators,
   ...SchemaOperands,
+  ...SchemaConditionsOnlyOperators,
 ] as string[];
 
 export const fileExtensionName = [".dmrl"];
