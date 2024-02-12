@@ -45,8 +45,15 @@ class DRNA extends Schema {
     if (options.removeDynamicParameters) {
       drna[1] = this.removeDynamicValuesFromDrna(drna[1]);
     }
+    if (!drna[0] || !drna[1]) {
+      throw new Error(
+        `Implementation error DRNA must have at least two parts: Type and the path, ${String(
+          drna
+        )} was given with ${String(drna[0])} and ${String(drna[1])} as parts.`
+      );
+    }
     const type = drna[0];
-    const drnaPath = drna[1].split(":");
+    const drnaPath = String(drna[1]).split(":");
     /* remove params and wildcard from the last path */
     if (drnaPath[drnaPath.length - 1].includes("&")) {
       drnaPath[drnaPath.length - 1] =

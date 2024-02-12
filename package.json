@@ -1,6 +1,6 @@
 {
   "name": "dimrill",
-  "version": "3.0.73",
+  "version": "3.0.77",
   "description": "Dimrill V3",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.mjs",
@@ -33,7 +33,10 @@
     "fastify",
     "express"
   ],
-  "repository": "sosickstudio/dimrill",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sosickstudio/dimrill.git"
+  },
   "author": "Mateo Laporte",
   "devDependencies": {
     "@types/jest": "^29.5.12",

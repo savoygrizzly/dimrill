@@ -12,6 +12,8 @@ class IvmSandbox {
     }
   ) {
     this.options = options;
+    this.instanciated = false;
+    this.contextSet = false;
     this.isolate = null;
     this.context = null;
   }
@@ -21,6 +23,8 @@ class IvmSandbox {
     timeout: number;
   };
 
+  private contextSet: boolean;
+  private instanciated: boolean;
   private isolate: ivm.Isolate | null;
   private context: ivm.Context | null;
   /**
@@ -34,13 +38,14 @@ class IvmSandbox {
       timeout: this.options.timeout,
     }
   ): Promise<{ isolate: ivm.Isolate; context: ivm.Context }> {
-    if (this.isolate === null) {
+    if (!this.instanciated) {
       this.isolate = new ivm.Isolate(options);
-    }
-    if (this.context === null) {
       this.context = await this.isolate.createContext();
+      this.instanciated = true;
+      return { isolate: this.isolate, context: this.context };
+    } else {
+      return { isolate: this.isolate!, context: this.context! };
     }
-    return { isolate: this.isolate, context: this.context };
   }
 
   public destroy(): void {
@@ -56,7 +61,13 @@ class IvmSandbox {
    *
    */
   public async setup(validatedObjects: validatedDataObjects): Promise<void> {
-    if (this.context !== null && this.isolate !== null) {
+    if (
+      this.instanciated &&
+      !this.contextSet &&
+      this.context !== null &&
+      this.isolate !== null
+    ) {
+      this.contextSet = true;
       const jail = this.context.global;
       /*
         Pass the validated objects to the Isolate
