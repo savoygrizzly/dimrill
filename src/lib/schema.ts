@@ -67,55 +67,77 @@ class Schema {
 
   private validateSchemaObject(schema: RootSchema, path: string[]): RootSchema {
     const keys = Object.keys(schema as Record<string, any>);
-    const hasNestedObjects = keys.some(
-      (key) => typeof schema[key] === "object" && schema[key] !== null
-    );
 
     keys.forEach((key: string) => {
       const currentPath = [...path, key];
+      const value = schema[key];
 
       if (SchemaGlobalKeys.includes(key)) {
-        schema[key] = this.validateGlobalKey(schema[key], key);
+        this.validateGlobalKey(value, key);
 
         if (
-          typeof schema[key] === "object" &&
-          !Array.isArray(schema[key]) &&
-          schema[key] !== null
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value)
         ) {
-          schema[key] = Object.setPrototypeOf(
-            schema[key],
-            this.returnSchemaSectionPrototype(key, false)
+          Object.setPrototypeOf(
+            value,
+            this.returnSchemaSectionPrototype(key, true)
           );
         }
-        return; // Move to the next key
+        return;
       }
 
-      if (typeof schema[key] === "object" && schema[key] !== null) {
-        schema[key] = Object.setPrototypeOf(
-          this.validateSchemaObject(
-            schema[key] as unknown as RootSchema,
-            currentPath
-          ),
-          this.returnSchemaSectionPrototype(key, false)
-        );
-      } else {
-        throw new Error(`Invalid schema path: ${currentPath.join(":")}`);
+      if (typeof value === "object" && value !== null) {
+        const isEndpoint = Object.keys(value).includes("Type");
+
+        if (isEndpoint) {
+          if (
+            !Array.isArray(value.Type) ||
+            (!value.Type.includes("Action") &&
+              !value.Type.includes("Ressource"))
+          ) {
+            throw new Error(
+              `Missing or invalid 'Type' key at: ${currentPath.join(":")}`
+            );
+          }
+
+          Object.setPrototypeOf(
+            value,
+            this.returnSchemaSectionPrototype(key, true)
+          );
+
+          // Check for nested endpoints which are not allowed
+          const nestedKeys = Object.keys(value);
+          const hasNestedEndpoints = nestedKeys.some(
+            (subKey) => !SchemaGlobalKeys.includes(subKey)
+          );
+          if (hasNestedEndpoints) {
+            const nestedKey = nestedKeys.filter(
+              (subKey) => !SchemaGlobalKeys.includes(subKey)
+            );
+            throw new Error(
+              `Nested endpoints are not allowed at: ${String(
+                currentPath.join(":")
+              )} for key: ${String(nestedKey)}`
+            );
+          }
+        } else {
+          if (Object.keys(value).length === 0) {
+            throw new Error(`Empty object at: ${currentPath.join(":")}`);
+          }
+          schema[key] = Object.setPrototypeOf(
+            this.validateSchemaObject(
+              schema[key] as unknown as RootSchema,
+              currentPath
+            ),
+            this.returnSchemaSectionPrototype(key, false)
+          );
+          this.validateSchemaObject(value, currentPath);
+        }
       }
     });
 
-    // Check for 'Type' key at endpoints when no nested objects are present
-    if (!hasNestedObjects) {
-      if (
-        !schema.Type.includes("Action") &&
-        !schema.Type.includes("Ressource")
-      ) {
-        throw new Error(`Missing 'Type' key at endpoint: ${path.join(":")}`);
-      }
-      schema = Object.setPrototypeOf(
-        schema,
-        this.returnSchemaSectionPrototype(path[path.length - 1], true)
-      );
-    }
     return schema;
   }
 
@@ -426,14 +448,14 @@ class Schema {
           throw new Error(`Target at path: ${path} is not an array.`);
         }
 
-        const index = currentArray.indexOf(elementName);
-        if (index === -1) {
+        const included = currentArray.includes(elementName);
+        if (!included) {
           console.error(
             `Element named ${elementName} not found in array at path: ${path}.`
           );
           return false; // Element not found, removal not performed
         }
-
+        const index = currentArray.indexOf(elementName);
         currentArray.splice(index, 1);
 
         const testObject = _get(

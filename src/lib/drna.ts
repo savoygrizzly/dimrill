@@ -65,7 +65,10 @@ class DRNA extends Schema {
         return false;
       }
     }
-    if ((currentSchema.Type as string[]).includes(type)) {
+    if (
+      Array.isArray(currentSchema.Type) &&
+      (currentSchema.Type as string[]).includes(type)
+    ) {
       return currentSchema;
     } else {
       return false;

@@ -260,7 +260,7 @@ class Dimrill {
       this.schema.returnSchema()
     );
     if (schemaExists === false) {
-      throw new Error(`Invalid DRNA path: ${drna.join(":")}`);
+      throw new Error(`Invalid DRNA path: ${drna}`);
     }
     const validatedObjects = this.schema.castObjectsToSchemaTypes(
       (schemaExists as PathSchema)?.Variables ?? {},
