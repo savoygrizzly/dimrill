@@ -122,6 +122,10 @@ class Dimrill {
     this.schema.compileSchema(schemaSet);
   }
 
+  public getSchema(): RootSchema | boolean {
+    return this.schema.getSchema();
+  }
+
   public schemaHasCompiled(): boolean {
     return this.schema.schemaHasLoaded();
   }

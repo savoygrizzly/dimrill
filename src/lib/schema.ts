@@ -455,5 +455,12 @@ class Schema {
       },
     };
   }
+
+  public getSchema(): RootSchema | boolean {
+    if (!this.compiledSchema) {
+      return false;
+    }
+    return this.compiledSchema;
+  }
 }
 export default Schema;
