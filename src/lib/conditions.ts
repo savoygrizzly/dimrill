@@ -12,7 +12,9 @@ import util from "util";
 import TypeCasters from "./operators/typeCasters";
 class Condition {
   constructor(
-    options = {
+    options: {
+      adapter?: string;
+    } = {
       adapter: "mongodb",
     }
   ) {
@@ -24,7 +26,7 @@ class Condition {
   private isolatedVmContext: any;
   private isolatedVm: any;
   private readonly options: {
-    adapter: string;
+    adapter?: string;
   };
 
   public setVm(isolate: any, context: any): void {
@@ -201,6 +203,7 @@ class Condition {
         schema?.Condition?.QueryOperators.includes(mainOperator))
     ) {
       returnValue.valid = true;
+
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
           return await this.runAdapter(mainOperator, variables);

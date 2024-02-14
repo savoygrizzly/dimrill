@@ -119,37 +119,47 @@ class DRNA extends Schema {
         } else {
           // if the argument is not in injectedDrnaParams
           // add the default value to the parameters object
-          let validatedObjectValue = false;
+          let validatedObjectValue: undefined | number | string;
           if (schema.Arguments?.[key]?.value) {
-            validatedObjectValue = !!schema.Arguments?.[key]?.value;
+            validatedObjectValue = schema.Arguments?.[key]?.value;
           } else if (schema.Arguments?.[key]?.dataFrom) {
             validatedObjectValue = _get(
               validatedObjects,
               schema.Arguments?.[key]?.dataFrom!,
-              false
+              undefined
             );
           }
+
           if (
-            validatedObjectValue &&
+            validatedObjectValue !== undefined &&
             (schema.Arguments?.[key]?.type === "number" ||
               (schema.Arguments?.[key]?.type === "string" &&
-                schema.Arguments?.[key]?.enum === null) ||
+                !schema.Arguments?.[key]?.enum) ||
               schema.Arguments?.[key]?.enum?.includes(
                 String(validatedObjectValue)
               ) === true)
           ) {
-            if (schema.Arguments?.[key]?.value) {
-              parameters[key] = schema.Arguments?.[key]?.value;
-            } else if (schema.Arguments?.[key]?.dataFrom) {
-              parameters[key] = _get(
-                validatedObjects,
-                schema.Arguments?.[key]?.dataFrom!
-              );
+            if (schema.Arguments?.[key]?.type === "number") {
+              validatedObjectValue = Number(validatedObjectValue);
+            } else if (schema.Arguments?.[key]?.type === "string") {
+              validatedObjectValue = String(validatedObjectValue);
+            }
+
+            if (
+              schema.Arguments?.[key]?.enum &&
+              schema.Arguments?.[key]?.enum?.includes(
+                validatedObjectValue as string
+              )
+            ) {
+              parameters[key] = validatedObjectValue;
+            } else if (!schema.Arguments?.[key]?.enum && validatedObjectValue) {
+              parameters[key] = validatedObjectValue;
             }
           }
         }
       });
     }
+
     return parameters;
   }
 

@@ -31,11 +31,3 @@ for (let i = 0; i < TRIES; i++) {
   });
 }
 console.timeEnd("regex");
-
-const arra = ["test", 1];
-const arrb = ["jello", 3];
-function intersect(a, b) {
-  var setB = new Set(b);
-  return [...new Set(a)].filter((x) => setB.has(x));
-}
-console.log(intersect(arra, arrb).length > 0);
