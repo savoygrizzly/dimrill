@@ -217,7 +217,7 @@ The only cases in which this might not return true is where a Condition Enforce 
 Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install.
 Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
 
-Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data objects passed to the autorizer.
+Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data objects passed to the authorizer.
 It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill.
 If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
 
@@ -228,30 +228,62 @@ new Dimrill(options?
     {
         validateData:boolean, default true //Validate the data passed to authorizers
         ivmTimeout: number, default 500 //timeout for the ivm in ms
-        ivmMemoryLimit: number, default 8, min 8 //max ivm memory in Mb
-        schemaPrefix: string, prefix all schemas with provided prefix, default ""
+        ivmMemoryLimit: number, default 30, min 8 //max ivm memory in Mb set the value
+        schemaPrefix: string, prefix all schemas with provided prefix, default "",
+        autoLaunchIvm:boolean, default true //
     }
 ):Dimrill
 ```
 
-Initialize Dimrill.
+### Options details
 
-`autoload(directoryPath: string):Promise()`:
+`validateData`:
+Useful to disable the ajv data validation if you alreadfy have your own data validation implemented.
+
+`ivmTimeout`:
+Set the timeout for Isolated-vm execution in order to prevent DOS attacks.
+
+`ivmMemoryLimit`:
+Useful to save ressources, Dimrill shares by default a single IVM, therefore set this value according to the load you expect to face.
+A value too low might result in an error when new contexts are created to run authorizers.
+
+`schemaPrefix`:
+Prefixes all schemas with the specified value.
+
+`autoLaunchIvm`:
+By default Dimrill will create an ivm for you when compiling the schemas (either whgen calling autoload or compileSchemas).
+In order to avoid racing conditions make sure to **await** these functions.
+
+### Methods
+
+`destroyIvm:void`:
+
+Should you want to delete the Dimrill instance you created, **CALL THIS FIRST** in order to release the memory used by a possible IVM.
+
+`createIvm:Promise<void>`:
+
+Create a new IVM instance using the options specified when dimrill was initialized.
+
+`autoload(directoryPath: string):Promise<void>`:
 
 Autoload and compile all files ending with `.dmrl` in the specified directory as Schemas.
 The schema will then be initialized and other files cannot be added.
 
-`loadSchema(string | string[]):Promise()`:
+`loadSchema(string | string[]):Promise<void>`:
 
 Loads files at the specified paths but does not initialize the Schemas.
 
-`compileSchemas():Promise()`:
+`compileSchemas():Promise<void>`:
 
 Compile schemas loaded with `loadSchema` and initialize the Schemas.
 
 `schemaHasCompiled():boolean`:
 
 Returns true if Schemas have been initialized.
+
+`getSchema():RootSchema`:
+
+Returns the compiled schemas.
 
 `extendSchema(path:string)`:
 
@@ -267,7 +299,7 @@ Has to be chained with one of the following methods:
 
 The `set` method will modify an endpoint (specified in) or its sub-properties.
 The `push` method will modify an endpoint or its sub-property array.
-The `slice` method will remove the specified value from an endpoint or its sub-property array.
+The `remove` method will remove the specified value from an endpoint or its sub-property array.
 The `unset` method will remove the specified value from an endpoint or its sub-property object.
 
 All methods will trigger a re-validation of the modified portion of the Schema and throw an error should the validation fail.
@@ -301,20 +333,25 @@ Returned object have the following structure:
 }
 ```
 
-`authorize([ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} }, {validateData?:boolean, pathOnly?:boolean}):Promise({valid: boolean, query:{} })`:
+```
+authorize(
+  [ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} },
+  {validateData?:boolean, pathOnly?:boolean}
+  ):Promise<{valid: boolean, query:{} }>
+```
 
 Authorize the request against provided DRNA Type and string, returns a Promise.
 
-`authorizeBulk([ "Action"|"Ressource",drna:String ][], policies[], {ignoreConditions?:true}):Promise(string[])`
+`authorizeBulk([ "Action"|"Ressource",drna:String ][], policies[], {ignoreConditions?:true}):Promise<string[]>`
 
 **This method is not meant to authorize access**
 
 Authorize an array of DRNA, by default this method **will not validate conditions, drna parameters, nor return generated queries**, it also does not currently accept validation objects (req, user, context).
 The goal of this method is to help _define_ what ressources a user _might_ have access to based on drna paths.
-
+Because AuthorizeBulk will keep the same ivm context to run all given drna, it is much more efficient,
 This method might come in handy if say, you wanted to generate a menu dynamically, depending on a user or entity's policies.
 
-The method will retuyrn strings in the following format: `"Action | Ressource",drna:stringSupplied`.
+The method will return strings in the following format: `"Action | Ressource",drna:stringSupplied`.
 
 ## Schemas
 

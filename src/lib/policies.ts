@@ -15,12 +15,20 @@ class Policies {
 
   private isolatedVm: any;
   public isolatedVmContext: any;
+  private readonly ivmOptions: {
+    timeout: number;
+  };
 
-  constructor(DRNA: DRNA, Conditions: Condition) {
+  constructor(
+    DRNA: DRNA,
+    Conditions: Condition,
+    options: { timeout: number } = { timeout: 300 }
+  ) {
     this.DRNA = DRNA;
     this.Conditions = Conditions;
     this.isolatedVm = null;
     this.isolatedVmContext = null;
+    this.ivmOptions = options;
   }
 
   public setVm(isolatedVm: any, context: any): void {
@@ -66,7 +74,8 @@ class Policies {
       const parsedValue = await this.isolatedVmContext.eval(
         `(function() {return formatValue(${JSON.stringify(
           value
-        )},groupedContext)})()`
+        )},groupedContext)})()`,
+        this.ivmOptions
       );
       acc[String(key)] = parsedValue;
     }

@@ -20,15 +20,15 @@ class Dimrill {
       validateData?: boolean;
       ivmMemoryLimit?: number;
       ivmTimeout?: number;
-      persistantIvm?: boolean;
       schemaPrefix?: string;
+      autoLaunchIvm?: boolean;
     } = {}
   ) {
     this.opts = {
       validateData: true,
-      ivmMemoryLimit: 8,
+      ivmMemoryLimit: 12,
       ivmTimeout: 500,
-      persistantIvm: false,
+      autoLaunchIvm: true,
       schemaPrefix: "",
       ...options,
     };
@@ -38,10 +38,12 @@ class Dimrill {
     this.schema = new Schema({ prefix: this.opts.schemaPrefix });
     this.DRNA = new DRNA();
     this.ivmSandbox = new IvmSandbox({
-      memoryLimit: this.opts.ivmMemoryLimit!,
-      timeout: this.opts.ivmTimeout!,
+      memoryLimit: this.opts.ivmMemoryLimit ? this.opts.ivmMemoryLimit : 12,
+      timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 500,
     });
-    this.policies = new Policies(this.DRNA, new Condition());
+    this.policies = new Policies(this.DRNA, new Condition(), {
+      timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 300,
+    });
     this.policiesCompiler = new PoliciesCompiler(this.DRNA, this.schema);
   }
 
@@ -50,7 +52,7 @@ class Dimrill {
     validateData?: boolean;
     ivmMemoryLimit?: number;
     ivmTimeout?: number;
-    persistantIvm?: boolean;
+    autoLaunchIvm?: boolean;
   };
 
   private readonly schemaLoadingList: Record<string, RootSchema> = {};
@@ -81,6 +83,32 @@ class Dimrill {
     return data;
   }
 
+  private async autolaunchIvm(): Promise<void> {
+    if (this.opts.autoLaunchIvm === true) {
+      await this.ivmSandbox.createIvm();
+    }
+  }
+
+  /**
+   * Destroy the IVM instance
+   */
+  public destroyIvm(): void {
+    this.ivmSandbox.destroy();
+  }
+
+  /**
+   * Create a new IVM instance using the options dimrill was initialized with
+   * @returns Promise
+   */
+  public async createIvm(): Promise<void> {
+    await this.ivmSandbox.createIvm();
+  }
+
+  /**
+   *  Autoload the schema files from a directory
+   * @param directoryPath Path to directory containing the schema files
+   * @returns Promise
+   */
   public async autoload(directoryPath: string): Promise<void> {
     const schemas = await this.readFiles(directoryPath);
     const schemaSet = new Map<string, RootSchema>();
@@ -88,8 +116,17 @@ class Dimrill {
       schemaSet.set(key, this.schema.validateSchema(value));
     });
     this.schema.compileSchema(schemaSet);
+    /*
+        Launch the IVM
+    */
+    await this.autolaunchIvm();
   }
 
+  /**
+   * Load the schema file or files into memory
+   * @param paths Path to the schema file or an array of paths
+   * @returns Promise
+   */
   public async loadSchema(paths: string | string[]): Promise<void> {
     if (!Array.isArray(paths)) paths = [paths];
     await Promise.all(
@@ -114,22 +151,42 @@ class Dimrill {
     );
   }
 
-  public compileSchemas(): void {
+  /**
+   * Compile the schema files into memory
+   */
+  public async compileSchemas(): Promise<void> {
     const schemaSet = new Map<string, RootSchema>();
     Object.entries(this.schemaLoadingList).forEach(([key, value]) => {
       schemaSet.set(key, this.schema.validateSchema(value));
     });
     this.schema.compileSchema(schemaSet);
+    /*
+        Launch the IVM
+    */
+    await this.autolaunchIvm();
   }
 
+  /**
+   * Get the compiled schema
+   * @returns The compiled schema
+   */
   public getSchema(): RootSchema | boolean {
     return this.schema.getSchema();
   }
 
+  /**
+   * Check if the schema has been compiled
+   * @returns True if the schema has been compiled
+   */
   public schemaHasCompiled(): boolean {
     return this.schema.schemaHasLoaded();
   }
 
+  /**
+   * Extend the schema at specified path
+   * @param path Schema path to extend
+   * @returns An object with methods to set, unset, push and remove values from the schema
+   */
   public extendSchema(path: string): {
     set: (value: string | string[] | object) => void;
     unset: (value: string | object) => void;
@@ -152,22 +209,22 @@ class Dimrill {
     };
   }
 
+  /**
+   *  Compile and validate the policies
+   * @param policies Array of policies to check against
+   * @returns A Map of the compiled policies with their compilation results
+   */
   public compilePolicies(policies: Policy[]): Map<number, CompilationResults> {
     return this.policiesCompiler.compilePolicies(policies);
   }
 
-  private async launchIvm(): Promise<void> {
-    await this.ivmSandbox.create();
-    // await this.ivmSandbox.setup(validatedObjects);
-    /*
-        Pass the Isolate and the Context to the Policies class
-    */
-    this.policies.setVm(
-      this.ivmSandbox.get().isolate,
-      this.ivmSandbox.get().context
-    );
-  }
-
+  /**
+   *  Authorize a DRNA Array
+   * @param drnaArray The array of DRNA to authorize
+   * @param policies The policies to check against
+   * @param options Options
+   * @returns An array of all the valid drna strings supplied
+   */
   public async authorizeBulk(
     drnaArray: string[][],
     policies: Policy[],
@@ -183,16 +240,12 @@ class Dimrill {
       context: {},
     };
 
-    await this.ivmSandbox.create();
-    await this.ivmSandbox.setup(validatedObjects);
+    const ivmContext = await this.ivmSandbox.createContext(validatedObjects);
 
     /*
         Pass the Isolate and the Context to the Policies class
     */
-    this.policies.setVm(
-      this.ivmSandbox.get().isolate,
-      this.ivmSandbox.get().context
-    );
+    this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
 
     const returnedDRNA: Array<string | boolean> = await Promise.all(
       drnaArray.map(async (drna) => {
@@ -234,12 +287,20 @@ class Dimrill {
       })
     );
 
-    this.ivmSandbox.destroy();
+    this.ivmSandbox.release(ivmContext);
     this.policies.destroyVm();
 
     return returnedDRNA.filter((v) => v) as string[];
   }
 
+  /**
+   * Authorize a user/entity against a DRNA type and path, generates a query if requested
+   * @param drna The DRNA to authorize
+   * @param policies The policies to check against
+   * @param validatedObjects The Objects to use in the authorizer
+   * @param options
+   * @returns The query or an object with the query and the valid status
+   */
   public async authorize(
     drna: string[],
     policies: Policy[],
@@ -272,15 +333,11 @@ class Dimrill {
         validateData: options.validateData ?? true,
       }
     );
-    await this.ivmSandbox.create();
-    await this.ivmSandbox.setup(validatedObjects);
+    const ivmContext = await this.ivmSandbox.createContext(validatedObjects);
     /*
         Pass the Isolate and the Context to the Policies class
     */
-    this.policies.setVm(
-      this.ivmSandbox.get().isolate,
-      this.ivmSandbox.get().context
-    );
+    this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
 
     /*
         Parse the DRNA to match the policy
@@ -309,7 +366,7 @@ class Dimrill {
       Merge the results
     */
     const results = this.policies.mergePoliciesResults(matchedPolicy);
-    this.ivmSandbox.destroy();
+    this.ivmSandbox.release(ivmContext);
     this.policies.destroyVm();
 
     return results;
