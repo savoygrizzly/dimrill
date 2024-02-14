@@ -50,6 +50,8 @@ class IvmSandbox {
 
   public destroy(): void {
     if (this.isolate !== null) {
+      this.instanciated = false;
+      this.contextSet = false;
       this.isolate.dispose();
       this.isolate = null;
     }
