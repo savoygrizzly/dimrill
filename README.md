@@ -156,7 +156,7 @@ const valid = await DimrillAuthorizer.authorize(
         "files:createOrder" will validate if a policy Statement specifies anything  with the path "files:createOrder" or a higher wildcard (* or files:*).
 
         */,
-  }
+  },
 );
 /*
 Will return a value in the following format.
@@ -221,6 +221,8 @@ Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/a
 It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill.
 If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
 
+Because Dimrill can generate queries, it is important to ensure that the user input is validated before being passed to Dimrill. Currently with the only "out of the box" adapter supported being MongoDB, the major injection risk resides if you pass unvalidated and unsanitized input to `Equals` or `NotEquals` operators without an `EnforceTypeCast` in the schema (and if your policy also doesn't specify one). If you are using the `ToQuery` modifier and have enabled `unsafeEquals` via Dimrill constructor, you should ensure that the input is validated and sanitized before being passed to Dimrill even if given the generated query's structure injection risks are low.
+
 ## Dimrill methods
 
 ```
@@ -231,6 +233,7 @@ new Dimrill(options?
         ivmMemoryLimit: number, default 30, min 8 //max ivm memory in Mb set the value
         schemaPrefix: string, prefix all schemas with provided prefix, default "",
         autoLaunchIvm:boolean, default true //
+        unsafeEquals:boolean, default false //notEquals and Equals without catsing objects to string for comparison
     }
 ):Dimrill
 ```
@@ -253,6 +256,9 @@ Prefixes all schemas with the specified value.
 `autoLaunchIvm`:
 By default Dimrill will create an ivm for you when compiling the schemas (either whgen calling autoload or compileSchemas).
 In order to avoid racing conditions make sure to **await** these functions.
+
+`unsafeEquals`:
+By default when adapting a condition to a query, dimrill will cast objects to string in order to avoid the risk of injections should the data passed to dimrill have not been validated.
 
 ### Methods
 
@@ -444,7 +450,9 @@ The allowed main-operators are:
 
 Each operators accept 2 arguments `(left,right)`
 
-Note that `Equals`, `NotEquals` and `InArray` will not cast the 2 arguments to a specific type, hence the **STRONG** recommendation to validate your data, either in app or using the Variables property in the Schemas. This might otherwise return false for specific cases.
+Note that by default `InArray` will cast the value to string if the right value is an object in order to prevent possible injections into mongodb.
+
+By default with the option `unsafeEquals` set to false, `Equals` and `NotEquals` will cast the right value to `String` if the value is an object in order to prevent possible injections. This behavior can be overriden by setting `unsafeEquals` to true in the Dimrill constructor.
 
 A logical operator, either `AnyValues` or `EveryValues` (think and/or). When such operator is present it will check that either all or at least one of the values passed in the block returns true when validated against the main operator. `EveryValues` being the default behavior.
 **These operators are currently not implemented with `ToQuery`**

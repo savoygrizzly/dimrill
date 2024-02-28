@@ -1,6 +1,6 @@
 {
   "name": "dimrill",
-  "version": "3.0.8",
+  "version": "3.0.9",
   "description": "Dimrill V3",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.mjs",
@@ -13,9 +13,7 @@
       "default": "./dist/esm/src/index.js"
     }
   },
-  "files": [
-    "dist/"
-  ],
+  "files": ["dist/"],
   "scripts": {
     "dev": "tsc --build && node ./examples/index.js && tsc --build --clean",
     "compile": "tsc -b ./tsconfig.cjs.json ./tsconfig.esm.json ./tsconfig.types.json",
