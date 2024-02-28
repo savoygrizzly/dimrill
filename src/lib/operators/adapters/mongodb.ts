@@ -4,7 +4,7 @@ export default class MongoDbOperators {
     return { [field]: { $eq: value } };
   };
 
-  // NotEquals
+  // NotEquals˚
   public NotEquals = (field: string, value: any): Record<string, object> => {
     return { [field]: { $ne: value } };
   };
@@ -12,7 +12,7 @@ export default class MongoDbOperators {
   // StringEquals
   public StringEquals = (
     field: string,
-    value: string
+    value: string,
   ): Record<string, string> => {
     return { [field]: String(value) };
   };
@@ -20,7 +20,7 @@ export default class MongoDbOperators {
   // StringNotEquals
   public StringNotEquals = (
     field: string,
-    value: string
+    value: string,
   ): Record<string, object> => {
     return { [field]: { $ne: String(value) } };
   };
@@ -28,7 +28,7 @@ export default class MongoDbOperators {
   // NumberEquals
   public NumberEquals = (
     field: string,
-    value: number
+    value: number,
   ): Record<string, object> => {
     return { [field]: { $eq: Number(value) } };
   };
@@ -36,7 +36,7 @@ export default class MongoDbOperators {
   // NumberNotEquals
   public NumberNotEquals = (
     field: string,
-    value: number
+    value: number,
   ): Record<string, object> => {
     return { [field]: { $ne: Number(value) } };
   };
@@ -44,7 +44,7 @@ export default class MongoDbOperators {
   // NumberLessThan
   public NumberLessThan = (
     field: string,
-    value: number
+    value: number,
   ): Record<string, object> => {
     return { [field]: { $lt: Number(value) } };
   };
@@ -52,7 +52,7 @@ export default class MongoDbOperators {
   // NumberLessThanEquals
   public NumberLessThanEquals = (
     field: string,
-    value: number
+    value: number,
   ): Record<string, object> => {
     return { [field]: { $lte: Number(value) } };
   };
@@ -60,7 +60,7 @@ export default class MongoDbOperators {
   // NumberGreaterThan
   public NumberGreaterThan = (
     field: string,
-    value: number
+    value: number,
   ): Record<string, object> => {
     return { [field]: { $gt: Number(value) } };
   };
@@ -68,7 +68,7 @@ export default class MongoDbOperators {
   // NumberGreaterThanEquals
   public NumberGreaterThanEquals = (
     field: string,
-    value: number
+    value: number,
   ): Record<string, object> => {
     return { [field]: { $gte: Number(value) } };
   };
@@ -81,7 +81,7 @@ export default class MongoDbOperators {
   // DateNotEquals
   public DateNotEquals = (
     field: string,
-    value: Date
+    value: Date,
   ): Record<string, object> => {
     return { [field]: { $ne: new Date(value) } };
   };
@@ -89,7 +89,7 @@ export default class MongoDbOperators {
   // DateLessThan
   public DateLessThan = (
     field: string,
-    value: Date
+    value: Date,
   ): Record<string, object> => {
     return { [field]: { $lt: new Date(value) } };
   };
@@ -97,7 +97,7 @@ export default class MongoDbOperators {
   // DateLessThanEquals
   public DateLessThanEquals = (
     field: string,
-    value: Date
+    value: Date,
   ): Record<string, object> => {
     return { [field]: { $lte: new Date(value) } };
   };
@@ -105,7 +105,7 @@ export default class MongoDbOperators {
   // DateGreaterThan
   public DateGreaterThan = (
     field: string,
-    value: Date
+    value: Date,
   ): Record<string, object> => {
     return { [field]: { $gt: new Date(value) } };
   };
@@ -113,7 +113,7 @@ export default class MongoDbOperators {
   // DateGreaterThanEquals
   public DateGreaterThanEquals = (
     field: string,
-    value: Date
+    value: Date,
   ): Record<string, object> => {
     return { [field]: { $gte: new Date(value) } };
   };
@@ -136,7 +136,7 @@ export default class MongoDbOperators {
       })
       .filter(
         (filtered: boolean | string | number) =>
-          filtered !== null && filtered !== undefined
+          filtered !== null && filtered !== undefined,
       );
 
     return { [field]: { $in: safeValues } };

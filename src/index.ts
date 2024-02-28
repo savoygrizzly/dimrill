@@ -22,7 +22,7 @@ class Dimrill {
       ivmTimeout?: number;
       schemaPrefix?: string;
       autoLaunchIvm?: boolean;
-    } = {}
+    } = {},
   ) {
     this.opts = {
       validateData: true,
@@ -30,6 +30,7 @@ class Dimrill {
       ivmTimeout: 500,
       autoLaunchIvm: true,
       schemaPrefix: "",
+      unsafeEquals: false,
       ...options,
     };
     if (Number(this.opts.ivmMemoryLimit) < 8) {
@@ -40,6 +41,7 @@ class Dimrill {
     this.ivmSandbox = new IvmSandbox({
       memoryLimit: this.opts.ivmMemoryLimit ? this.opts.ivmMemoryLimit : 12,
       timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 500,
+      unsafeEquals: this.opts.unsafeEquals ? this.opts.unsafeEquals : false,
     });
     this.policies = new Policies(this.DRNA, new Condition(), {
       timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 300,
@@ -53,6 +55,7 @@ class Dimrill {
     ivmMemoryLimit?: number;
     ivmTimeout?: number;
     autoLaunchIvm?: boolean;
+    unsafeEquals?: boolean;
   };
 
   private readonly schemaLoadingList: Record<string, RootSchema> = {};
@@ -63,14 +66,26 @@ class Dimrill {
   private readonly schema: Schema;
 
   private async readFiles(
-    dirname: string
+    dirname: string,
   ): Promise<Record<string, RootSchema>> {
     const data: Record<string, RootSchema> = {};
     const files = await fsp.readdir(dirname);
     await Promise.all(
       files.map(async (filename) => {
-        const fileType = path.extname(filename);
+        let fileType = path.extname(filename);
+
         const full = path.join(dirname, filename);
+
+        // Check for double extension of .dmrl.json
+        const fileExtensions = filename.split(".");
+        const totalExtensions = fileExtensions.slice(
+          Math.max(fileExtensions.length - 2, 1),
+        );
+
+        if (totalExtensions.length < 3) {
+          fileType = `.${totalExtensions.join(".")}`;
+        }
+
         if (!fileExtensionName.includes(fileType)) return;
         try {
           const content = await fsp.readFile(full, { encoding: "utf8" });
@@ -78,7 +93,7 @@ class Dimrill {
         } catch (e) {
           throw new Error(`Error reading file: ${full}`);
         }
-      })
+      }),
     );
     return data;
   }
@@ -135,8 +150,8 @@ class Dimrill {
         if (!fileExtensionName.includes(fileType)) {
           throw new Error(
             `Invalid file type: ${filename}, extension must be: ${fileExtensionName.join(
-              ", "
-            )}`
+              ", ",
+            )}`,
           );
         }
         try {
@@ -144,10 +159,10 @@ class Dimrill {
           this.schemaLoadingList[filename] = JSON.parse(content);
         } catch (error) {
           throw new Error(
-            `Error reading file, file may not exist: ${filename}`
+            `Error reading file, file may not exist: ${filename}`,
           );
         }
-      })
+      }),
     );
   }
 
@@ -232,7 +247,7 @@ class Dimrill {
       ignoreConditions?: boolean;
     } = {
       ignoreConditions: true,
-    }
+    },
   ): Promise<string[]> {
     const validatedObjects = {
       req: {},
@@ -251,13 +266,13 @@ class Dimrill {
       drnaArray.map(async (drna) => {
         const schemaExists = this.DRNA.matchDrnaFromSchema(
           drna,
-          this.schema.returnSchema()
+          this.schema.returnSchema(),
         );
         if (schemaExists !== false) {
           const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
             drna[1],
             schemaExists as PathSchema,
-            validatedObjects
+            validatedObjects,
           );
 
           /*
@@ -272,7 +287,7 @@ class Dimrill {
             {
               pathOnly: true,
               ignoreConditions: Boolean(options.ignoreConditions),
-            }
+            },
           );
 
           /*
@@ -284,7 +299,7 @@ class Dimrill {
           }
         }
         return false;
-      })
+      }),
     );
 
     this.ivmSandbox.release(ivmContext);
@@ -310,7 +325,7 @@ class Dimrill {
       pathOnly?: boolean;
     } = {
       pathOnly: false,
-    }
+    },
   ): Promise<object> {
     if (!options.validateData) {
       options.validateData = this.opts.validateData;
@@ -318,7 +333,7 @@ class Dimrill {
 
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       drna,
-      this.schema.returnSchema()
+      this.schema.returnSchema(),
     );
     if (schemaExists === false) {
       throw new Error(`Invalid DRNA path: ${drna}`);
@@ -331,7 +346,7 @@ class Dimrill {
       context,
       {
         validateData: options.validateData ?? true,
-      }
+      },
     );
     const ivmContext = await this.ivmSandbox.createContext(validatedObjects);
     /*
@@ -345,7 +360,7 @@ class Dimrill {
     const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
       drna[1],
       schemaExists as PathSchema,
-      options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects
+      options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
     );
     /*
         Match the policy
@@ -359,7 +374,7 @@ class Dimrill {
       {
         pathOnly: options.pathOnly ? options.pathOnly : false,
         ignoreConditions: false,
-      }
+      },
     );
 
     /*

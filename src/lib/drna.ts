@@ -1,5 +1,4 @@
 import _get from "lodash/get";
-
 import {
   type RootSchema,
   type PathSchema,
@@ -9,10 +8,6 @@ import {
 
 import Schema from "./schema";
 class DRNA extends Schema {
-  constructor() {
-    super();
-  }
-
   private removeDynamicValuesFromDrna(drnaString: string): string {
     // Split the DRNA string into base and parameters
     const [baseDrna, ...params] = drnaString.split("&");
@@ -37,7 +32,7 @@ class DRNA extends Schema {
       removeDynamicParameters: boolean;
     } = {
       removeDynamicParameters: false,
-    }
+    },
   ): object | boolean {
     if (drna.length < 2) {
       return false; // DRNA must have at least two parts: Type and the path
@@ -48,8 +43,8 @@ class DRNA extends Schema {
     if (!drna[0] || !drna[1]) {
       throw new Error(
         `Implementation error DRNA must have at least two parts: Type and the path, ${String(
-          drna
-        )} was given with ${String(drna[0])} and ${String(drna[1])} as parts.`
+          drna,
+        )} was given with ${String(drna[0])} and ${String(drna[1])} as parts.`,
       );
     }
     const type = drna[0];
@@ -92,7 +87,7 @@ class DRNA extends Schema {
     validatedObjects: object,
     options = {
       allowWildcards: false,
-    }
+    },
   ): Record<string, string | number | undefined> {
     const parameters: Record<string, string | number | undefined> = {};
     // iterate over the schema arguments
@@ -108,7 +103,7 @@ class DRNA extends Schema {
             if (
               schema.Arguments?.[key]?.enum === null ||
               schema.Arguments?.[key]?.enum?.includes(
-                String(injectedDrnaParams.get(key))
+                String(injectedDrnaParams.get(key)),
               ) === true ||
               (options.allowWildcards &&
                 String(injectedDrnaParams.get(key)) === "*")
@@ -125,8 +120,8 @@ class DRNA extends Schema {
           } else if (schema.Arguments?.[key]?.dataFrom) {
             validatedObjectValue = _get(
               validatedObjects,
-              schema.Arguments?.[key]?.dataFrom!,
-              undefined
+              schema.Arguments[key].dataFrom! as string,
+              undefined,
             );
           }
 
@@ -136,7 +131,7 @@ class DRNA extends Schema {
               (schema.Arguments?.[key]?.type === "string" &&
                 !schema.Arguments?.[key]?.enum) ||
               schema.Arguments?.[key]?.enum?.includes(
-                String(validatedObjectValue)
+                String(validatedObjectValue),
               ) === true)
           ) {
             if (schema.Arguments?.[key]?.type === "number") {
@@ -148,7 +143,7 @@ class DRNA extends Schema {
             if (
               schema.Arguments?.[key]?.enum &&
               schema.Arguments?.[key]?.enum?.includes(
-                validatedObjectValue as string
+                validatedObjectValue as string,
               )
             ) {
               parameters[key] = validatedObjectValue;
@@ -167,7 +162,7 @@ class DRNA extends Schema {
     drnaParams: string[],
     options = {
       removeWildcards: true,
-    }
+    },
   ): Map<string, string> {
     const injectedDrnaParams = new Map<string, string>(
       drnaParams
@@ -180,7 +175,7 @@ class DRNA extends Schema {
             return param[0] !== "*";
           }
           return param;
-        })
+        }),
     );
 
     return injectedDrnaParams;
@@ -189,7 +184,7 @@ class DRNA extends Schema {
   public synthetizeDrnaFromSchema(
     drna: string,
     schema: PathSchema,
-    validatedObjects: object
+    validatedObjects: object,
   ): synthetizedDRNAMatch {
     // match the schema arguments with the request, user and context objects
     // return the drna with the arguments values
@@ -198,7 +193,7 @@ class DRNA extends Schema {
     const parameters = this.matchParametersToSchema(
       this.mapInjectedParams(sanitizedDrna.slice(1)),
       schema,
-      validatedObjects
+      validatedObjects,
     );
     // join the parameters to the drna
 
@@ -213,7 +208,7 @@ class DRNA extends Schema {
     parameters: drnaParameters,
     policyPath: string[],
     policyParams: drnaParameters,
-    pathOnly = false
+    pathOnly = false,
   ): boolean {
     const pathStr = path.join(":");
     const policyPathStr = policyPath.join(":");

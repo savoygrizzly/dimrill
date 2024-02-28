@@ -10,6 +10,7 @@ export interface PathSchema {
   Variables?: VariableSchema;
 }
 interface Argument {
+  [key: string]: any; // Add type annotation to the index signature
   type: string | number;
   enum?: string[]; // enum is optional and only for string type
   dataFrom?: string;
@@ -19,7 +20,10 @@ interface Argument {
 // Modified ArgumentSchema using conditional types
 export type ArgumentSchema = Record<
   string,
-  Argument & (Argument extends { type: "string" } ? { enum: string[] } : {})
+  Argument &
+    (Argument extends { type: "string" }
+      ? { enum: string[] }
+      : Record<string, unknown>)
 >;
 // Schema for Arguments
 

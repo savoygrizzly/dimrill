@@ -1,6 +1,6 @@
 import type Schema from "./schema";
 import type DRNA from "./drna";
-import type Condition from "./conditions";
+
 import {
   type PathSchema,
   type StatementCondition,
@@ -9,14 +9,7 @@ import {
   type CompilationResults,
   type CompilatorReturnFormat,
 } from "../types/custom";
-import {
-  SchemaGlobalKeys,
-  SchemaConditionKeys,
-  SchemaOperators,
-  SchemaConditionValues,
-  SchemaOperands,
-  SchemaCastTypes,
-} from "../constants";
+import { SchemaOperators, SchemaOperands, SchemaCastTypes } from "../constants";
 
 class PoliciesCompiler {
   private readonly DRNA: DRNA;
@@ -55,7 +48,7 @@ class PoliciesCompiler {
           }
         } else if (key === "Condition") {
           const compiledConditions = this.compileCondition(
-            statement[key] ?? {}
+            statement[key] ?? {},
           );
           results.conditions.push(compiledConditions.filter((c) => !c.valid));
         } else if (
@@ -78,7 +71,7 @@ class PoliciesCompiler {
   }
 
   private compileCondition(
-    condition: StatementCondition
+    condition: StatementCondition,
   ): CompilatorReturnFormat[] {
     const compiledConditions = Object.entries(condition).map(([key, value]) => {
       const keys = key.split(":");
@@ -93,12 +86,12 @@ class PoliciesCompiler {
           SchemaOperators.includes(k) ||
           SchemaOperands.includes(k) ||
           SchemaCastTypes.includes(k) ||
-          k === "ToQuery"
+          k === "ToQuery",
       );
 
       // Identify main operator, operand, ToQuery modifier, and castType
       const mainOperator = modifiers.find((modifier: string) =>
-        SchemaOperators.includes(modifier)
+        SchemaOperators.includes(modifier),
       );
 
       if (!mainOperator) {
@@ -111,13 +104,13 @@ class PoliciesCompiler {
       }
 
       const mainOperatorCount = modifiers.filter((modifier) =>
-        SchemaOperators.includes(modifier)
+        SchemaOperators.includes(modifier),
       ).length;
       const operandCount = modifiers.filter((modifier) =>
-        SchemaOperands.includes(modifier)
+        SchemaOperands.includes(modifier),
       ).length;
       const castTypeCount = modifiers.filter((modifier) =>
-        SchemaCastTypes.includes(modifier)
+        SchemaCastTypes.includes(modifier),
       ).length;
 
       if (
@@ -147,7 +140,7 @@ class PoliciesCompiler {
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       [drnaType, drna],
       this.schema.returnSchema(),
-      { removeDynamicParameters: true }
+      { removeDynamicParameters: true },
     );
 
     if (schemaExists === false) {
@@ -159,11 +152,11 @@ class PoliciesCompiler {
       };
     }
     try {
-      const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
-        drna,
-        schemaExists as PathSchema,
-        { req: {}, user: {}, context: {} }
-      );
+      this.DRNA.synthetizeDrnaFromSchema(drna, schemaExists as PathSchema, {
+        req: {},
+        user: {},
+        context: {},
+      });
 
       return {
         valid: true,

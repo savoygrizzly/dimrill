@@ -4,7 +4,6 @@ import {
   type validatedDataObjects,
   type synthetizedDRNAMatch,
   type drnaParameters,
-  type Statement,
 } from "../types/custom";
 import type Condition from "./conditions";
 import type DRNA from "./drna";
@@ -22,7 +21,7 @@ class Policies {
   constructor(
     DRNA: DRNA,
     Conditions: Condition,
-    options: { timeout: number } = { timeout: 300 }
+    options: { timeout: number } = { timeout: 300 },
   ) {
     this.DRNA = DRNA;
     this.Conditions = Conditions;
@@ -46,7 +45,7 @@ class Policies {
   public async sanitizePolicyDrna(
     drna: string,
     schema: PathSchema,
-    validatedObjects: validatedDataObjects
+    validatedObjects: validatedDataObjects,
   ): Promise<synthetizedDRNAMatch> {
     const rawParameters = this.DRNA.matchParametersToSchema(
       this.DRNA.mapInjectedParams(drna.split("&").slice(1), {
@@ -54,7 +53,7 @@ class Policies {
       }),
       schema,
       validatedObjects,
-      { allowWildcards: true }
+      { allowWildcards: true },
     );
 
     const parameters = await this.processParameters(rawParameters);
@@ -65,7 +64,7 @@ class Policies {
   }
 
   private async processParameters(
-    rawParameters: Record<string, string | number | undefined>
+    rawParameters: Record<string, string | number | undefined>,
   ): Promise<drnaParameters> {
     const acc: Record<string, string | number | undefined> = {}; // This will be the accumulator object
 
@@ -73,9 +72,9 @@ class Policies {
       // Assuming isolatedVmContext.eval is an async function
       const parsedValue = await this.isolatedVmContext.eval(
         `(function() {return formatValue(${JSON.stringify(
-          value
+          value,
         )},groupedContext)})()`,
-        this.ivmOptions
+        this.ivmOptions,
       );
       acc[String(key)] = parsedValue;
     }
@@ -92,7 +91,7 @@ class Policies {
     options: {
       pathOnly: boolean;
       ignoreConditions: boolean;
-    }
+    },
   ): Promise<{
     valid: boolean;
     query: object | string;
@@ -103,7 +102,7 @@ class Policies {
           const sanitizedDrna = await this.sanitizePolicyDrna(
             String(elem),
             schema,
-            validatedObjects
+            validatedObjects,
           );
 
           const valid = this.DRNA.checkDrnaAccess(
@@ -111,7 +110,7 @@ class Policies {
             drnaToMatch.parameters,
             sanitizedDrna.drnaPaths,
             sanitizedDrna.parameters,
-            options.pathOnly
+            options.pathOnly,
           );
 
           if (valid && options.ignoreConditions) {
@@ -122,7 +121,7 @@ class Policies {
           } else if (valid) {
             return await this.Conditions.runConditions(
               statement.Condition,
-              schema
+              schema,
             );
           }
         }
@@ -143,7 +142,7 @@ class Policies {
     options: {
       pathOnly: boolean;
       ignoreConditions: boolean;
-    }
+    },
   ): Promise<Array<{ valid: boolean; query: object | string }>> {
     if (policies.length === 0) {
       return [
@@ -162,16 +161,16 @@ class Policies {
             drnaToMatch,
             schema,
             validatedObjects,
-            options
-          )
-      )
+            options,
+          ),
+      ),
     );
 
     return promises;
   }
 
   public mergePoliciesResults(
-    results: Array<{ valid: boolean; query: object | string }>
+    results: Array<{ valid: boolean; query: object | string }>,
   ): {
     valid: boolean;
     query: object | string;
@@ -188,7 +187,7 @@ class Policies {
     const mergedQuery =
       typeof allQueries[0] === "object"
         ? this.Conditions.mergeObjectQueries(
-            allQueries as Array<Record<string, any>>
+            allQueries as Array<Record<string, any>>,
           )
         : this.Conditions.mergeStringQueries(allQueries[0] as string[]);
     return {

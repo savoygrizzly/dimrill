@@ -54,4 +54,4 @@ export const SchemaConditionValues = [
   ...SchemaConditionsOnlyOperators,
 ] as string[];
 
-export const fileExtensionName = [".dmrl"];
+export const fileExtensionName = [".dmrl", ".dmrl.json"];

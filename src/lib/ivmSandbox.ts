@@ -1,5 +1,4 @@
 import ivm from "isolated-vm";
-import { ObjectId } from "bson";
 import { type validatedDataObjects } from "../types/custom";
 
 import Operators from "./operators/operators";
@@ -9,7 +8,8 @@ class IvmSandbox {
     options = {
       memoryLimit: 8,
       timeout: 1000,
-    }
+      unsafeEquals: false,
+    },
   ) {
     this.options = options;
     this.instanciated = false;
@@ -19,6 +19,7 @@ class IvmSandbox {
   private readonly options: {
     memoryLimit: number;
     timeout: number;
+    unsafeEquals: boolean;
   };
 
   private instanciated: boolean;
@@ -38,7 +39,13 @@ class IvmSandbox {
       this.instanciated = true;
       return { isolate: this.isolate };
     } else {
-      return { isolate: this.isolate! };
+      if (this.isolate === null) {
+        this.isolate = new ivm.Isolate({
+          memoryLimit: this.options.memoryLimit,
+        });
+        this.instanciated = true;
+      }
+      return { isolate: this.isolate };
     }
   }
 
@@ -60,7 +67,7 @@ class IvmSandbox {
    *
    */
   public async createContext(
-    validatedObjects: validatedDataObjects
+    validatedObjects: validatedDataObjects,
   ): Promise<ivm.Context> {
     if (this.isolate !== null && this.instanciated) {
       const context = await this.isolate.createContext();
@@ -71,15 +78,15 @@ class IvmSandbox {
     */
       await jail.set(
         "req",
-        new ivm.ExternalCopy(validatedObjects.req).copyInto()
+        new ivm.ExternalCopy(validatedObjects.req).copyInto(),
       );
       await jail.set(
         "user",
-        new ivm.ExternalCopy(validatedObjects.user).copyInto()
+        new ivm.ExternalCopy(validatedObjects.user).copyInto(),
       );
       await jail.set(
         "context",
-        new ivm.ExternalCopy(validatedObjects.context).copyInto()
+        new ivm.ExternalCopy(validatedObjects.context).copyInto(),
       );
 
       await jail.set("log", function (...args: any) {
@@ -97,17 +104,28 @@ class IvmSandbox {
           // @ts-expect-error
           const result = operatorsClass[fn](a, b);
           return new ivm.ExternalCopy(result).copyInto();
-        }).deref()
+        }).deref(),
       );
-
+      // const _this = this;
       await jail.set(
         "__adapterClass__",
-        new ivm.Reference(function (fn: any, a: string, b: any) {
+        new ivm.Reference((fn: string, c: string, a: string, b: any) => {
+          if (
+            !this.options.unsafeEquals &&
+            ["Equals", "NotEquals"].includes(fn) &&
+            c === "undefined" &&
+            typeof b === "object" &&
+            b !== null &&
+            !Array.isArray(b)
+          ) {
+            b = String(b);
+          }
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-expect-error
           const result = adapterClass[fn](a, b);
+
           return new ivm.ExternalCopy(result).copyInto();
-        }).deref()
+        }).deref(),
       );
 
       await jail.set("Operators", operatorsClass, {
@@ -141,7 +159,7 @@ class IvmSandbox {
           }
           return current;
         }
-    
+
         function formatValue(value, context) {
           let parsedValue;
           try {
@@ -149,7 +167,7 @@ class IvmSandbox {
           } catch (e) {
             parsedValue = value;
           }
-    
+
           if (typeof parsedValue !== "string") return parsedValue;
           else {
             if (parsedValue.startsWith("{{") && parsedValue.endsWith("}}")) {
@@ -169,7 +187,7 @@ class IvmSandbox {
       return context;
     } else {
       throw new Error(
-        "Isolate not Instanciated, call createIvm first or set autoLaunchIvm to true"
+        "Isolate not Instanciated, call createIvm first or set autoLaunchIvm to true",
       );
     }
   }

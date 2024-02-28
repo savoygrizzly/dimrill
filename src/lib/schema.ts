@@ -13,11 +13,11 @@ import {
   type validatedDataObjects,
 } from "../types/custom";
 
-import type CompiledSchemaObject from "./compiledSchema";
+// import type CompiledSchemaObject from "./compiledSchema";
 import Ajv from "ajv";
 import _get from "lodash/get";
 import _set from "lodash/set";
-import _merge from "lodash/merge";
+// import _merge from "lodash/merge";
 class Schema {
   constructor(options: { prefix: string } = { prefix: "" }) {
     this.schema = {};
@@ -41,7 +41,7 @@ class Schema {
 
   private returnSchemaSectionPrototype(
     type: string,
-    isEndpoint: boolean
+    isEndpoint: boolean,
   ): object {
     return {
       isEndpoint() {
@@ -82,7 +82,7 @@ class Schema {
         ) {
           Object.setPrototypeOf(
             value,
-            this.returnSchemaSectionPrototype(key, true)
+            this.returnSchemaSectionPrototype(key, true),
           );
         }
         return;
@@ -98,28 +98,28 @@ class Schema {
               !value.Type.includes("Ressource"))
           ) {
             throw new Error(
-              `Missing or invalid 'Type' key at: ${currentPath.join(":")}`
+              `Missing or invalid 'Type' key at: ${currentPath.join(":")}`,
             );
           }
 
           Object.setPrototypeOf(
             value,
-            this.returnSchemaSectionPrototype(key, true)
+            this.returnSchemaSectionPrototype(key, true),
           );
 
           // Check for nested endpoints which are not allowed
           const nestedKeys = Object.keys(value);
           const hasNestedEndpoints = nestedKeys.some(
-            (subKey) => !SchemaGlobalKeys.includes(subKey)
+            (subKey) => !SchemaGlobalKeys.includes(subKey),
           );
           if (hasNestedEndpoints) {
             const nestedKey = nestedKeys.filter(
-              (subKey) => !SchemaGlobalKeys.includes(subKey)
+              (subKey) => !SchemaGlobalKeys.includes(subKey),
             );
             throw new Error(
               `Nested endpoints are not allowed at: ${String(
-                currentPath.join(":")
-              )} for key: ${String(nestedKey)}`
+                currentPath.join(":"),
+              )} for key: ${String(nestedKey)}`,
             );
           }
         } else {
@@ -129,9 +129,9 @@ class Schema {
           schema[key] = Object.setPrototypeOf(
             this.validateSchemaObject(
               schema[key] as unknown as RootSchema,
-              currentPath
+              currentPath,
             ),
-            this.returnSchemaSectionPrototype(key, false)
+            this.returnSchemaSectionPrototype(key, false),
           );
           this.validateSchemaObject(value, currentPath);
         }
@@ -171,7 +171,7 @@ class Schema {
   }
 
   private validateSchemaArguments(
-    schemaArguments: ArgumentSchema
+    schemaArguments: ArgumentSchema,
   ): ArgumentSchema {
     Object.keys(schemaArguments as Record<string, any>).forEach((key) => {
       if (
@@ -189,7 +189,7 @@ class Schema {
   }
 
   private validateSchemaCondition(
-    schemaCondition: ConditionSchema
+    schemaCondition: ConditionSchema,
   ): ConditionSchema {
     Object.keys(schemaCondition).forEach((key: string) => {
       if (!SchemaConditionKeys.includes(key)) {
@@ -203,14 +203,14 @@ class Schema {
             !SchemaConditionsOnlyOperators.includes(operator)
           ) {
             throw new Error(
-              `Invalid schema condition operator: ${operator} for ${key}`
+              `Invalid schema condition operator: ${operator} for ${key}`,
             );
           } else if (
             key === "ContextOperators" &&
             !SchemaOperators.includes(operator)
           ) {
             throw new Error(
-              `Invalid schema context operator: ${operator} for ${key}`
+              `Invalid schema context operator: ${operator} for ${key}`,
             );
           }
         });
@@ -220,14 +220,14 @@ class Schema {
         }
 
         const conditionValues = Object.keys(
-          schemaCondition[key] as ConditionEnforceSchema
+          schemaCondition[key] as ConditionEnforceSchema,
         );
         conditionValues.forEach((operators: string) => {
           const splitOperators = operators.split(":");
           if (
             splitOperators.length > 3 ||
             !SchemaConditionValues.every((i) =>
-              SchemaConditionValues.includes(i)
+              SchemaConditionValues.includes(i),
             )
           ) {
             throw new Error(`Invalid schema operator: ${operators} for ${key}`);
@@ -241,17 +241,17 @@ class Schema {
   private mergeSchemaObjects(
     obj1: Record<string, any>,
     obj2: Record<string, any>,
-    fileName: string
+    fileName: string,
   ): Record<string, any> {
     Object.keys(obj2).forEach((key) => {
       // Ensure prototype is set for new keys in obj1
       if (
-        !obj1.hasOwnProperty(key) &&
+        !Object.prototype.hasOwnProperty.call(obj1, key) &&
         this.returnSchemaFilePrototype(fileName)
       ) {
         Object.setPrototypeOf(
           obj2[key],
-          this.returnSchemaFilePrototype(fileName)
+          this.returnSchemaFilePrototype(fileName),
         );
       }
 
@@ -260,7 +260,11 @@ class Schema {
         obj1[key] = Array.from(new Set([...obj1[key], ...obj2[key]]));
       } else if (this.isObject(obj1[key]) && this.isObject(obj2[key])) {
         // Recursively merge objects
-        obj1[key] = this.mergeSchemaObjects(obj1[key], obj2[key], fileName);
+        obj1[key] = this.mergeSchemaObjects(
+          obj1[key] as Record<string, any>,
+          obj2[key] as Record<string, any>,
+          fileName,
+        );
       } else {
         // For non-overlapping keys or primitive values, simply set/overwrite with obj2's value
         obj1[key] = obj2[key];
@@ -296,7 +300,7 @@ class Schema {
     context: object,
     options: {
       validateData: boolean;
-    }
+    },
   ): validatedDataObjects {
     const data = { req, user, context };
 
@@ -306,7 +310,7 @@ class Schema {
     validationSchema.additionalProperties = false;
 
     const validate = this.ajv.compile(
-      Object.setPrototypeOf(validationSchema, Object)
+      Object.setPrototypeOf(validationSchema, Object),
     );
 
     const valid = validate(data);
@@ -319,8 +323,10 @@ class Schema {
   private readonly validationFunctions: Record<string, (obj: any) => boolean> =
     {
       Type: (obj) => this.validateSchemaType(obj),
-      Arguments: (obj) => this.validateSchemaArguments(obj) !== null,
-      Condition: (obj) => this.validateSchemaCondition(obj) !== null,
+      Arguments: (obj) =>
+        this.validateSchemaArguments(obj as ArgumentSchema) !== null,
+      Condition: (obj) =>
+        this.validateSchemaCondition(obj as ConditionSchema) !== null,
       Variables: () => true, // Assuming no validation needed; adjust as necessary
       // Add other section validations as needed
     };
@@ -328,7 +334,7 @@ class Schema {
   private reValidateSchema(
     path: string,
     targetKey: string,
-    testObject: any
+    testObject: any,
   ): boolean {
     // Early return if the validation function for the targetKey doesn't exist,
     // indicating that no validation is needed for this key.
@@ -350,7 +356,7 @@ class Schema {
     const validate = this.validationFunctions[sectionName];
     if (!validate) {
       console.error(
-        `No validation function found for section: ${sectionName} at path: ${path}`
+        `No validation function found for section: ${sectionName} at path: ${path}`,
       );
       return false;
     }
@@ -376,8 +382,8 @@ class Schema {
     if (!validEndpoints.includes(targetKey)) {
       throw new Error(
         `Invalid endpoint: ${targetKey}. Only ${validEndpoints.join(
-          ", "
-        )} are modifiable.`
+          ", ",
+        )} are modifiable.`,
       );
     }
 
@@ -399,13 +405,13 @@ class Schema {
 
         if (Array.isArray(parentObject[targetKey])) {
           throw new Error(
-            `Cannot unset property from an array at path: ${path}`
+            `Cannot unset property from an array at path: ${path}`,
           );
         }
 
         if (!(keyToRemove in parentObject[targetKey])) {
           console.error(
-            `Key ${keyToRemove} not found in object at path: ${path}.`
+            `Key ${keyToRemove} not found in object at path: ${path}.`,
           );
           return; // Key not found, no operation performed
         }
@@ -414,7 +420,7 @@ class Schema {
 
         if (!this.reValidateSchema(parentPath, targetKey, parentObject)) {
           throw new Error(
-            `Validation failed after unsetting key from path: ${path}`
+            `Validation failed after unsetting key from path: ${path}`,
           );
         }
 
@@ -451,7 +457,7 @@ class Schema {
         const included = currentArray.includes(elementName);
         if (!included) {
           console.error(
-            `Element named ${elementName} not found in array at path: ${path}.`
+            `Element named ${elementName} not found in array at path: ${path}.`,
           );
           return false; // Element not found, removal not performed
         }
@@ -461,15 +467,15 @@ class Schema {
         const testObject = _get(
           this.schema,
           path.split(".").slice(0, -1).join("."),
-          {}
+          {},
         ) as Record<string, any>;
-        testObject[path.split(".").pop() || ""] = currentArray;
+        testObject[path.split(".").pop() ?? ""] = currentArray;
 
         if (
-          !this.reValidateSchema(path, path.split(".").pop() || "", testObject)
+          !this.reValidateSchema(path, path.split(".").pop() ?? "", testObject)
         ) {
           throw new Error(
-            `Validation failed after removing element from path: ${path}`
+            `Validation failed after removing element from path: ${path}`,
           );
         }
 

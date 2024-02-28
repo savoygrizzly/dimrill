@@ -1,14 +1,10 @@
 import { type ConditionSchema, type StatementCondition } from "../types/custom";
 import {
-  SchemaGlobalKeys,
-  SchemaConditionKeys,
   SchemaOperators,
-  SchemaConditionValues,
   SchemaConditionsOnlyOperators,
   SchemaOperands,
   SchemaCastTypes,
 } from "../constants";
-import util from "util";
 import TypeCasters from "./operators/typeCasters";
 class Condition {
   constructor(
@@ -16,7 +12,7 @@ class Condition {
       adapter?: string;
     } = {
       adapter: "mongodb",
-    }
+    },
   ) {
     this.typeCasters = new TypeCasters();
     this.options = options;
@@ -41,7 +37,7 @@ class Condition {
 
   public async runConditions(
     condition: StatementCondition | undefined,
-    schema: ConditionSchema
+    schema: ConditionSchema,
   ): Promise<{
     valid: boolean;
     query: object | string;
@@ -61,27 +57,27 @@ class Condition {
             SchemaOperands.includes(k) ||
             SchemaCastTypes.includes(k) ||
             SchemaConditionsOnlyOperators.includes(k) ||
-            k === "ToQuery"
+            k === "ToQuery",
         );
 
         // Identify main operator, operand, ToQuery modifier, and castType
         const mainOperator = modifiers.find((modifier) =>
           [...SchemaOperators, ...SchemaConditionsOnlyOperators].includes(
-            modifier
-          )
+            modifier,
+          ),
         );
 
         const operand = modifiers.find((modifier) =>
-          SchemaOperands.includes(modifier)
+          SchemaOperands.includes(modifier),
         );
         const toQuery = modifiers.includes("ToQuery") ? "ToQuery" : undefined;
         const castType = modifiers.find((modifier) =>
-          SchemaCastTypes.includes(modifier)
+          SchemaCastTypes.includes(modifier),
         );
 
         if (!mainOperator) {
           throw new Error(
-            `Invalid condition key: ${String(key)}. Main operator is missing.`
+            `Invalid condition key: ${String(key)}. Main operator is missing.`,
           );
         }
         if (
@@ -90,22 +86,22 @@ class Condition {
         ) {
           throw new Error(
             `Invalid condition query key: ${String(key)}. Operator ${String(
-              mainOperator
-            )} is not allowed to be used with the ToQuery modifier.`
+              mainOperator,
+            )} is not allowed to be used with the ToQuery modifier.`,
           );
         }
         const mainOperatorCount = modifiers.filter(
           (modifier) =>
             (toQuery !== undefined && SchemaOperators.includes(modifier)) ||
             [...SchemaOperators, ...SchemaConditionsOnlyOperators].includes(
-              modifier
-            )
+              modifier,
+            ),
         ).length;
         const operandCount = modifiers.filter((modifier) =>
-          SchemaOperands.includes(modifier)
+          SchemaOperands.includes(modifier),
         ).length;
         const castTypeCount = modifiers.filter((modifier) =>
-          SchemaCastTypes.includes(modifier)
+          SchemaCastTypes.includes(modifier),
         ).length;
 
         if (
@@ -115,7 +111,7 @@ class Condition {
           keys.length > modifiers.length
         ) {
           throw new Error(
-            `Invalid condition key: ${key}. Structure not valid.`
+            `Invalid condition key: ${key}. Structure not valid.`,
           );
         }
 
@@ -124,9 +120,9 @@ class Condition {
           mainOperator,
           { operand, toQuery, castType },
           value,
-          schema
+          schema,
         );
-      })
+      }),
     );
 
     return this.mergeConditionsResults(results);
@@ -136,7 +132,7 @@ class Condition {
     results: Array<{
       valid: boolean;
       query: object | string;
-    }>
+    }>,
   ): {
     valid: boolean;
     query: object | string;
@@ -160,7 +156,7 @@ class Condition {
   }
 
   public mergeObjectQueries(
-    queries: Array<Record<string, any>>
+    queries: Array<Record<string, any>>,
   ): Record<string, any> {
     return queries.reduce((acc, currentArray) => {
       if (!Array.isArray(currentArray)) {
@@ -186,7 +182,7 @@ class Condition {
       castType: string | undefined;
     },
     values: object,
-    schema: ConditionSchema
+    schema: ConditionSchema,
   ): Promise<{
     valid: boolean;
     query: object | string;
@@ -206,16 +202,19 @@ class Condition {
 
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
-          return await this.runAdapter(mainOperator, variables);
-        })
+          return await this.runAdapter(
+            mainOperator,
+            variables,
+            modifiers.castType ?? schema?.Condition?.QueryEnforceTypeCast,
+          );
+        }),
       );
-      if (modifiers.castType || schema?.Condition?.QueryEnforceTypeCast) {
+      if (modifiers.castType ?? schema?.Condition?.QueryEnforceTypeCast) {
         // cast results to correct type
-
         returnValue.query = this.castQuery(
           results,
-          modifiers.castType!,
-          schema?.Condition?.QueryEnforceTypeCast
+          modifiers.castType ?? "",
+          schema?.Condition?.QueryEnforceTypeCast,
         );
       } else {
         returnValue.query = results;
@@ -227,7 +226,7 @@ class Condition {
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
           return await this.runCondition(mainOperator, variables);
-        })
+        }),
       );
       // Process results
       if (modifiers.operand === "AnyValues") {
@@ -243,7 +242,7 @@ class Condition {
   private castQuery(
     results: any[],
     castType: string,
-    enforceTypeCast: Record<string, string> | undefined
+    enforceTypeCast: Record<string, string> | undefined,
   ): string | Record<string, any> {
     return results.map((result) => {
       if (typeof result === "string") {
@@ -288,29 +287,36 @@ class Condition {
             }
             return acc;
           },
-          {}
+          {},
         );
+      } else if (typeof result === "boolean") {
+        return Boolean(result);
+      } else if (typeof result === "number") {
+        return Number(result);
+      } else {
+        return String(result); // enforce string type
       }
     });
   }
 
   private async runAdapter(
     operator: string,
-    valueArray: string[]
+    valueArray: string[],
+    castType: string | any,
   ): Promise<Record<string, object> | string> {
     const result = await this.isolatedVmContext.eval(`
     (function() {
       const formattedValue1 = formatValue(${JSON.stringify(
-        valueArray[0]
+        valueArray[0],
       )}, groupedContext);
       const formattedValue2 = formatValue(${JSON.stringify(
-        valueArray[1]
+        valueArray[1],
       )}, groupedContext);
-    
-    
+
+
       const query = __adapterClass__.apply(
-        undefined, 
-        ["${operator}", formattedValue1, formattedValue2],
+        undefined,
+        ["${operator}","${castType}", formattedValue1, formattedValue2],
         {
           arguments: { copy: true },
         }
@@ -324,25 +330,25 @@ class Condition {
 
   private async runCondition(
     operator: string,
-    valueArray: string[]
+    valueArray: string[],
   ): Promise<boolean> {
     const result = await this.isolatedVmContext.eval(`
     (function() {
     const formattedValue1 = formatValue(${JSON.stringify(
-      valueArray[0]
+      valueArray[0],
     )}, groupedContext);
     const formattedValue2 = formatValue(${JSON.stringify(
-      valueArray[1]
+      valueArray[1],
     )}, groupedContext);
-    
-   
-    
+
+
+
     return  (__operatorsClass__.apply(
-      undefined, 
+      undefined,
       ["${operator}", formattedValue1, formattedValue2],
       {
         arguments: { copy: true },
-       
+
       }
     ));
     })()
