@@ -9,7 +9,7 @@ Wildcards `*` for parameters are now required to be specified as `&*`or`&*/*`. W
 ## What is Dimrill, and the philosophy behind it
 
 Dimrill is a policy based authorization module for nodeJS environments, it doesnt replace your JWT token, nor does it replace your login logic.
-What it does is help you replace a role based authorization (eg. an `admin` role for a user that can oversee eveyrthing, a `user` that can perform certain actions and then maybe a `manager` sitting in the middle of all that).
+What it does is help you replace a traditional role based authorization (eg. an `admin` role, a `user` role, a `manager` role etc), for a policy based authorization.
 
 It is intended to act as an **authorization middleware** for complex roles handling, and will allow you to define "roles" dynamically based on the ressources and action required.
 
