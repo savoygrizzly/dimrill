@@ -103,7 +103,7 @@ First install dimrill: `npm install dimrill`.
 
 To implement the example above, we just need to follow a few steps.
 
-Saving the schemas, make sure the schema(s) are valid JSON objects, and save them with the `.dmrl` extension
+Saving the schemas to a file, make sure the schema(s) are valid JSON objects, and save them in a file with either one of the `.dmrl` or `.dmrl.json` extensions.
 
 Initialize Dimrill and autoload the schemas:
 

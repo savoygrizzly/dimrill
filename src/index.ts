@@ -65,6 +65,23 @@ class Dimrill {
   private readonly policies: Policies;
   private readonly schema: Schema;
 
+  private validateFileExtension(filename: string): boolean {
+    let fileType = path.extname(filename);
+
+    // Check for double extension of .dmrl.json
+    const fileExtensions = filename.split(".");
+    const totalExtensions = fileExtensions.slice(
+      Math.max(fileExtensions.length - 2, 1),
+    );
+
+    if (totalExtensions.length < 3) {
+      fileType = `.${totalExtensions.join(".")}`;
+    }
+
+    if (!fileExtensionName.includes(fileType)) return false;
+    return true;
+  }
+
   private async readFiles(
     dirname: string,
   ): Promise<Record<string, RootSchema>> {
@@ -72,21 +89,9 @@ class Dimrill {
     const files = await fsp.readdir(dirname);
     await Promise.all(
       files.map(async (filename) => {
-        let fileType = path.extname(filename);
-
         const full = path.join(dirname, filename);
 
-        // Check for double extension of .dmrl.json
-        const fileExtensions = filename.split(".");
-        const totalExtensions = fileExtensions.slice(
-          Math.max(fileExtensions.length - 2, 1),
-        );
-
-        if (totalExtensions.length < 3) {
-          fileType = `.${totalExtensions.join(".")}`;
-        }
-
-        if (!fileExtensionName.includes(fileType)) return;
+        if (!this.validateFileExtension(filename)) return;
         try {
           const content = await fsp.readFile(full, { encoding: "utf8" });
           data[filename] = JSON.parse(content);
@@ -146,8 +151,7 @@ class Dimrill {
     if (!Array.isArray(paths)) paths = [paths];
     await Promise.all(
       paths.map(async (filename) => {
-        const fileType = path.extname(filename);
-        if (!fileExtensionName.includes(fileType)) {
+        if (!this.validateFileExtension(filename)) {
           throw new Error(
             `Invalid file type: ${filename}, extension must be: ${fileExtensionName.join(
               ", ",
