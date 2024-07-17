@@ -13,7 +13,9 @@ import fs from "fs";
 import path from "path";
 import IvmSandbox from "./lib/ivmSandbox";
 import { fileExtensionName } from "./constants";
+
 const fsp = fs.promises;
+
 class Dimrill {
   constructor(
     options: {
@@ -330,7 +332,10 @@ class Dimrill {
     } = {
       pathOnly: false,
     },
-  ): Promise<object> {
+  ): Promise<{
+    query: string | object;
+    valid: boolean;
+  }> {
     if (!options.validateData) {
       options.validateData = this.opts.validateData;
     }
@@ -340,7 +345,9 @@ class Dimrill {
       this.schema.returnSchema(),
     );
     if (schemaExists === false) {
-      throw new Error(`Invalid DRNA path: ${drna}`);
+      throw new Error(
+        `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`,
+      );
     }
 
     const validatedObjects = this.schema.castObjectsToSchemaTypes(
