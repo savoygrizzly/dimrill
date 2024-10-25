@@ -1,6 +1,6 @@
 # Dimrill
 
-**VERSION 3.0.X**
+**VERSION 3.1.X**
 
 Release notes:
 
@@ -510,7 +510,7 @@ If a statement has a Condition containing blocks without the operator `ToQuery`,
 It is possible to use dynamic parameters directly in the policies statements.
 Dynamic parameters can be passed in drna strings as well as in conditions value (right one). Dynamic parameters will only have access to the `req`,`user`, and `context` objects passed to the authorizer. Paths must therefore start with one of these objects name.
 
-In order to specify a dynamic parameter the following syntax has to be used `"{{req:yourparam:subParam}}"`, the value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
+In order to specify a dynamic parameter the following syntax has to be used `"{{req:yourparam:subParam}}"` or `"{{req.yourparam.subParam}}"`, the value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
 
 NB.
 **Dynamic parameters cannot be used in the authorizer**
