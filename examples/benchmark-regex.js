@@ -9,7 +9,7 @@
 
 const TRIES = 20000;
 
-console.log("Benchmarking regex");
+l.log("Benchmarking regex");
 console.time("regex");
 for (let i = 0; i < TRIES; i++) {
   const matchingDrna = "files:createOrder&pricelist/distributor&currency/USD";
@@ -26,7 +26,7 @@ for (let i = 0; i < TRIES; i++) {
 
   policies.forEach((policy) => {
     const result = String(matchingDrna).match(
-      new RegExp("^" + String(policy).replace("*", ".*"))
+      new RegExp("^" + String(policy).replace("*", ".*")),
     );
   });
 }

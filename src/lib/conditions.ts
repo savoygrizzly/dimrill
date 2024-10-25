@@ -214,7 +214,7 @@ class Condition {
         returnValue.query = this.castQuery(
           results,
           modifiers.castType ?? "",
-          schema?.Condition?.QueryEnforceTypeCast,
+          schema?.Condition?.QueryEnforceTypeCast as Record<string, string>,
         );
       } else {
         returnValue.query = results;
@@ -249,7 +249,7 @@ class Condition {
         return result; // Directly return the string if the result is a string
       } else if (typeof result === "object" && result !== null) {
         // Process each key-value pair in the object
-        return Object.entries(result).reduce(
+        return Object.entries(result as Record<string, any>).reduce(
           (acc: Record<string, any>, [key, value]) => {
             // Check if value is a direct object or a MongoDB query object
             let enforcedTypeCast = castType;
@@ -268,7 +268,9 @@ class Condition {
                 value !== null &&
                 !Array.isArray(value)
               ) {
-                Object.entries(value).forEach(([queryKey, queryValue]) => {
+                Object.entries(
+                  value as Record<string, unknown> | ArrayLike<unknown>,
+                ).forEach(([queryKey, queryValue]) => {
                   const castedValue =
                     this.typeCasters[
                       String(enforcedTypeCast) as keyof TypeCasters
@@ -313,7 +315,6 @@ class Condition {
         valueArray[1],
       )}, groupedContext);
 
-
       const query = __adapterClass__.apply(
         undefined,
         ["${operator}","${castType}", formattedValue1, formattedValue2],
@@ -340,7 +341,7 @@ class Condition {
     const formattedValue2 = formatValue(${JSON.stringify(
       valueArray[1],
     )}, groupedContext);
-
+    log(${JSON.stringify(valueArray[0])},formattedValue2)
 
 
     return  (__operatorsClass__.apply(

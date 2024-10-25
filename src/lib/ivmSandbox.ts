@@ -90,6 +90,7 @@ class IvmSandbox {
       );
 
       await jail.set("log", function (...args: any) {
+        // eslint-disable-next-line
         console.log(...args);
       });
 
@@ -144,7 +145,8 @@ class IvmSandbox {
         };
 
         function accessProperty(path, context) {
-          const parts = path.split(":");
+          // Split by either ':' or '.'
+          const parts = path.split(/[:.]/);
           let current = context;
           for (const part of parts) {
             if (current && typeof current === "object" && part in current) {
