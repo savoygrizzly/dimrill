@@ -7,7 +7,19 @@ export interface PathSchema {
   Type: Array<"Action" | "Ressource">;
   Arguments?: ArgumentSchema;
   Condition?: ConditionSchema;
-  Variables?: VariableSchema;
+  Variables?: Record<[key: string], VariableSchema>;
+}
+export interface VariableSchema {
+  type:
+    | "string"
+    | "number"
+    | "boolean"
+    | "array"
+    | "objectId"
+    | "objectIdArray"
+    | "date";
+  required?: boolean;
+  description?: string;
 }
 interface Argument {
   [key: string]: any; // Add type annotation to the index signature
@@ -37,8 +49,6 @@ export interface ConditionSchema {
   QueryEnforceTypeCast?: Record<string, string>;
 }
 
-// Schema for Variables (like 'req', 'user', 'context')
-export type VariableSchema = Record<string, object>;
 export interface Constants {
   SchemaArgumentKeys: string[];
   SchemaGlobalKeys: string[];

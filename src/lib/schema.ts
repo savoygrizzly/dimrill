@@ -18,6 +18,11 @@ import Ajv from "ajv";
 import _get from "lodash/get";
 import _set from "lodash/set";
 // import _merge from "lodash/merge";
+interface SchemaVariable {
+  type: "string" | "number" | "boolean" | "array";
+  required?: boolean;
+  description?: string;
+}
 class Schema {
   constructor(options: { prefix: string } = { prefix: "" }) {
     this.schema = {};
@@ -141,21 +146,38 @@ class Schema {
     return schema;
   }
 
+  private validateSchemaVariables(
+    variables: Record<string, SchemaVariable>,
+  ): boolean {
+    for (const [key, value] of Object.entries(variables)) {
+      if (
+        !value.type ||
+        !["string", "number", "boolean", "array"].includes(value.type)
+      ) {
+        throw new Error(
+          `Invalid variable type for ${key}. Must be one of: string, number, boolean, array`,
+        );
+      }
+    }
+    return true;
+  }
+
   private validateGlobalKey(value: any, key: string): any {
     switch (key) {
       case "Arguments":
         return this.validateSchemaArguments(value as unknown as ArgumentSchema);
 
-        break;
       case "Condition":
         return this.validateSchemaCondition(value as ConditionSchema);
-        break;
       case "Type":
         if (!this.validateSchemaType(value)) {
           throw new Error(`Invalid Type value for global key: ${key}`);
         }
         return value;
-        break;
+      case "Variables":
+        return this.validateSchemaVariables(
+          value as Record<string, SchemaVariable>,
+        );
       default:
         return value;
     }
@@ -415,7 +437,7 @@ class Schema {
           );
           return; // Key not found, no operation performed
         }
-
+        // eslint-disable-next-line
         delete parentObject[targetKey][keyToRemove];
 
         if (!this.reValidateSchema(parentPath, targetKey, parentObject)) {

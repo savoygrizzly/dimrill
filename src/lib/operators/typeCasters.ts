@@ -34,7 +34,7 @@ export default class TypeCasters {
       })
       .filter(
         (filtered: boolean | string | number) =>
-          filtered !== null && filtered !== undefined
+          filtered !== null && filtered !== undefined,
       );
 
     return safeValues;

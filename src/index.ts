@@ -3,6 +3,7 @@ import {
   type CompilationResults,
   type PathSchema,
   type Policy,
+  type VariableSchema,
 } from "./types/custom";
 import Schema from "./lib/schema";
 import PoliciesCompiler from "./lib/policiesCompiler";
@@ -12,6 +13,7 @@ import Condition from "./lib/conditions";
 import fs from "fs";
 import path from "path";
 import IvmSandbox from "./lib/ivmSandbox";
+import { ObjectId } from "bson"; // Add this import
 import { fileExtensionName } from "./constants";
 
 const fsp = fs.promises;
@@ -325,7 +327,13 @@ class Dimrill {
   public async authorize(
     drna: string[],
     policies: Policy[],
-    { req = {}, user = {}, context = {} },
+    {
+      req = {},
+      user = {},
+      context = {},
+      // eslint-disable-next-line
+      variables = {} as Record<string, unknown>,
+    },
     options: {
       validateData?: boolean;
       pathOnly?: boolean;
@@ -343,15 +351,120 @@ class Dimrill {
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       drna,
       this.schema.returnSchema(),
-    );
+    ) as PathSchema | false; // First, explicitly type the return value
+
     if (schemaExists === false) {
       throw new Error(
         `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`,
       );
     }
+    /*
+        Validate the variables passed.
+    */
+    if (Object.keys(variables).length > 0 && schemaExists.Variables) {
+      const schemaVariables = schemaExists.Variables as Record<
+        string,
+        VariableSchema
+      >;
+
+      // Create a new variables object with cast values
+      const castVariables: Record<string, unknown> = {};
+
+      for (const [key, schema] of Object.entries(schemaVariables)) {
+        if (schema.required && !(key in variables)) {
+          throw new Error(`Required variable "${key}" is missing`);
+        }
+        if (key in variables) {
+          const value = variables[key];
+          switch (schema.type) {
+            case "string":
+              if (typeof value !== "string") {
+                throw new Error(`Variable "${key}" must be a string`);
+              }
+              castVariables[key] = value;
+              break;
+            case "number":
+              if (typeof value !== "number") {
+                throw new Error(`Variable "${key}" must be a number`);
+              }
+              castVariables[key] = value;
+              break;
+            case "boolean":
+              if (typeof value !== "boolean") {
+                throw new Error(`Variable "${key}" must be a boolean`);
+              }
+              castVariables[key] = value;
+              break;
+            case "array":
+              if (!Array.isArray(value)) {
+                throw new Error(`Variable "${key}" must be an array`);
+              }
+              castVariables[key] = value;
+              break;
+            case "objectId":
+              // First check if it's already an ObjectId
+              // @ts-expect-error inferring the type of value
+              if (ObjectId.isValid(value) && typeof value === "object") {
+                castVariables[key] = value;
+              } else if (typeof value === "string" && ObjectId.isValid(value)) {
+                // If it's a string and valid ObjectId format, convert it
+                castVariables[key] = new ObjectId(value);
+              } else {
+                throw new Error(
+                  `Variable "${key}" must be an ObjectId or valid ObjectId string`,
+                );
+              }
+
+              break;
+            case "objectIdArray":
+              if (!Array.isArray(value)) {
+                throw new Error(
+                  `Variable "${key}" must be an array of ObjectIds`,
+                );
+              }
+              // eslint-disable-next-line
+              const objectIds = value.map((item) => {
+                // eslint-disable-next-line
+                if (ObjectId.isValid(item) && typeof item === "object") {
+                  return item;
+                } else if (typeof item === "string" && ObjectId.isValid(item)) {
+                  return new ObjectId(item);
+                } else {
+                  throw new Error(
+                    `All items in "${key}" must be ObjectIds or valid ObjectId strings`,
+                  );
+                }
+              });
+
+              castVariables[key] = objectIds;
+              break;
+            case "date":
+              if (value instanceof Date) {
+                castVariables[key] = value;
+              } else {
+                try {
+                  const date = new Date(value as string | number);
+                  if (isNaN(date.getTime())) {
+                    throw new Error();
+                  }
+                  castVariables[key] = date;
+                } catch {
+                  throw new Error(
+                    `Variable "${key}" must be a Date or valid date string`,
+                  );
+                }
+              }
+              break;
+          }
+        }
+      }
+
+      // Replace the original variables with the cast ones
+      variables = castVariables;
+    }
 
     const validatedObjects = this.schema.castObjectsToSchemaTypes(
-      (schemaExists as PathSchema)?.Variables ?? {},
+      schemaExists?.Variables ?? {},
       req,
       user,
       context,
@@ -359,8 +472,13 @@ class Dimrill {
         validateData: options.validateData ?? true,
       },
     );
-    const ivmContext = await this.ivmSandbox.createContext(validatedObjects);
+    const ivmContext = await this.ivmSandbox.createContext(
+      validatedObjects,
+      variables,
+    );
+
     /*
+
         Pass the Isolate and the Context to the Policies class
     */
     this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
@@ -370,7 +488,7 @@ class Dimrill {
     */
     const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
       drna[1],
-      schemaExists as PathSchema,
+      schemaExists,
       options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
     );
     /*
@@ -379,7 +497,7 @@ class Dimrill {
     const matchedPolicy = await this.policies.matchPolicy(
       drna[0],
       synthetizedMatch,
-      schemaExists as PathSchema,
+      schemaExists,
       policies,
       options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
       {

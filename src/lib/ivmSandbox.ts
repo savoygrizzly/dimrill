@@ -68,6 +68,7 @@ class IvmSandbox {
    */
   public async createContext(
     validatedObjects: validatedDataObjects,
+    variables: Record<string, unknown> = {},
   ): Promise<ivm.Context> {
     if (this.isolate !== null && this.instanciated) {
       const context = await this.isolate.createContext();
@@ -88,6 +89,7 @@ class IvmSandbox {
         "context",
         new ivm.ExternalCopy(validatedObjects.context).copyInto(),
       );
+      await jail.set("variables", new ivm.ExternalCopy(variables).copyInto());
 
       await jail.set("log", function (...args: any) {
         // eslint-disable-next-line
@@ -138,53 +140,64 @@ class IvmSandbox {
       await jail.set("global", jail.derefInto());
 
       const sc = await this.isolate.compileScript(`
-        const groupedContext = {
-            req,
-            user,
-            context
-        };
+            const groupedContext = {
+              req,
+              user,
+              context,
+              variables
+            };
 
-        function accessProperty(path, context) {
-          // Split by either ':' or '.'
-          const parts = path.split(/[:.]/);
-          let current = context;
-          for (const part of parts) {
-            if (current && typeof current === "object" && part in current) {
-              current = current[part];
-            } else {
-              return undefined;
-              // Property not found or invalid; return undefined or handle as needed
-            }
-          }
-          if (['&', '/', '*'].includes(current)) {
-            current = "";
-          }
-          return current;
-        }
-
-        function formatValue(value, context) {
-          let parsedValue;
-          try {
-            parsedValue = JSON.parse(value);
-          } catch (e) {
-            parsedValue = value;
-          }
-
-          if (typeof parsedValue !== "string") return parsedValue;
-          else {
-            if (parsedValue.startsWith("{{") && parsedValue.endsWith("}}")) {
-              return accessProperty(parsedValue.slice(2, -2), context);
-            }
-            else {
-              if (['&', '/'].includes(parsedValue)) {
-                parsedValue = "";
+            function accessProperty(path, context) {
+              // Handle variable access (now wrapped in {{$variableName}})
+              if (path.startsWith('$')) {
+                const variableName = path.slice(1);
+                return context.variables[variableName];
               }
-              return parsedValue;
-            }
-          }
-        }
 
-    `);
+              // Split by either ':' or '.'
+              const parts = path.split(/[:.]/);
+              let current = context;
+              for (const part of parts) {
+                if (current && typeof current === "object" && part in current) {
+                  current = current[part];
+                } else {
+                  return undefined;
+                }
+              }
+              if (['&', '/', '*'].includes(current)) {
+                current = "";
+              }
+              return current;
+            }
+
+            function formatValue(value, context) {
+              let parsedValue;
+              try {
+                parsedValue = JSON.parse(value);
+              } catch (e) {
+                parsedValue = value;
+              }
+
+              if (typeof parsedValue !== "string") return parsedValue;
+              else {
+                if (parsedValue.startsWith("{{") && parsedValue.endsWith("}}")) {
+                  const innerValue = parsedValue.slice(2, -2);
+                  // Check if it's a variable reference
+                  if (innerValue.startsWith('$')) {
+                    return accessProperty(innerValue, context);
+                  }
+                  // Otherwise, treat as a regular path
+                  return accessProperty(innerValue, context);
+                } else {
+                  if (['&', '/'].includes(parsedValue)) {
+                    parsedValue = "";
+                  }
+                  return parsedValue;
+                }
+              }
+            }
+          `);
+
       await sc.run(context);
       return context;
     } else {
