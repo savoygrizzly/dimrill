@@ -8,6 +8,7 @@ export interface PathSchema {
   Arguments?: ArgumentSchema;
   Condition?: ConditionSchema;
   Variables?: Record<[key: string], VariableSchema>;
+  AJVSchema?: Record<string, any>;
 }
 export interface VariableSchema {
   type:

@@ -40,6 +40,12 @@ class Dimrill {
     if (Number(this.opts.ivmMemoryLimit) < 8) {
       throw new Error("Minimum memory limit is 8MB");
     }
+    console.warn(
+      "\x1b[33m%s\x1b[0m", // Yellow color for warning
+      `[Dimrill] DEPRECATION WARNING: The use of 'req', 'user', and 'context' objects is deprecated and will be removed in a future version.
+        Please use the 'variables' object instead for passing data to policies.
+        For more information, please refer to: https://github.com/sosickstudio/dimrill`,
+    );
     this.schema = new Schema({ prefix: this.opts.schemaPrefix });
     this.DRNA = new DRNA();
     this.ivmSandbox = new IvmSandbox({
@@ -464,7 +470,7 @@ class Dimrill {
     }
 
     const validatedObjects = this.schema.castObjectsToSchemaTypes(
-      schemaExists?.Variables ?? {},
+      schemaExists?.AJVSchema ?? {},
       req,
       user,
       context,

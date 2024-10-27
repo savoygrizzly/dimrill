@@ -184,8 +184,6 @@ class Schema {
   }
 
   private validateSchemaType(value: any): boolean {
-    // Add logic to handle validation when 'value' is an array
-
     return (
       Array.isArray(value) &&
       ["Action", "Ressource"].some((i) => value.includes(i))

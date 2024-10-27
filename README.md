@@ -1,12 +1,13 @@
 # Dimrill
 
-**VERSION 3.1.X**
+**VERSION 3.5.X**
 
 Release notes:
 
-Wildcards `*` for parameters are now required to be specified as `&*`or`&*/*`. Wildcard for parameters on endpoints specified like so `files:createOrder:*`or`files:createOrder*` **are now invalid**. In order to specify any paramters for an endpoint use`files:createOrder:&*`.
+If you used the integrated ajv, the schema property `Variables` has been renamed to `AJVSchema` to avoid confusion with the new `Variables` system.
 
-## What is Dimrill, and the philosophy behind it
+Variables can now be defined in the schema, and will be casted to the correct type before being passed to the authorizer.
+This ensures predictable behavior in contrast to the old system where req, user and context could be located differently than expected.
 
 Dimrill is a policy based authorization module for nodeJS environments, it doesnt replace your JWT token, nor does it replace your login logic.
 What it does is help you replace a traditional role based authorization (eg. an `admin` role, a `user` role, a `manager` role etc), for a policy based authorization.
@@ -26,14 +27,21 @@ This is done by declaring a schema that let you define the what and the where:
         "pricelist": {
           "type": "string",
           "enum": ["public", "distributor"],
-          "dataFrom": "req.body.pricelist"
         },
         "currency": {
           "type": "string",
           "enum": ["EUR", "USD"],
-          "dataFrom": "req.body.currency"
         }
-      }
+      },
+      "Variables": {
+        "pricelist": {
+          "type": "string",
+          "required": true,
+        },
+        "currency": {
+          "type": "string",
+
+        }
     }
   }
 }
@@ -73,7 +81,7 @@ If we wanted to restrict our user or entity to only create orders with a priceli
 ]
 ```
 
-If we passed `req.body` to Dimrill we could also implement a condition like so:
+We can also access the dynamic parameters from the variables object:
 
 ```json
 [
@@ -87,15 +95,15 @@ If we passed `req.body` to Dimrill we could also implement a condition like so:
     ],
     "Condition": {
       "StringEquals": {
-        "{{req.body.pricelist}}": "distributor",
-        "{{req.body.currency}}": "USD"
+        "{{$pricelist}}": "distributor",
+        "{{$currency}}": "USD"
       }
     }
   }
 ]
 ```
 
-This assumes `pricelist` and `currency` are within the `req.body` and that the request body content is passed to dimrill.
+This assumes `pricelist` and `currency` are passed to dimrill as variables. If they are not and not marked as required an empty string will be used instead.
 
 ## Code example
 
@@ -149,9 +157,14 @@ const valid = await DimrillAuthorizer.authorize(
     req: {}, //you can pass an object to req, typically your own req object
     user: {}, //the concerned user or object entity
     context: {}, //other properties that might be useful
+    variables: {
+      variablesName: value, //any value, function returned or whatever you want, the value will be cast based off schema, if it fails an error will be thrown.
+      pricelist: "distributor",
+      currency:"USD",
+    }, //the variables passed to the authorizer
   },
   {
-    validateData: false /* By default this option is set to true, if a valid AJV schema is found under Variable when matching DRNA, the req, user, and context objects (if passed to dimrill); will be validated. Extra properties will be removed and type coerced. */,
+    validateData: false /* By default this option is set to true, if a valid AJV schema is found under AJVSchema when matching DRNA, the req, user, and context objects (if passed to dimrill); will be validated. Extra properties will be removed and type coerced. */,
     pathOnly: false /* When this option is set to true, dimrill will ignore parameters that aren't hard coded in the DRNA to be matched ("files:createOrder&pricelist/distributor" will require the pricelist param to be equal to distributor;
         "files:createOrder" will validate if a policy Statement specifies anything  with the path "files:createOrder" or a higher wildcard (* or files:*).
 
@@ -341,7 +354,7 @@ Returned object have the following structure:
 
 ```
 authorize(
-  [ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{} },
+  [ "Action"|"Ressource",drna:String ], policies[], { req?:{}, user?:{}, context?:{},variables?:{} },
   {validateData?:boolean, pathOnly?:boolean}
   ):Promise<{valid: boolean, query:{} }>
 ```
@@ -379,6 +392,18 @@ topPortion
                             value?:string | number //the value to use, if present, will override dataFrom
                         }
                     },
+                    Variables?:{
+                      variableName:{
+                        type:
+                          | "string"
+                          | "number"
+                          | "boolean"
+                          | "array"
+                          | "objectId"
+                          | "objectIdArray"
+                          | "date"; //the type of the argument value.
+                        required?:boolean //(optional) whether the variable is required or not
+                    },
                     Condition?:{
                         Enforce?:{
                             //The conditions to enforce, will be added to each authorize regardless of the policy matched
@@ -398,7 +423,7 @@ topPortion
                              [key: string]: "Type" //See type casters list in Conditions for valid types
                         }
                     },
-                    Variables?:{
+                    AJVSchema?:{
                         "type": "object",
                         "properties": {
                             req:{},//AJV Schema, see AJV doc
@@ -507,10 +532,21 @@ If a statement has a Condition containing blocks without the operator `ToQuery`,
 
 ## Dynamic parameters
 
+*DEPRECATED*
 It is possible to use dynamic parameters directly in the policies statements.
 Dynamic parameters can be passed in drna strings as well as in conditions value (right one). Dynamic parameters will only have access to the `req`,`user`, and `context` objects passed to the authorizer. Paths must therefore start with one of these objects name.
 
 In order to specify a dynamic parameter the following syntax has to be used `"{{req:yourparam:subParam}}"` or `"{{req.yourparam.subParam}}"`, the value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
+
+The new system will use the variables object instead of the req, user and context objects.
+
+Those can be dynamically accessed in the policies statements like so:
+
+`"{{$variableName}}"`
+
+The value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
+
+If the variable is not passed to the authorizer, and not marked as required, an empty string will be used instead.
 
 NB.
 **Dynamic parameters cannot be used in the authorizer**
