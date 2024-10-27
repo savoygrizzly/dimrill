@@ -261,6 +261,7 @@ class Dimrill {
       req: {},
       user: {},
       context: {},
+      variables: {},
     };
 
     const ivmContext = await this.ivmSandbox.createContext(validatedObjects);
@@ -347,7 +348,6 @@ class Dimrill {
     if (!options.validateData) {
       options.validateData = this.opts.validateData;
     }
-
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       drna,
       this.schema.returnSchema(),
@@ -405,10 +405,10 @@ class Dimrill {
               // First check if it's already an ObjectId
               // @ts-expect-error inferring the type of value
               if (ObjectId.isValid(value) && typeof value === "object") {
-                castVariables[key] = value;
+                castVariables[key] = (value as ObjectId).toString();
               } else if (typeof value === "string" && ObjectId.isValid(value)) {
                 // If it's a string and valid ObjectId format, convert it
-                castVariables[key] = new ObjectId(value);
+                castVariables[key] = new ObjectId(value).toString();
               } else {
                 throw new Error(
                   `Variable "${key}" must be an ObjectId or valid ObjectId string`,
@@ -426,9 +426,9 @@ class Dimrill {
               const objectIds = value.map((item) => {
                 // eslint-disable-next-line
                 if (ObjectId.isValid(item) && typeof item === "object") {
-                  return item;
+                  return (item as ObjectId).toString();
                 } else if (typeof item === "string" && ObjectId.isValid(item)) {
-                  return new ObjectId(item);
+                  return new ObjectId(item).toString();
                 } else {
                   throw new Error(
                     `All items in "${key}" must be ObjectIds or valid ObjectId strings`,
@@ -468,6 +468,7 @@ class Dimrill {
       req,
       user,
       context,
+      variables,
       {
         validateData: options.validateData ?? true,
       },
@@ -489,8 +490,11 @@ class Dimrill {
     const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
       drna[1],
       schemaExists,
-      options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
+      options.pathOnly
+        ? { req: {}, user: {}, context: {}, variables: {} }
+        : validatedObjects,
     );
+
     /*
         Match the policy
     */
@@ -499,7 +503,9 @@ class Dimrill {
       synthetizedMatch,
       schemaExists,
       policies,
-      options.pathOnly ? { req: {}, user: {}, context: {} } : validatedObjects,
+      options.pathOnly
+        ? { req: {}, user: {}, context: {}, variables: {} }
+        : validatedObjects,
       {
         pathOnly: options.pathOnly ? options.pathOnly : false,
         ignoreConditions: false,

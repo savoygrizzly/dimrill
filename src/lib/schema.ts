@@ -202,9 +202,6 @@ class Schema {
       ) {
         throw new Error(`Invalid schema argument type for: ${key}`);
       }
-      if (schemaArguments[key].dataFrom === null) {
-        throw new Error(`Missing schema argument dataFrom for: ${key}`);
-      }
     });
 
     return schemaArguments;
@@ -320,6 +317,7 @@ class Schema {
     req: object,
     user: object,
     context: object,
+    variables: Record<string, unknown>,
     options: {
       validateData: boolean;
     },
@@ -327,7 +325,7 @@ class Schema {
     const data = { req, user, context };
 
     if (!options.validateData) {
-      return data;
+      return { ...data, variables };
     }
     validationSchema.additionalProperties = false;
 
@@ -339,7 +337,7 @@ class Schema {
     if (!valid) {
       throw new Error(`Invalid data`);
     }
-    return data;
+    return { ...data, variables };
   }
 
   private readonly validationFunctions: Record<string, (obj: any) => boolean> =

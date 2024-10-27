@@ -92,45 +92,54 @@ class Policies {
       pathOnly: boolean;
       ignoreConditions: boolean;
     },
-  ): Promise<{
-    valid: boolean;
-    query: object | string;
-  }> {
+  ): Promise<{ valid: boolean; query: object | string }> {
     for (const statement of policy.Statement) {
       if (statement[String(drnaType)] && statement.Effect === "Allow") {
-        for (const elem of statement[drnaType]) {
-          const sanitizedDrna = await this.sanitizePolicyDrna(
-            String(elem),
-            schema,
-            validatedObjects,
-          );
+        const drnaElements = statement[drnaType];
+        if (!Array.isArray(drnaElements)) continue;
 
-          const valid = this.DRNA.checkDrnaAccess(
-            drnaToMatch.drnaPaths,
-            drnaToMatch.parameters,
-            sanitizedDrna.drnaPaths,
-            sanitizedDrna.parameters,
-            options.pathOnly,
-          );
+        for (const elem of drnaElements) {
+          // First check if base paths match before processing parameters
+          const policyBasePath = elem.split("&")[0];
+          const requestBasePath = drnaToMatch.drnaPaths.join(":");
 
-          if (valid && options.ignoreConditions) {
-            return {
-              valid,
-              query: {},
-            };
-          } else if (valid) {
-            return await this.Conditions.runConditions(
-              statement.Condition,
+          // Use policyPathMatches instead of direct equality
+
+          if (
+            this.DRNA.policyPathMatches(
+              policyBasePath as string,
+              requestBasePath,
+            )
+          ) {
+            const sanitizedDrna = await this.sanitizePolicyDrna(
+              String(elem),
               schema,
+              validatedObjects,
             );
+
+            const valid = this.DRNA.checkDrnaAccess(
+              drnaToMatch.drnaPaths,
+              drnaToMatch.parameters,
+              sanitizedDrna.drnaPaths,
+              sanitizedDrna.parameters,
+              options.pathOnly,
+            );
+
+            if (valid) {
+              if (options.ignoreConditions) {
+                return { valid: true, query: {} };
+              }
+              return await this.Conditions.runConditions(
+                statement.Condition,
+                schema,
+              );
+            }
           }
         }
       }
     }
-    return {
-      valid: false,
-      query: {},
-    };
+
+    return { valid: false, query: {} };
   }
 
   public async matchPolicy(

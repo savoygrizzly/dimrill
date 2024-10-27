@@ -80,6 +80,7 @@ export interface validatedDataObjects {
   req: object;
   user: object;
   context: object;
+  variables: Record<string, unknown>;
 }
 
 export type drnaParameters = Record<string, string | number | undefined>;

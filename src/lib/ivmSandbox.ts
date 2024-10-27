@@ -1,6 +1,6 @@
 import ivm from "isolated-vm";
 import { type validatedDataObjects } from "../types/custom";
-
+import { ObjectId } from "bson";
 import Operators from "./operators/operators";
 import MongoDbOperators from "./operators/adapters/mongodb";
 class IvmSandbox {
@@ -74,6 +74,23 @@ class IvmSandbox {
       const context = await this.isolate.createContext();
 
       const jail = context.global;
+      const serializedVariables = Object.entries(variables).reduce(
+        (acc, [key, value]) => {
+          if (value instanceof ObjectId) {
+            acc[key] = value.toString();
+          } else if (
+            Array.isArray(value) &&
+            value.every((v) => v instanceof ObjectId)
+          ) {
+            acc[key] = value.map((v) => v.toString());
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        // eslint-disable-next-line
+        {} as Record<string, unknown>,
+      );
       /*
         Pass the validated objects to the Isolate
     */
@@ -89,7 +106,10 @@ class IvmSandbox {
         "context",
         new ivm.ExternalCopy(validatedObjects.context).copyInto(),
       );
-      await jail.set("variables", new ivm.ExternalCopy(variables).copyInto());
+      await jail.set(
+        "variables",
+        new ivm.ExternalCopy(serializedVariables).copyInto(),
+      );
 
       await jail.set("log", function (...args: any) {
         // eslint-disable-next-line
@@ -171,31 +191,32 @@ class IvmSandbox {
             }
 
             function formatValue(value, context) {
-              let parsedValue;
-              try {
-                parsedValue = JSON.parse(value);
-              } catch (e) {
-                parsedValue = value;
-              }
+                    let parsedValue;
+                    try {
+                      parsedValue = JSON.parse(value);
+                    } catch (e) {
+                      parsedValue = value;
+                    }
 
-              if (typeof parsedValue !== "string") return parsedValue;
-              else {
-                if (parsedValue.startsWith("{{") && parsedValue.endsWith("}}")) {
-                  const innerValue = parsedValue.slice(2, -2);
-                  // Check if it's a variable reference
-                  if (innerValue.startsWith('$')) {
-                    return accessProperty(innerValue, context);
+                    if (typeof parsedValue !== "string") return parsedValue;
+                    else {
+                      if (parsedValue.startsWith("{{") && parsedValue.endsWith("}}")) {
+                        const innerValue = parsedValue.slice(2, -2);
+                        // Check if it's a variable reference
+                        if (innerValue.startsWith('$')) {
+                          const result = accessProperty(innerValue, context);
+                          return result;
+                        }
+                        // Otherwise, treat as a regular path
+                        return accessProperty(innerValue, context);
+                      } else {
+                        if (['&', '/'].includes(parsedValue)) {
+                          parsedValue = "";
+                        }
+                        return parsedValue;
+                      }
+                    }
                   }
-                  // Otherwise, treat as a regular path
-                  return accessProperty(innerValue, context);
-                } else {
-                  if (['&', '/'].includes(parsedValue)) {
-                    parsedValue = "";
-                  }
-                  return parsedValue;
-                }
-              }
-            }
           `);
 
       await sc.run(context);

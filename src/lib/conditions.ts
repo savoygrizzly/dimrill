@@ -341,8 +341,6 @@ class Condition {
     const formattedValue2 = formatValue(${JSON.stringify(
       valueArray[1],
     )}, groupedContext);
-    log(${JSON.stringify(valueArray[0])},formattedValue2)
-
 
     return  (__operatorsClass__.apply(
       undefined,

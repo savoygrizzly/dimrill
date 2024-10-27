@@ -5,6 +5,7 @@ import {
   type drnaParameters,
   type synthetizedDRNAMatch,
 } from "../types/custom";
+import { ObjectId } from "bson";
 
 import Schema from "./schema";
 class DRNA extends Schema {
@@ -84,7 +85,12 @@ class DRNA extends Schema {
   public matchParametersToSchema(
     injectedDrnaParams: Map<string, string>,
     schema: PathSchema,
-    validatedObjects: object,
+    validatedObjects: {
+      req?: object;
+      user?: object;
+      context?: object;
+      variables?: Record<string, unknown>;
+    },
     options = {
       allowWildcards: false,
     },
@@ -93,7 +99,7 @@ class DRNA extends Schema {
     // iterate over the schema arguments
     if (schema.Arguments) {
       Object.keys(schema.Arguments).forEach((key) => {
-        // if the arfument is in injectedDrnaParams
+        // if the argument is in injectedDrnaParams
         if (injectedDrnaParams.has(key)) {
           // add the value to the parameters object
           parameters[key] = injectedDrnaParams.get(key);
@@ -118,11 +124,31 @@ class DRNA extends Schema {
           if (schema.Arguments?.[key]?.value) {
             validatedObjectValue = schema.Arguments?.[key]?.value;
           } else if (schema.Arguments?.[key]?.dataFrom) {
+            // eslint-disable-next-line
             validatedObjectValue = _get(
               validatedObjects,
-              schema.Arguments[key].dataFrom! as string,
+              schema.Arguments[key].dataFrom,
               undefined,
             );
+          } else {
+            let variableValue = validatedObjects.variables?.[key];
+            if (variableValue !== undefined) {
+              if (schema.Arguments?.[key]?.type === "number") {
+                variableValue = Number(variableValue);
+              } else if (schema.Arguments?.[key]?.type === "string") {
+                variableValue = String(variableValue);
+              } else if (schema.Arguments?.[key]?.type === "boolean") {
+                variableValue = Boolean(variableValue);
+              } else if (
+                schema.Arguments?.[key]?.type === "object" &&
+                variableValue instanceof ObjectId
+              ) {
+                variableValue = variableValue.toString();
+              }
+              validatedObjectValue = variableValue as string | number;
+            } else {
+              validatedObjectValue = "";
+            }
           }
 
           if (
@@ -154,7 +180,6 @@ class DRNA extends Schema {
         }
       });
     }
-
     return parameters;
   }
 
@@ -256,7 +281,7 @@ class DRNA extends Schema {
     return false;
   }
 
-  private policyPathMatches(policyPath: string, inputPath: string): boolean {
+  public policyPathMatches(policyPath: string, inputPath: string): boolean {
     // Handle global wildcard
     if (policyPath === "*") {
       return true;
