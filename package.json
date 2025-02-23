@@ -1,7 +1,7 @@
 {
   "name": "dimrill",
   "version": "3.5.1",
-  "description": "Dimrill V3",
+  "description": "Dimrill V4",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.mjs",
   "types": "./dist/types/src/index.d.ts",
@@ -23,6 +23,7 @@
     "build": "npm-run-all build:clean compile && node ./scripts/prepare-package-json",
     "test": "jest",
     "test:manual": "tsx tests/test-dimrill.ts",
+    "test:linter": "tsx tests/test-linter.ts",
     "clean": "tsc --build --clean"
   },
   "license": "MIT",

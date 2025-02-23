@@ -22,7 +22,6 @@ const fsp = fs.promises;
 class Dimrill {
   constructor(
     options: {
-      validateData?: boolean;
       ivmMemoryLimit?: number;
       ivmTimeout?: number;
       schemaPrefix?: string;
@@ -30,7 +29,6 @@ class Dimrill {
     } = {},
   ) {
     this.opts = {
-      validateData: true,
       ivmMemoryLimit: 12,
       ivmTimeout: 500,
       autoLaunchIvm: true,

@@ -10,7 +10,6 @@ const __dirname = dirname(__filename);
 
 async function testLinter() {
     const dimrill = new Dimrill({
-        validateData: false,
         ivmMemoryLimit: 20,
         schemaPrefix: "blackeye"
     });
@@ -38,7 +37,7 @@ async function testLinter() {
                 organizations: { type: "objectIdArray" }
             },
             conditions: {
-                queryEnforceTypeCast: {
+                QueryEnforceTypeCast: {
                     organizations: "ToObjectIdArray",
                     categories: "ToObjectIdArray"
                 }

@@ -253,9 +253,6 @@ new Dimrill(options?
 
 ### Options details
 
-`validateData`:
-Useful to disable the ajv data validation if you alreadfy have your own data validation implemented.
-
 `ivmTimeout`:
 Set the timeout for Isolated-vm execution in order to prevent DOS attacks.
 
@@ -269,9 +266,6 @@ Prefixes all schemas with the specified value.
 `autoLaunchIvm`:
 By default Dimrill will create an ivm for you when compiling the schemas (either whgen calling autoload or compileSchemas).
 In order to avoid racing conditions make sure to **await** these functions.
-
-`unsafeEquals`:
-By default when adapting a condition to a query, dimrill will cast objects to string in order to avoid the risk of injections should the data passed to dimrill have not been validated.
 
 ### Methods
 

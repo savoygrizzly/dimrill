@@ -13,7 +13,6 @@ const __dirname = dirname(__filename);
 
 async function testDimrill() {
     const dimrill = new Dimrill({
-        validateData: false,
         ivmMemoryLimit: 20,
         schemaPrefix: "blackeye"
     });
