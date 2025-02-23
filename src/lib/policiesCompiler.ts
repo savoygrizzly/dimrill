@@ -6,8 +6,8 @@ import {
   type StatementCondition,
   type Statement,
   type Policy,
-  type CompilationResults,
-  type CompilatorReturnFormat,
+  type _CompilationResults,
+  type _CompilatorReturnFormat,
 } from "../types/custom";
 import { SchemaOperators, SchemaOperands, SchemaCastTypes } from "../constants";
 
@@ -19,7 +19,7 @@ class PoliciesCompiler {
     this.schema = Schema;
   }
 
-  public compilePolicies(policies: Policy[]): Map<number, CompilationResults> {
+  public compilePolicies(policies: Policy[]): Map<number, _CompilationResults> {
     const compilationResults = new Map<number, any>();
     policies.forEach((policy, index) => {
       compilationResults.set(index, this.compilePolicy(policy));
@@ -29,13 +29,13 @@ class PoliciesCompiler {
 
   private compilePolicy(policy: Policy): {
     effects: string[];
-    drna: CompilatorReturnFormat[];
-    conditions: CompilatorReturnFormat[][];
+    drna: _CompilatorReturnFormat[];
+    conditions: _CompilatorReturnFormat[][];
   } {
     /*
         Try to get a schema from the policy path
     */
-    const results: CompilationResults = {
+    const results: _CompilationResults = {
       effects: [],
       drna: [],
       conditions: [],
@@ -72,7 +72,7 @@ class PoliciesCompiler {
 
   private compileCondition(
     condition: StatementCondition,
-  ): CompilatorReturnFormat[] {
+  ): _CompilatorReturnFormat[] {
     const compiledConditions = Object.entries(condition).map(([key, value]) => {
       const keys = key.split(":");
       if (keys.length > 4) {
@@ -133,10 +133,10 @@ class PoliciesCompiler {
         },
       };
     });
-    return compiledConditions as CompilatorReturnFormat[];
+    return compiledConditions as _CompilatorReturnFormat[];
   }
 
-  private compileDrna(drnaType: string, drna: string): CompilatorReturnFormat {
+  private compileDrna(drnaType: string, drna: string): _CompilatorReturnFormat {
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       [drnaType, drna],
       this.schema.returnSchema(),

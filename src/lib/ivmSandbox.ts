@@ -1,5 +1,5 @@
 import ivm from "isolated-vm";
-import { type validatedDataObjects } from "../types/custom";
+import { type ValidatedDataObjects } from "../types/custom";
 import { ObjectId } from "bson";
 import Operators from "./operators/operators";
 import MongoDbOperators from "./operators/adapters/mongodb";
@@ -67,7 +67,7 @@ class IvmSandbox {
    *
    */
   public async createContext(
-    validatedObjects: validatedDataObjects,
+    validatedObjects: ValidatedDataObjects,
     variables: Record<string, unknown> = {},
   ): Promise<ivm.Context> {
     if (this.isolate !== null && this.instanciated) {

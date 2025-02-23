@@ -1,0 +1,44 @@
+{
+  "files": {
+    "orders": {
+      "allowedProductCategories": {
+        "Type": [
+          "Action",
+          "Ressource"
+        ],
+        "Arguments": {
+          "pricelist": {
+            "type": "string"
+          },
+          "orderCurrency": {
+            "type": "string"
+          },
+          "organizations": {
+            "type": "objectIdArray"
+          }
+        },
+        "Variables": {
+          "pricelist": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "objectIdArray"
+          },
+          "orderCurrency": {
+            "type": "string",
+            "required": true
+          },
+          "organizations": {
+            "type": "objectIdArray"
+          }
+        },
+        "Condition": {
+          "QueryEnforceTypeCast": {
+            "organizations": "ToObjectIdArray",
+            "categories": "ToObjectIdArray"
+          }
+        }
+      }
+    }
+  }
+}

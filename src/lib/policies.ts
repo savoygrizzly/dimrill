@@ -1,9 +1,9 @@
 import {
   type PathSchema,
   type Policy,
-  type validatedDataObjects,
-  type synthetizedDRNAMatch,
-  type drnaParameters,
+  type ValidatedDataObjects,
+  type _SynthetizedDRNAMatch,
+  type _DrnaParameters,
 } from "../types/custom";
 import type Condition from "./conditions";
 import type DRNA from "./drna";
@@ -45,8 +45,8 @@ class Policies {
   public async sanitizePolicyDrna(
     drna: string,
     schema: PathSchema,
-    validatedObjects: validatedDataObjects,
-  ): Promise<synthetizedDRNAMatch> {
+    validatedObjects: ValidatedDataObjects,
+  ): Promise<_SynthetizedDRNAMatch> {
     const rawParameters = this.DRNA.matchParametersToSchema(
       this.DRNA.mapInjectedParams(drna.split("&").slice(1), {
         removeWildcards: true,
@@ -65,7 +65,7 @@ class Policies {
 
   private async processParameters(
     rawParameters: Record<string, string | number | undefined>,
-  ): Promise<drnaParameters> {
+  ): Promise<_DrnaParameters> {
     const acc: Record<string, string | number | undefined> = {}; // This will be the accumulator object
 
     for (const [key, value] of Object.entries(rawParameters)) {
@@ -85,9 +85,9 @@ class Policies {
   private async processPolicy(
     drnaType: string,
     policy: Policy,
-    drnaToMatch: synthetizedDRNAMatch,
+    drnaToMatch: _SynthetizedDRNAMatch,
     schema: PathSchema,
-    validatedObjects: validatedDataObjects,
+    validatedObjects: ValidatedDataObjects,
     options: {
       pathOnly: boolean;
       ignoreConditions: boolean;
@@ -144,10 +144,10 @@ class Policies {
 
   public async matchPolicy(
     drnaType: string,
-    drnaToMatch: synthetizedDRNAMatch,
+    drnaToMatch: _SynthetizedDRNAMatch,
     schema: PathSchema,
     policies: Policy[],
-    validatedObjects: validatedDataObjects,
+    validatedObjects: ValidatedDataObjects,
     options: {
       pathOnly: boolean;
       ignoreConditions: boolean;
@@ -196,8 +196,8 @@ class Policies {
     const mergedQuery =
       typeof allQueries[0] === "object"
         ? this.Conditions.mergeObjectQueries(
-            allQueries as Array<Record<string, any>>,
-          )
+          allQueries as Array<Record<string, any>>,
+        )
         : this.Conditions.mergeStringQueries(allQueries[0] as string[]);
     return {
       valid: true,

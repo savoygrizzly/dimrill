@@ -1,100 +1,101 @@
-// Root Schema Interface
-export type RootSchema = Record<string, PathSchema>;
-
-// Schema for each path, like 'files:createOrder'
-export interface PathSchema {
-  [key: string]: any; // Add type annotation to the index signature
-  Type: Array<"Action" | "Ressource">;
-  Arguments?: ArgumentSchema;
-  Condition?: ConditionSchema;
-  Variables?: Record<[key: string], VariableSchema>;
-  AJVSchema?: Record<string, any>;
-}
-export interface VariableSchema {
-  type:
-    | "string"
-    | "number"
-    | "boolean"
-    | "array"
-    | "objectId"
-    | "objectIdArray"
-    | "date";
-  required?: boolean;
-  description?: string;
-}
-interface Argument {
-  [key: string]: any; // Add type annotation to the index signature
-  type: string | number;
-  enum?: string[]; // enum is optional and only for string type
-  dataFrom?: string;
-  value?: string | number;
-}
-
-// Modified ArgumentSchema using conditional types
-export type ArgumentSchema = Record<
-  string,
-  Argument &
-    (Argument extends { type: "string" }
-      ? { enum: string[] }
-      : Record<string, unknown>)
->;
-// Schema for Arguments
-
-// Schema for Conditions
-export interface ConditionSchema {
-  [key: string]: string[] | any; // or the appropriate type for your condition values
-  // Existing definitions...
-  Enforce?: ConditionEnforceSchema; // Adjust the type as needed
-  Operators?: string[];
-  QueryOperators?: string[];
-  QueryEnforceTypeCast?: Record<string, string>;
-}
-
-export interface Constants {
-  SchemaArgumentKeys: string[];
-  SchemaGlobalKeys: string[];
-  SchemaConditionKeys: string[];
-  SchemaOperators: string[];
-}
-
-export type ConditionEnforceSchema = Record<string, Record<string, string>>;
-
+// Core types that users will need
 export interface Policy {
-  id?: string; // Optional, as it's not present in all policies
+  id?: string;
   Version: string;
   Statement: Statement[];
 }
 
-interface Statement {
-  [key: string]: any;
+export interface Statement {
   Effect: "Allow" | "Deny";
-  Action?: string[]; // Optional
-  Ressource?: string[]; // Optional
+  Action?: string[];
+  Ressource?: string[];
   Condition?: StatementCondition;
+  [key: string]: string[] | StatementCondition | "Allow" | "Deny" | undefined;
 }
 
+// Variable types for schema definition
+export interface VariableSchema {
+  type: "string" | "number" | "boolean" | "array" | "objectId" | "objectIdArray" | "date";
+  required?: boolean;
+  description?: string;
+}
+
+// Schema types
+export interface PathSchema {
+  Type: Array<"Action" | "Ressource">;
+  Arguments?: ArgumentSchema;
+  Condition?: ConditionSchema;
+  Variables?: Record<string, VariableSchema>;
+  AJVSchema?: Record<string, any>;
+  [key: string]: any;
+}
+
+export type RootSchema = Record<string, PathSchema>;
+
+// Argument types
+export interface Argument {
+  type: string | number;
+  enum?: string[];
+  dataFrom?: string;
+  value?: string | number;
+  [key: string]: any;
+}
+
+export type ArgumentSchema = Record<
+  string,
+  Argument & (Argument extends { type: "string" } ? { enum: string[] } : Record<string, unknown>)
+>;
+
+// Condition types
+export interface ConditionSchema {
+  Enforce?: ConditionEnforceSchema;
+  Operators?: string[];
+  QueryOperators?: string[];
+  QueryEnforceTypeCast?: Record<string, string>;
+  [key: string]: any;
+}
+
+export type ConditionEnforceSchema = Record<string, Record<string, string>>;
 export type StatementCondition = Record<
   string,
   Record<string, string | boolean | number | string[] | boolean[] | number[]>
 >;
-export interface validatedDataObjects {
+
+// Input/Output types
+export interface ValidatedDataObjects {
   req: object;
   user: object;
   context: object;
   variables: Record<string, unknown>;
 }
 
-export type drnaParameters = Record<string, string | number | undefined>;
-export interface synthetizedDRNAMatch {
-  drnaPaths: string[];
-  parameters: drnaParameters;
+export interface AuthorizationResult {
+  valid: boolean;
+  query: Record<string, any>;
 }
-export interface CompilatorReturnFormat {
+
+// Internal types (prefixed with underscore to indicate they're internal)
+export interface _Constants {
+  SchemaArgumentKeys: string[];
+  SchemaGlobalKeys: string[];
+  SchemaConditionKeys: string[];
+  SchemaOperators: string[];
+}
+
+export interface _CompilatorReturnFormat {
   valid: boolean;
   message: Record<string, string>;
 }
-export interface CompilationResults {
+
+export interface _CompilationResults {
   effects: string[];
-  drna: CompilatorReturnFormat[];
-  conditions: CompilatorReturnFormat[][];
+  drna: _CompilatorReturnFormat[];
+  conditions: _CompilatorReturnFormat[][];
+}
+
+export type _DrnaParameters = Record<string, string | number | undefined>;
+
+export interface _SynthetizedDRNAMatch {
+  drnaPaths: string[];
+  parameters: _DrnaParameters;
 }

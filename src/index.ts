@@ -1,6 +1,6 @@
 import {
   type RootSchema,
-  type CompilationResults,
+  type _CompilationResults,
   type PathSchema,
   type Policy,
   type VariableSchema,
@@ -243,7 +243,7 @@ class Dimrill {
    * @param policies Array of policies to check against
    * @returns A Map of the compiled policies with their compilation results
    */
-  public compilePolicies(policies: Policy[]): Map<number, CompilationResults> {
+  public compilePolicies(policies: Policy[]): Map<number, _CompilationResults> {
     return this.policiesCompiler.compilePolicies(policies);
   }
 
@@ -260,8 +260,8 @@ class Dimrill {
     options: {
       ignoreConditions?: boolean;
     } = {
-      ignoreConditions: true,
-    },
+        ignoreConditions: true,
+      },
   ): Promise<string[]> {
     const validatedObjects = {
       req: {},
@@ -345,8 +345,8 @@ class Dimrill {
       validateData?: boolean;
       pathOnly?: boolean;
     } = {
-      pathOnly: false,
-    },
+        pathOnly: false,
+      },
   ): Promise<{
     query: string | object;
     valid: boolean;

@@ -2,8 +2,8 @@ import _get from "lodash/get";
 import {
   type RootSchema,
   type PathSchema,
-  type drnaParameters,
-  type synthetizedDRNAMatch,
+  type _DrnaParameters,
+  type _SynthetizedDRNAMatch,
 } from "../types/custom";
 import { ObjectId } from "bson";
 
@@ -32,8 +32,8 @@ class DRNA extends Schema {
     options: {
       removeDynamicParameters: boolean;
     } = {
-      removeDynamicParameters: false,
-    },
+        removeDynamicParameters: false,
+      },
   ): object | boolean {
     if (drna.length < 2) {
       return false; // DRNA must have at least two parts: Type and the path
@@ -210,7 +210,7 @@ class DRNA extends Schema {
     drna: string,
     schema: PathSchema,
     validatedObjects: object,
-  ): synthetizedDRNAMatch {
+  ): _SynthetizedDRNAMatch {
     // match the schema arguments with the request, user and context objects
     // return the drna with the arguments values
     const sanitizedDrna = this.sanitizeDrnaString(drna).split("&");
@@ -230,9 +230,9 @@ class DRNA extends Schema {
 
   public checkDrnaAccess(
     path: string[],
-    parameters: drnaParameters,
+    parameters: _DrnaParameters,
     policyPath: string[],
-    policyParams: drnaParameters,
+    policyParams: _DrnaParameters,
     pathOnly = false,
   ): boolean {
     const pathStr = path.join(":");
