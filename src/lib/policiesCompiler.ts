@@ -153,9 +153,7 @@ class PoliciesCompiler {
     }
     try {
       this.DRNA.synthetizeDrnaFromSchema(drna, schemaExists as PathSchema, {
-        req: {},
-        user: {},
-        context: {},
+        variables: {}
       });
 
       return {

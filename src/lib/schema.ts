@@ -10,7 +10,7 @@ import {
   type ConditionSchema,
   type ConditionEnforceSchema,
   type RootSchema,
-  type validatedDataObjects,
+  type ValidatedDataObjects,
 } from "../types/custom";
 
 // import type CompiledSchemaObject from "./compiledSchema";
@@ -319,7 +319,7 @@ class Schema {
     options: {
       validateData: boolean;
     },
-  ): validatedDataObjects {
+  ): ValidatedDataObjects {
     const data = { req, user, context };
 
     if (!options.validateData) {
@@ -365,8 +365,8 @@ class Schema {
     // use it; otherwise, try to derive sectionName from the testObject.
     const sectionName =
       targetKey === "Type" ||
-      !testObject[targetKey] ||
-      typeof testObject[targetKey].sectionName !== "function"
+        !testObject[targetKey] ||
+        typeof testObject[targetKey].sectionName !== "function"
         ? targetKey
         : testObject[targetKey].sectionName();
 

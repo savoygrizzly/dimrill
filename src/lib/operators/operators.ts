@@ -154,6 +154,12 @@ export default class Operators {
     ).includes(leftOperator);
   };
 
+  public NotInArray = (leftOperator: any, rightOperator: any[]): boolean => {
+    return !(
+      Array.isArray(rightOperator) ? rightOperator : Array(rightOperator)
+    ).includes(leftOperator);
+  };
+
   public ArraysIntersect = (
     leftOperator: any[],
     rightOperator: any[]
@@ -161,6 +167,17 @@ export default class Operators {
     const rightOperatorSet = new Set(rightOperator);
     return (
       [...new Set(leftOperator)].filter((x) => rightOperatorSet.has(x)).length >
+      0
+    );
+  };
+
+  public ArraysNotIntersect = (
+    leftOperator: any[],
+    rightOperator: any[]
+  ): boolean => {
+    const rightOperatorSet = new Set(rightOperator);
+    return (
+      [...new Set(leftOperator)].filter((x) => rightOperatorSet.has(x)).length ===
       0
     );
   };

@@ -131,12 +131,10 @@ export default class MongoDbOperators {
         if (typeof val === "object" && val !== null) {
           return String(val);
         }
-
         return val;
       })
-      .filter(
-        (filtered: boolean | string | number) =>
-          filtered !== null && filtered !== undefined,
+      .filter((filtered: boolean | string | number) =>
+        filtered !== null && filtered !== undefined
       );
 
     return { [field]: { $in: safeValues } };

@@ -11,8 +11,8 @@ class Condition {
     options: {
       adapter?: string;
     } = {
-      adapter: "mongodb",
-    },
+        adapter: "mongodb",
+      },
   ) {
     this.typeCasters = new TypeCasters();
     this.options = options;
@@ -143,7 +143,6 @@ class Condition {
     // Determine the type of query in the results
     const allQueries = results.map((result) => result.query);
     const isObjectQuery = typeof allQueries[0] === "object";
-
     // Merge queries based on their type
     const mergedQuery = isObjectQuery
       ? this.mergeObjectQueries(allQueries as Array<Record<string, any>>)
@@ -158,13 +157,38 @@ class Condition {
   public mergeObjectQueries(
     queries: Array<Record<string, any>>,
   ): Record<string, any> {
-    return queries.reduce((acc, currentArray) => {
-      if (!Array.isArray(currentArray)) {
-        return acc;
+    // First, flatten any array results
+    const flattenedQueries = queries.map(query => {
+      if (Array.isArray(query)) {
+        return query.reduce((acc, curr) => ({ ...acc, ...curr }), {});
       }
-      currentArray.forEach((obj: any) => {
-        // Merge each object into the accumulator
-        Object.assign(acc, obj);
+      return query;
+    });
+
+    // Then merge the queries
+    return flattenedQueries.reduce((acc, query) => {
+      Object.entries(query).forEach(([key, value]) => {
+        if (key.startsWith('$')) {
+          // Handle MongoDB operators
+          if (!acc[key]) {
+            acc[key] = value;
+          } else {
+            // Merge arrays for operators
+            acc[key] = Array.isArray(acc[key]) && Array.isArray(value)
+              ? [...acc[key], ...value]
+              : value;
+          }
+        } else {
+          // Handle regular fields
+          if (!acc[key]) {
+            acc[key] = value;
+          } else {
+            // If both are objects, merge them
+            acc[key] = typeof acc[key] === 'object' && typeof value === 'object'
+              ? { ...acc[key], ...value }
+              : value;
+          }
+        }
       });
       return acc;
     }, {});
@@ -199,7 +223,6 @@ class Condition {
         schema?.Condition?.QueryOperators.includes(mainOperator))
     ) {
       returnValue.valid = true;
-
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
           return await this.runAdapter(
@@ -216,8 +239,13 @@ class Condition {
           modifiers.castType ?? "",
           schema?.Condition?.QueryEnforceTypeCast as Record<string, string>,
         );
+
       } else {
-        returnValue.query = results;
+        returnValue.query = Object.assign({}, ...results);
+      }
+      if (modifiers.operand === "AnyValues") {
+        returnValue.query = { $or: returnValue.query };
+
       }
     } else if (
       !schema?.Condition?.Operators ||
@@ -261,7 +289,7 @@ class Condition {
             if (
               SchemaCastTypes.includes(enforcedTypeCast) &&
               typeof this.typeCasters[enforcedTypeCast as keyof TypeCasters] ===
-                "function"
+              "function"
             ) {
               if (
                 typeof value === "object" &&
@@ -309,11 +337,9 @@ class Condition {
     const result = await this.isolatedVmContext.eval(`
     (function() {
       const formattedValue1 = formatValue(${JSON.stringify(
-        valueArray[0],
-      )}, groupedContext);
-      const formattedValue2 = formatValue(${JSON.stringify(
-        valueArray[1],
-      )}, groupedContext);
+      valueArray[0],
+    )}, groupedContext);
+      const formattedValue2 = formatValue(${JSON.stringify(valueArray[1])}, groupedContext);
 
       const query = __adapterClass__.apply(
         undefined,

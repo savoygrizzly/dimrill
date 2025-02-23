@@ -30,6 +30,9 @@
           },
           "organizations": {
             "type": "objectIdArray"
+          },
+          "status": {
+            "type": "array"
           }
         },
         "Condition": {

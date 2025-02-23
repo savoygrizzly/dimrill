@@ -36,7 +36,6 @@ export type RootSchema = Record<string, PathSchema>;
 export interface Argument {
   type: string | number;
   enum?: string[];
-  dataFrom?: string;
   value?: string | number;
   [key: string]: any;
 }
@@ -63,9 +62,6 @@ export type StatementCondition = Record<
 
 // Input/Output types
 export interface ValidatedDataObjects {
-  req: object;
-  user: object;
-  context: object;
   variables: Record<string, unknown>;
 }
 

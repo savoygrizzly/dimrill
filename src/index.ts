@@ -264,9 +264,6 @@ class Dimrill {
       },
   ): Promise<string[]> {
     const validatedObjects = {
-      req: {},
-      user: {},
-      context: {},
       variables: {},
     };
 
@@ -510,7 +507,7 @@ class Dimrill {
       schemaExists,
       policies,
       options.pathOnly
-        ? { req: {}, user: {}, context: {}, variables: {} }
+        ? { variables: {} }
         : validatedObjects,
       {
         pathOnly: options.pathOnly ? options.pathOnly : false,

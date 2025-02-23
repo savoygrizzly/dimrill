@@ -72,44 +72,22 @@ class IvmSandbox {
   ): Promise<ivm.Context> {
     if (this.isolate !== null && this.instanciated) {
       const context = await this.isolate.createContext();
-
       const jail = context.global;
       const serializedVariables = Object.entries(variables).reduce(
         (acc, [key, value]) => {
           if (value instanceof ObjectId) {
             acc[key] = value.toString();
-          } else if (
-            Array.isArray(value) &&
-            value.every((v) => v instanceof ObjectId)
-          ) {
+          } else if (Array.isArray(value) && value.every((v) => v instanceof ObjectId)) {
             acc[key] = value.map((v) => v.toString());
           } else {
             acc[key] = value;
           }
           return acc;
         },
-        // eslint-disable-next-line
         {} as Record<string, unknown>,
       );
-      /*
-        Pass the validated objects to the Isolate
-    */
-      await jail.set(
-        "req",
-        new ivm.ExternalCopy(validatedObjects.req).copyInto(),
-      );
-      await jail.set(
-        "user",
-        new ivm.ExternalCopy(validatedObjects.user).copyInto(),
-      );
-      await jail.set(
-        "context",
-        new ivm.ExternalCopy(validatedObjects.context).copyInto(),
-      );
-      await jail.set(
-        "variables",
-        new ivm.ExternalCopy(serializedVariables).copyInto(),
-      );
+
+      await jail.set("variables", new ivm.ExternalCopy(serializedVariables).copyInto());
 
       await jail.set("log", function (...args: any) {
         // eslint-disable-next-line
@@ -160,64 +138,65 @@ class IvmSandbox {
       await jail.set("global", jail.derefInto());
 
       const sc = await this.isolate.compileScript(`
-            const groupedContext = {
-              req,
-              user,
-              context,
-              variables
-            };
+        const groupedContext = {
+          variables
+        };
 
-            function accessProperty(path, context) {
-              // Handle variable access (now wrapped in {{$variableName}})
-              if (path.startsWith('$')) {
-                const variableName = path.slice(1);
-                return context.variables[variableName];
-              }
-
-              // Split by either ':' or '.'
-              const parts = path.split(/[:.]/);
-              let current = context;
-              for (const part of parts) {
-                if (current && typeof current === "object" && part in current) {
-                  current = current[part];
-                } else {
-                  return undefined;
-                }
-              }
-              if (['&', '/', '*'].includes(current)) {
-                current = "";
-              }
-              return current;
+        function accessProperty(path, context) {
+          // Handle variable access (now wrapped in {{$variableName}})
+          if (path.startsWith('$')) {
+            const variableName = path.slice(1);
+            // Clean special characters from variable values
+            if (['&', '/', '*'].includes(variableName)) {
+              return "";
             }
+            return context.variables[variableName];
+          }
+          // Any non-variable path should return empty string
+          return "";
+        }
 
-            function formatValue(value, context) {
-                    let parsedValue;
-                    try {
-                      parsedValue = JSON.parse(value);
-                    } catch (e) {
-                      parsedValue = value;
-                    }
+        function formatValue(value, context) {
+          
+          let parsedValue = value;
+      
+          // Helper to process a single value
+          function processValue(val) {
+            if (typeof val === "string") {
+              if (val.startsWith("{{") && val.endsWith("}}")) {
+                const innerValue = val.slice(2, -2);
+                if (innerValue.startsWith('$')) {
+                  return accessProperty(innerValue, context);
+                }
+                return "";
+              }
+              if (['&', '/'].includes(val)) {
+                return "";
+              }
+              return val;
+            }
+            return val;
+          }
 
-                    if (typeof parsedValue !== "string") return parsedValue;
-                    else {
-                      if (parsedValue.startsWith("{{") && parsedValue.endsWith("}}")) {
-                        const innerValue = parsedValue.slice(2, -2);
-                        // Check if it's a variable reference
-                        if (innerValue.startsWith('$')) {
-                          const result = accessProperty(innerValue, context);
-                          return result;
-                        }
-                        // Otherwise, treat as a regular path
-                        return accessProperty(innerValue, context);
-                      } else {
-                        if (['&', '/'].includes(parsedValue)) {
-                          parsedValue = "";
-                        }
-                        return parsedValue;
-                      }
-                    }
-                  }
-          `);
+          // Flatten and process arrays
+          function flattenAndProcess(val) {
+            if (Array.isArray(val)) {
+              return val.reduce((acc, curr) => {
+                if (Array.isArray(curr)) {
+                  return [...acc, ...flattenAndProcess(curr)];
+                }
+                const processed = processValue(curr);
+                return Array.isArray(processed) 
+                  ? [...acc, ...processed] 
+                  : [...acc, processed];
+              }, []);
+            }
+            return processValue(val);
+          }
+
+          return flattenAndProcess(parsedValue);
+        }
+      `);
 
       await sc.run(context);
       return context;
