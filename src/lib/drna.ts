@@ -86,9 +86,6 @@ class DRNA extends Schema {
     injectedDrnaParams: Map<string, string>,
     schema: PathSchema,
     validatedObjects: {
-      req?: object;
-      user?: object;
-      context?: object;
       variables?: Record<string, unknown>;
     },
     options = {

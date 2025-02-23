@@ -67,7 +67,6 @@ class IvmSandbox {
    *
    */
   public async createContext(
-    validatedObjects: ValidatedDataObjects,
     variables: Record<string, unknown> = {},
   ): Promise<ivm.Context> {
     if (this.isolate !== null && this.instanciated) {
@@ -170,7 +169,7 @@ class IvmSandbox {
                 }
                 return "";
               }
-              if (['&', '/'].includes(val)) {
+              if (['&', '/', '*'].includes(val)) {
                 return "";
               }
               return val;

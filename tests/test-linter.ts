@@ -1,0 +1,111 @@
+import Dimrill from "../src";
+import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { assertMatch } from "./assertMatch";
+import { ObjectId } from "bson";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+async function testLinter() {
+    const dimrill = new Dimrill({
+        validateData: false,
+        ivmMemoryLimit: 20,
+        schemaPrefix: "blackeye"
+    });
+
+    try {
+        console.log("\n📝 Loading schemas for linter tests...");
+        await dimrill.autoload(path.join(__dirname, "../tests/schemas"));
+        console.log("✅ Schemas loaded successfully");
+
+        // Test schema details retrieval
+        console.log("\n🧪 Testing schema details retrieval...");
+        const schemaDetails = dimrill.getSchemaDetails("blackeye:files:orders:allowedProductCategories");
+
+        assertMatch(schemaDetails, {
+            variables: {
+                pricelist: { type: "string" },
+                customerId: { type: "objectIdArray" },
+                orderCurrency: { type: "string", required: true },
+                organizations: { type: "objectIdArray" },
+                status: { type: "array" }
+            },
+            arguments: {
+                pricelist: { type: "string" },
+                orderCurrency: { type: "string" },
+                organizations: { type: "objectIdArray" }
+            },
+            conditions: {
+                queryEnforceTypeCast: {
+                    organizations: "ToObjectIdArray",
+                    categories: "ToObjectIdArray"
+                }
+            },
+            type: ["Action", "Ressource"]
+        }, "Schema details should match the schema file");
+
+        // Test variable validation
+        console.log("\n🧪 Testing variable validation...");
+
+        // Test valid variables
+        const validVariables = {
+            pricelist: "standard",
+            customerId: [new ObjectId()],
+            orderCurrency: "EUR",
+            organizations: [new ObjectId()],
+            status: ["active", "pending"]
+        };
+
+        const validResult = dimrill.validateVariables(
+            "blackeye:files:orders:allowedProductCategories",
+            validVariables
+        );
+        assertMatch(validResult, [], "Valid variables should produce no errors");
+
+        // Test invalid variables
+        const invalidVariables = {
+            pricelist: 123, // should be string
+            customerId: "not-an-array", // should be objectIdArray
+            organizations: ["not-an-objectid"], // should be array of ObjectIds
+            status: "not-an-array" // should be array
+            // missing required orderCurrency
+        };
+
+        const invalidResult = dimrill.validateVariables(
+            "blackeye:files:orders:allowedProductCategories",
+            invalidVariables
+        );
+
+        assertMatch(invalidResult.length, 5, "Should have 5 validation errors");
+        assertMatch(
+            invalidResult.some(error =>
+                error.message.includes('Required variable "orderCurrency" is missing')
+            ),
+            true,
+            "Should detect missing required variable"
+        );
+        assertMatch(
+            invalidResult.some(error =>
+                error.message.includes('must be a string') &&
+                error.path === 'pricelist'
+            ),
+            true,
+            "Should detect wrong type for string"
+        );
+
+        // Test non-existent path
+        console.log("\n🧪 Testing non-existent path...");
+        const nonExistentResult = dimrill.getSchemaDetails("blackeye:invalid:path");
+        assertMatch(nonExistentResult, null, "Non-existent path should return null");
+
+        console.log("\n✅ All linter tests passed!");
+
+    } catch (error) {
+        console.error("\n❌ Linter test failed:", error);
+        process.exit(1);
+    }
+}
+
+testLinter(); 

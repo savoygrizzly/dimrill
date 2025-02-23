@@ -10,6 +10,7 @@ import PoliciesCompiler from "./lib/policiesCompiler";
 import DRNA from "./lib/drna";
 import Policies from "./lib/policies";
 import Condition from "./lib/conditions";
+import { DimrillLinter } from "./lib/linter";
 import fs from "fs";
 import path from "path";
 import IvmSandbox from "./lib/ivmSandbox";
@@ -40,12 +41,7 @@ class Dimrill {
     if (Number(this.opts.ivmMemoryLimit) < 8) {
       throw new Error("Minimum memory limit is 8MB");
     }
-    console.warn(
-      "\x1b[33m%s\x1b[0m", // Yellow color for warning
-      `[Dimrill] DEPRECATION WARNING: The use of 'req', 'user', and 'context' objects is deprecated and will be removed in a future version.
-        Please use the 'variables' object instead for passing data to policies.
-        For more information, please refer to: https://github.com/sosickstudio/dimrill`,
-    );
+
     this.schema = new Schema({ prefix: this.opts.schemaPrefix });
     this.DRNA = new DRNA();
     this.ivmSandbox = new IvmSandbox({
@@ -57,6 +53,7 @@ class Dimrill {
       timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 300,
     });
     this.policiesCompiler = new PoliciesCompiler(this.DRNA, this.schema);
+    this.linter = null;
   }
 
   private readonly opts: {
@@ -74,6 +71,7 @@ class Dimrill {
   private readonly DRNA: DRNA;
   private readonly policies: Policies;
   private readonly schema: Schema;
+  private linter: DimrillLinter | null = null;
 
   private validateFileExtension(filename: string): boolean {
     let fileType = path.extname(filename);
@@ -332,9 +330,6 @@ class Dimrill {
     drna: string[],
     policies: Policy[],
     {
-      req = {},
-      user = {},
-      context = {},
       // eslint-disable-next-line
       variables = {} as Record<string, unknown>,
     },
@@ -466,18 +461,7 @@ class Dimrill {
       variables = castVariables;
     }
 
-    const validatedObjects = this.schema.castObjectsToSchemaTypes(
-      schemaExists?.AJVSchema ?? {},
-      req,
-      user,
-      context,
-      variables,
-      {
-        validateData: options.validateData ?? true,
-      },
-    );
     const ivmContext = await this.ivmSandbox.createContext(
-      validatedObjects,
       variables,
     );
 
@@ -494,8 +478,8 @@ class Dimrill {
       drna[1],
       schemaExists,
       options.pathOnly
-        ? { req: {}, user: {}, context: {}, variables: {} }
-        : validatedObjects,
+        ? { variables: {} }
+        : { variables },
     );
 
     /*
@@ -508,7 +492,7 @@ class Dimrill {
       policies,
       options.pathOnly
         ? { variables: {} }
-        : validatedObjects,
+        : { variables },
       {
         pathOnly: options.pathOnly ? options.pathOnly : false,
         ignoreConditions: false,
@@ -523,6 +507,47 @@ class Dimrill {
     this.policies.destroyVm();
 
     return results;
+  }
+
+  /**
+   * Get the linter instance. Creates one if it doesn't exist.
+   */
+  public getLinter(): DimrillLinter {
+    if (!this.linter) {
+      if (!this.schema.schemaHasLoaded()) {
+        throw new Error("Schema must be loaded before using the linter");
+      }
+      this.linter = new DimrillLinter(this.schema.returnSchema());
+    }
+    return this.linter;
+  }
+
+  /**
+   * Validate variables for a given DRNA path
+   */
+  public validateVariables(path: string, variables: Record<string, unknown>): Array<{
+    type: 'variable' | 'argument' | 'syntax';
+    message: string;
+    path?: string;
+    expected?: string;
+    received?: string;
+  }> {
+    return this.getLinter().validateVariables(path, variables);
+  }
+
+  /**
+   * Get schema details for a given DRNA path
+   */
+  public getSchemaDetails(path: string): {
+    variables?: Record<string, VariableSchema>;
+    arguments?: Record<string, { type: string }>;
+    conditions?: {
+      queryEnforceTypeCast?: Record<string, string>;
+      operators?: string[];
+    };
+    type?: string[];
+  } | null {
+    return this.getLinter().getSchemaDetails(path);
   }
 }
 export default Dimrill;

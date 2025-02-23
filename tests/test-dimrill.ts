@@ -127,6 +127,7 @@ async function testDimrill() {
                 distributorPolicies as any,
                 {
                     // These should be ignored
+                    // @ts-ignore
                     req: { someData: "test" },
                     user: { id: "123" },
                     context: { extra: "info" },

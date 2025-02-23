@@ -14,7 +14,6 @@ import {
 } from "../types/custom";
 
 // import type CompiledSchemaObject from "./compiledSchema";
-import Ajv from "ajv";
 import _get from "lodash/get";
 import _set from "lodash/set";
 // import _merge from "lodash/merge";
@@ -27,12 +26,10 @@ class Schema {
   constructor(options: { prefix: string } = { prefix: "" }) {
     this.schema = {};
     this.compiledSchema = null;
-    this.ajv = new Ajv();
     this.schemaPrefix = options.prefix;
   }
 
   private readonly schemaPrefix: string;
-  private readonly ajv: Ajv;
   public schema: RootSchema;
   public compiledSchema: RootSchema | null;
   public validateSchema(schema: RootSchema): RootSchema {
@@ -310,32 +307,10 @@ class Schema {
     this.compiledSchema = mergedSchema;
   }
 
-  public castObjectsToSchemaTypes(
-    validationSchema: Record<string, any>,
-    req: object,
-    user: object,
-    context: object,
+  public castObjectsToSchemaTypes(validationSchema: Record<string, any>,
     variables: Record<string, unknown>,
-    options: {
-      validateData: boolean;
-    },
   ): ValidatedDataObjects {
-    const data = { req, user, context };
-
-    if (!options.validateData) {
-      return { ...data, variables };
-    }
-    validationSchema.additionalProperties = false;
-
-    const validate = this.ajv.compile(
-      Object.setPrototypeOf(validationSchema, Object),
-    );
-
-    const valid = validate(data);
-    if (!valid) {
-      throw new Error(`Invalid data`);
-    }
-    return { ...data, variables };
+    return { variables };
   }
 
   private readonly validationFunctions: Record<string, (obj: any) => boolean> =
