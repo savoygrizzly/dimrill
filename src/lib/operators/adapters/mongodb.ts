@@ -139,4 +139,21 @@ export default class MongoDbOperators {
 
     return { [field]: { $in: safeValues } };
   };
+
+  // NotInArray
+  public NotInArray = (field: string, value: any): Record<string, object> => {
+    value = Array.isArray(value) ? value : [value];
+    const safeValues = value
+      .map((val: any) => {
+        if (typeof val === "object" && val !== null) {
+          return String(val);
+        }
+        return val;
+      })
+      .filter((filtered: boolean | string | number) =>
+        filtered !== null && filtered !== undefined
+      );
+
+    return { [field]: { $nin: safeValues } };
+  };
 }

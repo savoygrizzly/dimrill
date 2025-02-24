@@ -51,6 +51,7 @@ async function testLinter() {
         // Test valid variables
         const validVariables = {
             pricelist: "standard",
+            singleId: new ObjectId(),
             customerId: [new ObjectId()],
             orderCurrency: "EUR",
             organizations: [new ObjectId()],
@@ -66,6 +67,7 @@ async function testLinter() {
         // Test invalid variables
         const invalidVariables = {
             pricelist: 123, // should be string
+            singleId: "not-an-objectid", // should be ObjectId
             customerId: "not-an-array", // should be objectIdArray
             organizations: ["not-an-objectid"], // should be array of ObjectIds
             status: "not-an-array" // should be array
@@ -77,7 +79,7 @@ async function testLinter() {
             invalidVariables
         );
 
-        assertMatch(invalidResult.length, 5, "Should have 5 validation errors");
+        assertMatch(invalidResult.length, 6, "Should have 6 validation errors");
         assertMatch(
             invalidResult.some(error =>
                 error.message.includes('Required variable "orderCurrency" is missing')

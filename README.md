@@ -1,13 +1,16 @@
 # Dimrill
 
-**VERSION 3.5.X**
+**VERSION 4.X.X**
 
 Release notes:
 
-If you used the integrated ajv, the schema property `Variables` has been renamed to `AJVSchema` to avoid confusion with the new `Variables` system.
+- Added `$or` operator to conditions
+- Removed `req`, `user`, `context` from the authorizer
+- Added `ArraysIntersect` and `ArraysNoIntersect` operators
+- Added `NotInArray` operator to `ToQuery` operators
+- Linter in progress
 
-Variables can now be defined in the schema, and will be casted to the correct type before being passed to the authorizer.
-This ensures predictable behavior in contrast to the old system where req, user and context could be located differently than expected.
+## What is Dimrill?
 
 Dimrill is a policy based authorization module for nodeJS environments, it doesnt replace your JWT token, nor does it replace your login logic.
 What it does is help you replace a traditional role based authorization (eg. an `admin` role, a `user` role, a `manager` role etc), for a policy based authorization.
@@ -130,13 +133,12 @@ const valid = await DimrillAuthorizer.authorize(
   [
     "Action",
     "files:createOrder",
-  ] /* The DRNA to be matched, composed of a Type of either Action or Ressource, and a string pointing to a schema endpoint. The string will be extended using the parameters defined in the schema using the values passed with {req, user, context } if a value is empty the parameter will be ignored.
+  ] /* The DRNA to be matched, composed of a Type of either Action or Ressource, and a string pointing to a schema endpoint. The string will be extended using the parameters defined in the schema using the values passed with {variables} if a value is empty the parameter will be ignored.
 
       In order to enforce the match of parameters, you can specify them, eg. "files:createOrder&pricelist/distributor" will only match if:
         A policy Statement specifies a wildcard on a higher portion of the path eg: files:*
         A policy Statement specifies a wildcard on parameters eg: files:createOrder&* or files:createOrder&*
         A policy Statement specifies the exact same value on the parameter eg: files:createOrder&pricelist/distributor
-        The "dataFrom" key in Arguments portion of the Schema points to an object (req,user or context), holding the same String value
       */,
   /*
 
@@ -154,17 +156,11 @@ const valid = await DimrillAuthorizer.authorize(
     },
   ],
   {
-    req: {}, //you can pass an object to req, typically your own req object
-    user: {}, //the concerned user or object entity
-    context: {}, //other properties that might be useful
     variables: {
-      variablesName: value, //any value, function returned or whatever you want, the value will be cast based off schema, if it fails an error will be thrown.
-      pricelist: "distributor",
-      currency:"USD",
+       // [key: string]: any
     }, //the variables passed to the authorizer
   },
   {
-    validateData: false /* By default this option is set to true, if a valid AJV schema is found under AJVSchema when matching DRNA, the req, user, and context objects (if passed to dimrill); will be validated. Extra properties will be removed and type coerced. */,
     pathOnly: false /* When this option is set to true, dimrill will ignore parameters that aren't hard coded in the DRNA to be matched ("files:createOrder&pricelist/distributor" will require the pricelist param to be equal to distributor;
         "files:createOrder" will validate if a policy Statement specifies anything  with the path "files:createOrder" or a higher wildcard (* or files:*).
 
@@ -189,7 +185,7 @@ Should a condition argument for a matched policy Statement, with all conditions 
 ## Security considerations
 
 When usign Dimrill your authorization process will rely on the policies passed to the authorizer to define whether a user/entity is allowed to access a ressource or perform an action. It is therefore **imperative** to ensure that policies originate from a trusted source and cannot be corrupted or modified.
-If you intend to allow policies to be written by users you have to accept and understand the implications. **Dimrill currently does not provide any features other than Schema Conditions to limit what all users can perform.**
+If you intend to allow policies to be written by users you have to accept and understand the implications. **Dimrill currently does not provide any features other than Schema Conditions and hard coded paths to limit what all users can perform.**
 Considering that if a user is given a wildcard policy, he will be able to access all paths specified, on the Drna Type on which this wildcard applies, for example:
 This policy will give a user/entity access to every available Action and Ressource.
 
@@ -416,14 +412,6 @@ topPortion
                         */
                              [key: string]: "Type" //See type casters list in Conditions for valid types
                         }
-                    },
-                    AJVSchema?:{
-                        "type": "object",
-                        "properties": {
-                            req:{},//AJV Schema, see AJV doc
-                            user:{}, //AJV Schema
-                            context:{} //AJV Schema
-                        }
                     }
                 }
     anotherSubPortion:
@@ -465,6 +453,9 @@ The allowed main-operators are:
 "DateGreaterThanEquals",
 "Bool",
 "InArray",
+"NotInArray",
+"ArraysIntersect", // not allowed with ToQuery
+"ArraysNoIntersect", // not allowed with ToQuery
 ```
 
 Each operators accept 2 arguments `(left,right)`
@@ -474,7 +465,8 @@ Note that by default `InArray` will cast the value to string if the right value 
 By default with the option `unsafeEquals` set to false, `Equals` and `NotEquals` will cast the right value to `String` if the value is an object in order to prevent possible injections. This behavior can be overriden by setting `unsafeEquals` to true in the Dimrill constructor.
 
 A logical operator, either `AnyValues` or `EveryValues` (think and/or). When such operator is present it will check that either all or at least one of the values passed in the block returns true when validated against the main operator. `EveryValues` being the default behavior.
-**These operators are currently not implemented with `ToQuery`**
+
+When `AnyValues` is used in `ToQuery` mode, it will be translated to `$or` in mongodb.
 
 A `ToQuery` Operator, if this operator is present the condition will not be verified but instead adapted in the specified DB query language (currently only mongodb is supported). The query will be returned in the `query` property of `authorize` response.
 
@@ -524,36 +516,73 @@ Policies are valid JSON arrays of objects.
 For a Statement to be matched, it should hold a DRNA Type definition (Ressource or Action) with the same one as required by `authorize` and at least one of the drna strings it contains must match the DRNA required by `authorize`.
 If a statement has a Condition containing blocks without the operator `ToQuery`, the Condition should be valid for the Statement to be considered true.
 
-## Dynamic parameters
+## Linter
 
-*DEPRECATED*
-It is possible to use dynamic parameters directly in the policies statements.
-Dynamic parameters can be passed in drna strings as well as in conditions value (right one). Dynamic parameters will only have access to the `req`,`user`, and `context` objects passed to the authorizer. Paths must therefore start with one of these objects name.
+The linter is a tool that helps validate schemas, variables, and provides schema information for IDE integration. It can be used to:
 
-In order to specify a dynamic parameter the following syntax has to be used `"{{req:yourparam:subParam}}"` or `"{{req.yourparam.subParam}}"`, the value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
+1. Get schema details for a DRNA path:
+```typescript
+const dimrill = new Dimrill();
+await dimrill.autoload("path/to/schemas");
 
-The new system will use the variables object instead of the req, user and context objects.
-
-Those can be dynamically accessed in the policies statements like so:
-
-`"{{$variableName}}"`
-
-The value held at the specific path if one exists will be returned, note that characters `* & /` are forbidden in dynamic parameters and if one is found the returned value will be an empty string.
-
-If the variable is not passed to the authorizer, and not marked as required, an empty string will be used instead.
-
-NB.
-**Dynamic parameters cannot be used in the authorizer**
-
-Examples:
-In a condition:
-
-```
-Condition:{
-    StringEquals:{
-        "distributor":"{{req:body:pricelist}}"
-    }
+const details = dimrill.getSchemaDetails("blackeye:files:orders:allowedProductCategories");
+// Returns:
+{
+  variables: {
+    pricelist: { type: "string" },
+    orderCurrency: { type: "string", required: true },
+    // ...
+  },
+  arguments: { ... },
+  conditions: { ... },
+  type: ["Action", "Ressource"]
 }
 ```
 
-In a drna string: `files:createOrder&pricelist/{{req:body:pricelist}}`.
+2. Validate variables against a schema:
+```typescript
+const errors = dimrill.validateVariables("blackeye:files:orders:allowedProductCategories", {
+  orderCurrency: 123, // wrong type
+  // missing required variables
+});
+// Returns:
+[
+  {
+    type: 'variable',
+    message: 'Variable "orderCurrency" must be a string',
+    path: 'orderCurrency',
+    expected: 'string',
+    received: 'number'
+  }
+]
+```
+
+3. Format errors for IDE integration:
+```typescript
+const linter = dimrill.getLinter();
+const formattedErrors = linter.formatForIDE(errors);
+// Returns format compatible with code editors:
+{
+  markers: [{
+    startRow: 0,
+    startCol: 0,
+    endRow: 0,
+    endCol: 1,
+    className: 'dimrill-error-variable',
+    type: 'text',
+    text: 'Variable "orderCurrency" must be a string'
+  }],
+  annotations: [...]
+}
+```
+
+The linter supports validation for all variable types defined in the schema:
+- string
+- number
+- boolean
+- array
+- date
+- objectId
+- objectIdArray
+
+It can be used both programmatically and for IDE integration to provide real-time validation feedback.

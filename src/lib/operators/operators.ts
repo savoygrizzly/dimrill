@@ -171,7 +171,7 @@ export default class Operators {
     );
   };
 
-  public ArraysNotIntersect = (
+  public ArraysNoIntersect = (
     leftOperator: any[],
     rightOperator: any[]
   ): boolean => {

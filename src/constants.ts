@@ -31,8 +31,9 @@ export const SchemaOperators = [
   "DateGreaterThanEquals",
   "Bool",
   "InArray",
+  "NotInArray",
 ] as string[];
-export const SchemaConditionsOnlyOperators = ["ArraysIntersect"] as string[];
+export const SchemaConditionsOnlyOperators = ["ArraysIntersect", "ArraysNoIntersect"] as string[];
 export const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
 export const SchemaCastTypes = [
   "ToString",

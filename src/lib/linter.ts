@@ -137,6 +137,18 @@ export class DimrillLinter {
                         }
                         break;
 
+                    case 'objectId':
+                        if (!(value instanceof ObjectId)) {
+                            errors.push({
+                                type: 'variable',
+                                message: `Variable "${key}" must be an ObjectId`,
+                                path: key,
+                                expected: 'ObjectId',
+                                received: typeof value
+                            });
+                        }
+                        break;
+
                     case 'objectIdArray':
                         if (!Array.isArray(value) || !value.every(v => v instanceof ObjectId)) {
                             errors.push({
