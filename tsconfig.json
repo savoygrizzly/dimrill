@@ -17,7 +17,6 @@
     "examples",
     "tests",
     "node_modules",
-    "tsup.config.ts",
     "scripts"
   ]
 }

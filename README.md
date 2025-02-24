@@ -11,15 +11,25 @@ Release notes:
 - Linter in progress
 
 ## What is Dimrill?
+Dimrill is a policy-based authorization framework for NodeJS that helps you implement fine-grained access control. Rather than using traditional role-based authorization with fixed roles like "admin" or "user", Dimrill allows you to define dynamic permissions based on:
 
-Dimrill is a policy based authorization module for nodeJS environments, it doesnt replace your JWT token, nor does it replace your login logic.
-What it does is help you replace a traditional role based authorization (eg. an `admin` role, a `user` role, a `manager` role etc), for a policy based authorization.
+- What resource is being accessed (e.g. files, orders)
+- What action is being performed (e.g. read, create, update) 
+- The specific context of the request (e.g. parameters, user attributes)
 
-It is intended to act as an **authorization middleware** for complex roles handling, and will allow you to define "roles" dynamically based on the ressources and action required.
+At its core, Dimrill uses DRNA (Dynamic Resource Naming Authority) to define authorization rules through:
 
-Dimrill is using something called `DRNA` as in Dynamic Ressource Naming Authority, in a way it helps you define via schemas which _Ressource_ (think `GET`) and _Action_, (think `POST`) you need to authorize, which arguments (think `req.params` or `request.body`) are required to be passed, and helps you define conditions for extra validation.
+1. **Schemas** - Define the structure of your resources and actions:
+   - What resources and actions exist in your system
+   - What parameters are required/allowed for each
+   - What conditions need to be validated
 
-This is done by declaring a schema that let you define the what and the where:
+2. **Policies** - Define who can access what:
+   - Grant or deny permissions to users/entities
+   - Specify allowed resources and actions
+   - Set conditions and constraints
+
+Here's how it works - first you define a schema that specifies your authorization model:
 
 ```json
 {

@@ -28,9 +28,7 @@ async function testDimrill() {
                     ],
                     Action: ["blackeye:files:orders:allowedProductCategories"],
                     Condition: {
-                        "InArray:ToQuery": {
-                            "_id": "{{$organizations}}"
-                        },
+
                         "InArray:ToQuery:AnyValues": {
                             "status": ["{{$status}}", "banned"],
                             "organizations": "{{$organizations}}"
