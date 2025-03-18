@@ -61,8 +61,8 @@ const distributorPolicies = [
     Statement: [
       {
         Effect: "Allow",
-        Ressource: ["blackeye:files:orders:allowedProductCategories"],
-        Action: ["blackeye:files:orders:allowedProductCategories"],
+        Ressource: ["blackeye:orders:allowedProductCategories"],
+        Action: ["blackeye:orders:allowedProductCategories"],
         Condition: {
           "InArray:ToQuery": {
             _id: "{{$organizations}}",
@@ -82,7 +82,9 @@ describe("Dimrill Authorization Tests", () => {
     console.log("Starting tests...");
     console.log("Loading schemas from:", path.join(__dirname, "schemas"));
     try {
-      await dimrill.autoload(path.join(__dirname, "schemas"));
+      await dimrill.autoload(path.join(__dirname, "schemas"), {
+        recursive: true,
+      });
       console.log("Schemas loaded successfully");
       console.log("Schema compiled:", dimrill.schemaHasCompiled());
       console.log(
@@ -111,7 +113,7 @@ describe("Dimrill Authorization Tests", () => {
     try {
       console.log(dimrill);
       const result = await dimrill.authorize(
-        ["Ressource", "blackeye:files:orders:allowedProductCategories"],
+        ["Ressource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
           variables: {
@@ -137,7 +139,7 @@ describe("Dimrill Authorization Tests", () => {
     console.log("Testing rejection with missing variable...");
     await expect(
       dimrill.authorize(
-        ["Ressource", "blackeye:files:orders:allowedProductCategories"],
+        ["Ressource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
           variables: {
@@ -176,7 +178,7 @@ describe("Dimrill Authorization Tests", () => {
   // test("Should authorize allowed product categories", async () => {
   //   const testObj = generateTestObject();
   //   const result = await dimrill.authorize(
-  //     ["Ressource", "blackeye:files:orders:allowedProductCategories"],
+  //     ["Ressource", "blackeye:orders:allowedProductCategories"],
   //     distributorPolicies as any,
   //     testObj
   //   );
