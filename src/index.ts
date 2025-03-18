@@ -26,7 +26,7 @@ class Dimrill {
       ivmTimeout?: number;
       schemaPrefix?: string;
       autoLaunchIvm?: boolean;
-    } = {},
+    } = {}
   ) {
     this.opts = {
       ivmMemoryLimit: 12,
@@ -77,7 +77,7 @@ class Dimrill {
     // Check for double extension of .dmrl.json
     const fileExtensions = filename.split(".");
     const totalExtensions = fileExtensions.slice(
-      Math.max(fileExtensions.length - 2, 1),
+      Math.max(fileExtensions.length - 2, 1)
     );
 
     if (totalExtensions.length < 3) {
@@ -90,21 +90,44 @@ class Dimrill {
 
   private async readFiles(
     dirname: string,
+    recursive: boolean = false,
+    prefix: string = ""
   ): Promise<Record<string, RootSchema>> {
     const data: Record<string, RootSchema> = {};
-    const files = await fsp.readdir(dirname);
+    const files = await fsp.readdir(dirname, { withFileTypes: true });
+
     await Promise.all(
-      files.map(async (filename) => {
+      files.map(async (dirent) => {
+        const filename = dirent.name;
         const full = path.join(dirname, filename);
 
-        if (!this.validateFileExtension(filename)) return;
-        try {
-          const content = await fsp.readFile(full, { encoding: "utf8" });
-          data[filename] = JSON.parse(content);
-        } catch (e) {
-          throw new Error(`Error reading file: ${full}`);
+        if (dirent.isDirectory() && recursive) {
+          // For directories, recursively scan with the directory name as prefix
+          const nestedPrefix = prefix ? `${prefix}.${filename}` : filename;
+          const nestedData = await this.readFiles(
+            full,
+            recursive,
+            nestedPrefix
+          );
+
+          // Merge nested data with current data
+          Object.entries(nestedData).forEach(([key, value]) => {
+            data[key] = value;
+          });
+        } else if (dirent.isFile()) {
+          if (!this.validateFileExtension(filename)) return;
+          try {
+            const content = await fsp.readFile(full, { encoding: "utf8" });
+            const parsed = JSON.parse(content);
+
+            // If we have a prefix, store with prefix information
+            const key = prefix ? `${prefix}:${filename}` : filename;
+            data[key] = parsed;
+          } catch (e) {
+            throw new Error(`Error reading file: ${full}`);
+          }
         }
-      }),
+      })
     );
     return data;
   }
@@ -133,15 +156,33 @@ class Dimrill {
   /**
    *  Autoload the schema files from a directory
    * @param directoryPath Path to directory containing the schema files
+   * @param options Additional options for loading
+   * @param options.recursive When true, recursively scan subdirectories and use folder names as prefixes
    * @returns Promise
    */
-  public async autoload(directoryPath: string): Promise<void> {
-    const schemas = await this.readFiles(directoryPath);
+  public async autoload(
+    directoryPath: string,
+    options: { recursive?: boolean } = {}
+  ): Promise<void> {
+    const { recursive = false } = options;
+    const schemas = await this.readFiles(directoryPath, recursive);
     const schemaSet = new Map<string, RootSchema>();
+
     Object.entries(schemas).forEach(([key, value]) => {
-      schemaSet.set(key, this.schema.validateSchema(value));
+      // Extract prefix from key if it exists (format: "prefix:filename")
+      const [prefix, filename] = key.includes(":")
+        ? key.split(":")
+        : [null, key];
+
+      // Validate schema
+      const validatedSchema = this.schema.validateSchema(value);
+
+      // Set the schema with the appropriate key
+      schemaSet.set(key, validatedSchema);
     });
+
     this.schema.compileSchema(schemaSet);
+
     /*
         Launch the IVM
     */
@@ -160,8 +201,8 @@ class Dimrill {
         if (!this.validateFileExtension(filename)) {
           throw new Error(
             `Invalid file type: ${filename}, extension must be: ${fileExtensionName.join(
-              ", ",
-            )}`,
+              ", "
+            )}`
           );
         }
         try {
@@ -169,10 +210,10 @@ class Dimrill {
           this.schemaLoadingList[filename] = JSON.parse(content);
         } catch (error) {
           throw new Error(
-            `Error reading file, file may not exist: ${filename}`,
+            `Error reading file, file may not exist: ${filename}`
           );
         }
-      }),
+      })
     );
   }
 
@@ -256,8 +297,8 @@ class Dimrill {
     options: {
       ignoreConditions?: boolean;
     } = {
-        ignoreConditions: true,
-      },
+      ignoreConditions: true,
+    }
   ): Promise<string[]> {
     const validatedObjects = {
       variables: {},
@@ -274,13 +315,13 @@ class Dimrill {
       drnaArray.map(async (drna) => {
         const schemaExists = this.DRNA.matchDrnaFromSchema(
           drna,
-          this.schema.returnSchema(),
+          this.schema.returnSchema()
         );
         if (schemaExists !== false) {
           const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
             drna[1],
             schemaExists as PathSchema,
-            validatedObjects,
+            validatedObjects
           );
 
           /*
@@ -295,7 +336,7 @@ class Dimrill {
             {
               pathOnly: true,
               ignoreConditions: Boolean(options.ignoreConditions),
-            },
+            }
           );
 
           /*
@@ -307,7 +348,7 @@ class Dimrill {
           }
         }
         return false;
-      }),
+      })
     );
 
     this.ivmSandbox.release(ivmContext);
@@ -335,8 +376,8 @@ class Dimrill {
       validateData?: boolean;
       pathOnly?: boolean;
     } = {
-        pathOnly: false,
-      },
+      pathOnly: false,
+    }
   ): Promise<{
     query: string | object;
     valid: boolean;
@@ -346,12 +387,12 @@ class Dimrill {
     }
     const schemaExists = this.DRNA.matchDrnaFromSchema(
       drna,
-      this.schema.returnSchema(),
+      this.schema.returnSchema()
     ) as PathSchema | false; // First, explicitly type the return value
 
     if (schemaExists === false) {
       throw new Error(
-        `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`,
+        `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`
       );
     }
     /*
@@ -407,7 +448,7 @@ class Dimrill {
                 castVariables[key] = new ObjectId(value).toString();
               } else {
                 throw new Error(
-                  `Variable "${key}" must be an ObjectId or valid ObjectId string`,
+                  `Variable "${key}" must be an ObjectId or valid ObjectId string`
                 );
               }
 
@@ -415,7 +456,7 @@ class Dimrill {
             case "objectIdArray":
               if (!Array.isArray(value)) {
                 throw new Error(
-                  `Variable "${key}" must be an array of ObjectIds`,
+                  `Variable "${key}" must be an array of ObjectIds`
                 );
               }
               // eslint-disable-next-line
@@ -427,7 +468,7 @@ class Dimrill {
                   return new ObjectId(item).toString();
                 } else {
                   throw new Error(
-                    `All items in "${key}" must be ObjectIds or valid ObjectId strings`,
+                    `All items in "${key}" must be ObjectIds or valid ObjectId strings`
                   );
                 }
               });
@@ -446,7 +487,7 @@ class Dimrill {
                   castVariables[key] = date;
                 } catch {
                   throw new Error(
-                    `Variable "${key}" must be a Date or valid date string`,
+                    `Variable "${key}" must be a Date or valid date string`
                   );
                 }
               }
@@ -459,9 +500,7 @@ class Dimrill {
       variables = castVariables;
     }
 
-    const ivmContext = await this.ivmSandbox.createContext(
-      variables,
-    );
+    const ivmContext = await this.ivmSandbox.createContext(variables);
 
     /*
 
@@ -475,9 +514,7 @@ class Dimrill {
     const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
       drna[1],
       schemaExists,
-      options.pathOnly
-        ? { variables: {} }
-        : { variables },
+      options.pathOnly ? { variables: {} } : { variables }
     );
 
     /*
@@ -488,13 +525,11 @@ class Dimrill {
       synthetizedMatch,
       schemaExists,
       policies,
-      options.pathOnly
-        ? { variables: {} }
-        : { variables },
+      options.pathOnly ? { variables: {} } : { variables },
       {
         pathOnly: options.pathOnly ? options.pathOnly : false,
         ignoreConditions: false,
-      },
+      }
     );
 
     /*
@@ -523,8 +558,11 @@ class Dimrill {
   /**
    * Validate variables for a given DRNA path
    */
-  public validateVariables(path: string, variables: Record<string, unknown>): Array<{
-    type: 'variable' | 'argument' | 'syntax';
+  public validateVariables(
+    path: string,
+    variables: Record<string, unknown>
+  ): Array<{
+    type: "variable" | "argument" | "syntax";
     message: string;
     path?: string;
     expected?: string;

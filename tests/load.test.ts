@@ -4,9 +4,8 @@ import { ObjectId } from "bson";
 import util from "util";
 
 const dimrill = new Dimrill({
-  validateData: false,
   ivmMemoryLimit: 20,
-  schemaPrefix: "blackeye"
+  schemaPrefix: "blackeye",
 });
 
 // Helper function to generate random hex string
@@ -33,26 +32,26 @@ const generateTestObject = () => {
         parentId: generateRandomHexString(24),
         customerId: userOrgs[0],
         pricelist: "dealerPrice",
-        orderCurrency: "EUR"
+        orderCurrency: "EUR",
       },
       params: {
-        userId
-      }
+        userId,
+      },
     },
     user: {
       sub: userId,
       test: {
-        naaasty: "test"
+        naaasty: "test",
       },
       ot: 12,
-      organizations: userOrgs
+      organizations: userOrgs,
     },
     variables: {
       pricelist: "dealerPrice",
       orderCurrency: "EUR",
       customerId: [userOrgs[0]],
-      organizations: userOrgs
-    }
+      organizations: userOrgs,
+    },
   };
 };
 
@@ -62,22 +61,20 @@ const distributorPolicies = [
     Statement: [
       {
         Effect: "Allow",
-        Ressource: [
-          "blackeye:files:orders:allowedProductCategories"
-        ],
+        Ressource: ["blackeye:files:orders:allowedProductCategories"],
         Action: ["blackeye:files:orders:allowedProductCategories"],
         Condition: {
           "InArray:ToQuery": {
-            "_id": "{{$organizations}}"
-          }
-        }
+            _id: "{{$organizations}}",
+          },
+        },
       },
       {
         Effect: "Allow",
-        Ressource: ["blackeye:products:categories:*"]
-      }
-    ]
-  }
+        Ressource: ["blackeye:products:categories:*"],
+      },
+    ],
+  },
 ];
 
 describe("Dimrill Authorization Tests", () => {
@@ -88,7 +85,10 @@ describe("Dimrill Authorization Tests", () => {
       await dimrill.autoload(path.join(__dirname, "schemas"));
       console.log("Schemas loaded successfully");
       console.log("Schema compiled:", dimrill.schemaHasCompiled());
-      console.log("Schema content:", util.inspect(dimrill.getSchema(), { depth: null }));
+      console.log(
+        "Schema content:",
+        util.inspect(dimrill.getSchema(), { depth: null })
+      );
     } catch (error) {
       console.error("Error loading schemas:", error);
       throw error;
@@ -109,7 +109,7 @@ describe("Dimrill Authorization Tests", () => {
   test("Should authorize with valid variables", async () => {
     console.log("Testing authorization with valid variables...");
     try {
-      console.log(dimrill)
+      console.log(dimrill);
       const result = await dimrill.authorize(
         ["Ressource", "blackeye:files:orders:allowedProductCategories"],
         distributorPolicies as any,
@@ -117,12 +117,15 @@ describe("Dimrill Authorization Tests", () => {
           variables: {
             organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
             orderCurrency: "EUR",
-          }
+          },
         }
       );
-      console.log("Authorization result:", util.inspect(result, { depth: null }));
-      expect(result).toHaveProperty('valid');
-      expect(result).toHaveProperty('query');
+      console.log(
+        "Authorization result:",
+        util.inspect(result, { depth: null })
+      );
+      expect(result).toHaveProperty("valid");
+      expect(result).toHaveProperty("query");
       expect(result.valid).toBe(true);
     } catch (error) {
       console.error("Authorization error:", error);
@@ -132,30 +135,34 @@ describe("Dimrill Authorization Tests", () => {
 
   test("Should reject with missing required variable", async () => {
     console.log("Testing rejection with missing variable...");
-    await expect(dimrill.authorize(
-      ["Ressource", "blackeye:files:orders:allowedProductCategories"],
-      distributorPolicies as any,
-      {
-        variables: {
-          organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"]
-          // Missing orderCurrency
+    await expect(
+      dimrill.authorize(
+        ["Ressource", "blackeye:files:orders:allowedProductCategories"],
+        distributorPolicies as any,
+        {
+          variables: {
+            organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+            // Missing orderCurrency
+          },
         }
-      }
-    )).rejects.toThrow('Required variable');
+      )
+    ).rejects.toThrow("Required variable");
   }, 10000);
 
   test("Should reject invalid DRNA path", async () => {
     console.log("Testing rejection with invalid path...");
-    await expect(dimrill.authorize(
-      ["Ressource", "invalid:path"],
-      distributorPolicies as any,
-      {
-        variables: {
-          organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
-          orderCurrency: "EUR"
+    await expect(
+      dimrill.authorize(
+        ["Ressource", "invalid:path"],
+        distributorPolicies as any,
+        {
+          variables: {
+            organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+            orderCurrency: "EUR",
+          },
         }
-      }
-    )).rejects.toThrow('Invalid DRNA path');
+      )
+    ).rejects.toThrow("Invalid DRNA path");
   }, 10000);
 
   // test("Should authorize bulk operations", async () => {
@@ -178,4 +185,3 @@ describe("Dimrill Authorization Tests", () => {
   //   expect(result).toHaveProperty('query');
   // });
 });
-
