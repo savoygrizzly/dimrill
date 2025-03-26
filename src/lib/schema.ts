@@ -149,7 +149,14 @@ class Schema {
     for (const [key, value] of Object.entries(variables)) {
       if (
         !value.type ||
-        !["string", "number", "boolean", "array"].includes(value.type)
+        ![
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "objectId",
+          "objectIdArray",
+        ].includes(value.type)
       ) {
         throw new Error(
           `Invalid variable type for ${key}. Must be one of: string, number, boolean, array`

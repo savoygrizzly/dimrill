@@ -1,6 +1,7 @@
 {
   "allowedProductCategories": {
     "Type": ["Action", "Ressource"],
+    "Description": "This is a test description",
     "Arguments": {
       "pricelist": {
         "type": "string"

@@ -3,6 +3,7 @@ export const SchemaGlobalKeys = [
   "Arguments",
   "Condition",
   "Variables",
+  "Description",
   "Type",
 ] as string[];
 export const SchemaConditionKeys = [
@@ -33,7 +34,10 @@ export const SchemaOperators = [
   "InArray",
   "NotInArray",
 ] as string[];
-export const SchemaConditionsOnlyOperators = ["ArraysIntersect", "ArraysNoIntersect"] as string[];
+export const SchemaConditionsOnlyOperators = [
+  "ArraysIntersect",
+  "ArraysNoIntersect",
+] as string[];
 export const SchemaOperands = ["AnyValues", "EveryValues"] as string[];
 export const SchemaCastTypes = [
   "ToString",

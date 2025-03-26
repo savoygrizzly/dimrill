@@ -10,12 +10,26 @@ export interface Statement {
   Action?: string[];
   Ressource?: string[];
   Condition?: StatementCondition;
-  [key: string]: string[] | StatementCondition | "Allow" | "Deny" | undefined;
+  Description?: string;
+  [key: string]:
+    | string[]
+    | StatementCondition
+    | "Allow"
+    | "Deny"
+    | string
+    | undefined;
 }
 
 // Variable types for schema definition
 export interface VariableSchema {
-  type: "string" | "number" | "boolean" | "array" | "objectId" | "objectIdArray" | "date";
+  type:
+    | "string"
+    | "number"
+    | "boolean"
+    | "array"
+    | "objectId"
+    | "objectIdArray"
+    | "date";
   required?: boolean;
   description?: string;
 }
@@ -42,7 +56,10 @@ export interface Argument {
 
 export type ArgumentSchema = Record<
   string,
-  Argument & (Argument extends { type: "string" } ? { enum: string[] } : Record<string, unknown>)
+  Argument &
+    (Argument extends { type: "string" }
+      ? { enum: string[] }
+      : Record<string, unknown>)
 >;
 
 // Condition types
