@@ -3,6 +3,7 @@ export interface Policy {
   id?: string;
   Version: string;
   Statement: Statement[];
+  Description?: string;
 }
 
 export interface Statement {
@@ -12,24 +13,27 @@ export interface Statement {
   Condition?: StatementCondition;
   Description?: string;
   [key: string]:
-    | string[]
-    | StatementCondition
-    | "Allow"
-    | "Deny"
-    | string
-    | undefined;
+  | string[]
+  | StatementCondition
+  | "Allow"
+  | "Deny"
+  | string
+  | undefined;
 }
 
 // Variable types for schema definition
 export interface VariableSchema {
   type:
-    | "string"
-    | "number"
-    | "boolean"
-    | "array"
-    | "objectId"
-    | "objectIdArray"
-    | "date";
+  | "string"
+  | "number"
+  | "boolean"
+  | "array"
+  | "stringArray"
+  | "numberArray"
+  | "anyArray"
+  | "objectId"
+  | "objectIdArray"
+  | "date";
   required?: boolean;
   description?: string;
 }
@@ -40,7 +44,6 @@ export interface PathSchema {
   Arguments?: ArgumentSchema;
   Condition?: ConditionSchema;
   Variables?: Record<string, VariableSchema>;
-  AJVSchema?: Record<string, any>;
   [key: string]: any;
 }
 
@@ -57,9 +60,9 @@ export interface Argument {
 export type ArgumentSchema = Record<
   string,
   Argument &
-    (Argument extends { type: "string" }
-      ? { enum: string[] }
-      : Record<string, unknown>)
+  (Argument extends { type: "string" }
+    ? { enum: string[] }
+    : Record<string, unknown>)
 >;
 
 // Condition types

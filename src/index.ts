@@ -16,6 +16,18 @@ import path from "path";
 import IvmSandbox from "./lib/ivmSandbox";
 import { ObjectId } from "bson"; // Add this import
 import { fileExtensionName } from "./constants";
+import { Variables } from './lib/variables'; // Import Variables class
+
+export {
+  type RootSchema,
+  type PathSchema,
+  type Policy,
+  type VariableSchema,
+  type Statement,
+  type StatementCondition,
+  type AuthorizationResult,
+  type _CompilationResults,
+} from "./types/custom";
 
 const fsp = fs.promises;
 
@@ -297,8 +309,8 @@ class Dimrill {
     options: {
       ignoreConditions?: boolean;
     } = {
-      ignoreConditions: true,
-    }
+        ignoreConditions: true,
+      }
   ): Promise<string[]> {
     const validatedObjects = {
       variables: {},
@@ -376,8 +388,8 @@ class Dimrill {
       validateData?: boolean;
       pathOnly?: boolean;
     } = {
-      pathOnly: false,
-    }
+        pathOnly: false,
+      }
   ): Promise<{
     query: string | object;
     valid: boolean;
@@ -395,109 +407,14 @@ class Dimrill {
         `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`
       );
     }
-    /*
-        Validate the variables passed.
-    */
+
+    // Use Variables.castVariables
     if (Object.keys(variables).length > 0 && schemaExists.Variables) {
       const schemaVariables = schemaExists.Variables as Record<
         string,
         VariableSchema
       >;
-
-      // Create a new variables object with cast values
-      const castVariables: Record<string, unknown> = {};
-
-      for (const [key, schema] of Object.entries(schemaVariables)) {
-        if (schema.required && !(key in variables)) {
-          throw new Error(`Required variable "${key}" is missing`);
-        }
-        if (key in variables) {
-          const value = variables[key];
-          switch (schema.type) {
-            case "string":
-              if (typeof value !== "string") {
-                throw new Error(`Variable "${key}" must be a string`);
-              }
-              castVariables[key] = value;
-              break;
-            case "number":
-              if (typeof value !== "number") {
-                throw new Error(`Variable "${key}" must be a number`);
-              }
-              castVariables[key] = value;
-              break;
-            case "boolean":
-              if (typeof value !== "boolean") {
-                throw new Error(`Variable "${key}" must be a boolean`);
-              }
-              castVariables[key] = value;
-              break;
-            case "array":
-              if (!Array.isArray(value)) {
-                throw new Error(`Variable "${key}" must be an array`);
-              }
-              castVariables[key] = value;
-              break;
-            case "objectId":
-              // First check if it's already an ObjectId
-              // @ts-expect-error inferring the type of value
-              if (ObjectId.isValid(value) && typeof value === "object") {
-                castVariables[key] = (value as ObjectId).toString();
-              } else if (typeof value === "string" && ObjectId.isValid(value)) {
-                // If it's a string and valid ObjectId format, convert it
-                castVariables[key] = new ObjectId(value).toString();
-              } else {
-                throw new Error(
-                  `Variable "${key}" must be an ObjectId or valid ObjectId string`
-                );
-              }
-
-              break;
-            case "objectIdArray":
-              if (!Array.isArray(value)) {
-                throw new Error(
-                  `Variable "${key}" must be an array of ObjectIds`
-                );
-              }
-              // eslint-disable-next-line
-              const objectIds = value.map((item) => {
-                // eslint-disable-next-line
-                if (ObjectId.isValid(item) && typeof item === "object") {
-                  return (item as ObjectId).toString();
-                } else if (typeof item === "string" && ObjectId.isValid(item)) {
-                  return new ObjectId(item).toString();
-                } else {
-                  throw new Error(
-                    `All items in "${key}" must be ObjectIds or valid ObjectId strings`
-                  );
-                }
-              });
-
-              castVariables[key] = objectIds;
-              break;
-            case "date":
-              if (value instanceof Date) {
-                castVariables[key] = value;
-              } else {
-                try {
-                  const date = new Date(value as string | number);
-                  if (isNaN(date.getTime())) {
-                    throw new Error();
-                  }
-                  castVariables[key] = date;
-                } catch {
-                  throw new Error(
-                    `Variable "${key}" must be a Date or valid date string`
-                  );
-                }
-              }
-              break;
-          }
-        }
-      }
-
-      // Replace the original variables with the cast ones
-      variables = castVariables;
+      variables = Variables.castVariables(variables, schemaVariables);
     }
 
     const ivmContext = await this.ivmSandbox.createContext(variables);

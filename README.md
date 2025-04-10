@@ -236,8 +236,7 @@ The only cases in which this might not return true is where a Condition Enforce 
 Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install.
 Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
 
-Dimrill provides an easy solution using [AJV](https://github.com/ajv-validator/ajv) to validate the data objects passed to the authorizer.
-It's however strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill.
+It's  strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill.
 If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
 
 Because Dimrill can generate queries, it is important to ensure that the user input is validated before being passed to Dimrill. Currently with the only "out of the box" adapter supported being MongoDB, the major injection risk resides if you pass unvalidated and unsanitized input to `Equals` or `NotEquals` operators without an `EnforceTypeCast` in the schema (and if your policy also doesn't specify one). If you are using the `ToQuery` modifier and have enabled `unsafeEquals` via Dimrill constructor, you should ensure that the input is validated and sanitized before being passed to Dimrill even if given the generated query's structure injection risks are low.

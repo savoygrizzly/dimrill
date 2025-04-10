@@ -7,13 +7,13 @@ import {
 } from "../types/custom";
 import type Condition from "./conditions";
 import type DRNA from "./drna";
-
+import { type Isolate, type Context } from "isolated-vm";
 class Policies {
   public DRNA: DRNA;
   private readonly Conditions: Condition;
 
-  private isolatedVm: any;
-  public isolatedVmContext: any;
+  private isolatedVm: Isolate | null;
+  public isolatedVmContext: Context | null;
   private readonly ivmOptions: {
     timeout: number;
   };
@@ -30,7 +30,7 @@ class Policies {
     this.ivmOptions = options;
   }
 
-  public setVm(isolatedVm: any, context: any): void {
+  public setVm(isolatedVm: Isolate | null, context: Context | null): void {
     this.isolatedVm = isolatedVm;
     this.isolatedVmContext = context;
     this.Conditions.setVm(isolatedVm, context);
@@ -69,6 +69,9 @@ class Policies {
     const acc: Record<string, string | number | undefined> = {}; // This will be the accumulator object
 
     for (const [key, value] of Object.entries(rawParameters)) {
+      if (!this.isolatedVmContext) {
+        throw new Error("Isolated VM context is not set");
+      }
       // Assuming isolatedVmContext.eval is an async function
       const parsedValue = await this.isolatedVmContext.eval(
         `(function() {return formatValue(${JSON.stringify(
