@@ -7,45 +7,22 @@ import {
 } from "../types/custom";
 import type Condition from "./conditions";
 import type DRNA from "./drna";
-import { type Isolate, type Context } from "isolated-vm";
+import { VariableContext } from "./variableContext";
+
 class Policies {
   public DRNA: DRNA;
   private readonly Conditions: Condition;
 
-  private isolatedVm: Isolate | null;
-  public isolatedVmContext: Context | null;
-  private readonly ivmOptions: {
-    timeout: number;
-  };
-
-  constructor(
-    DRNA: DRNA,
-    Conditions: Condition,
-    options: { timeout: number } = { timeout: 300 }
-  ) {
+  constructor(DRNA: DRNA, Conditions: Condition) {
     this.DRNA = DRNA;
     this.Conditions = Conditions;
-    this.isolatedVm = null;
-    this.isolatedVmContext = null;
-    this.ivmOptions = options;
-  }
-
-  public setVm(isolatedVm: Isolate | null, context: Context | null): void {
-    this.isolatedVm = isolatedVm;
-    this.isolatedVmContext = context;
-    this.Conditions.setVm(isolatedVm, context);
-  }
-
-  public destroyVm(): void {
-    this.isolatedVm = null;
-    this.isolatedVmContext = null;
-    this.Conditions.unsetVm();
   }
 
   public async sanitizePolicyDrna(
     drna: string,
     schema: PathSchema,
-    validatedObjects: ValidatedDataObjects
+    validatedObjects: ValidatedDataObjects,
+    variableContext: VariableContext
   ): Promise<_SynthetizedDRNAMatch> {
     const rawParameters = this.DRNA.matchParametersToSchema(
       this.DRNA.mapInjectedParams(drna.split("&").slice(1), {
@@ -56,7 +33,10 @@ class Policies {
       { allowWildcards: true }
     );
 
-    const parameters = await this.processParameters(rawParameters);
+    const parameters = await this.processParameters(
+      rawParameters,
+      variableContext
+    );
     return {
       drnaPaths: drna.split("&")[0].split(":"),
       parameters,
@@ -64,32 +44,17 @@ class Policies {
   }
 
   private async processParameters(
-    rawParameters: Record<string, string | number | undefined>
+    rawParameters: Record<string, string | number | undefined>,
+    variableContext: VariableContext
   ): Promise<_DrnaParameters> {
-    const acc: Record<string, string | number | undefined> = {}; // This will be the accumulator object
+    const acc: Record<string, string | number | undefined> = {};
 
     for (const [key, value] of Object.entries(rawParameters)) {
-      if (!this.isolatedVmContext) {
-        // Add retry logic - try to check if context exists after a small delay
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        if (!this.isolatedVmContext) {
-          throw new Error("Isolated VM context is not set");
-        }
-      }
-
       try {
-        // Assuming isolatedVmContext.eval is an async function
-        const parsedValue = await this.isolatedVmContext.eval(
-          `(function() {return formatValue(${JSON.stringify(
-            value
-          )},groupedContext)})()`,
-          this.ivmOptions
-        );
+        const parsedValue = variableContext.formatValue(value);
         acc[String(key)] = parsedValue;
       } catch (error) {
-        // Handle eval errors gracefully
         throw new Error(`Error processing parameter ${key}: ${error}`);
-        // acc[String(key)] = value; // Fall back to the original value
       }
     }
 
@@ -102,6 +67,7 @@ class Policies {
     drnaToMatch: _SynthetizedDRNAMatch,
     schema: PathSchema,
     validatedObjects: ValidatedDataObjects,
+    variableContext: VariableContext,
     options: {
       pathOnly: boolean;
       ignoreConditions: boolean;
@@ -113,11 +79,8 @@ class Policies {
         if (!Array.isArray(drnaElements)) continue;
 
         for (const elem of drnaElements) {
-          // First check if base paths match before processing parameters
           const policyBasePath = elem.split("&")[0];
           const requestBasePath = drnaToMatch.drnaPaths.join(":");
-
-          // Use policyPathMatches instead of direct equality
 
           if (
             this.DRNA.policyPathMatches(
@@ -128,7 +91,8 @@ class Policies {
             const sanitizedDrna = await this.sanitizePolicyDrna(
               String(elem),
               schema,
-              validatedObjects
+              validatedObjects,
+              variableContext
             );
 
             const valid = this.DRNA.checkDrnaAccess(
@@ -145,7 +109,8 @@ class Policies {
               }
               return await this.Conditions.runConditions(
                 statement.Condition,
-                schema
+                schema,
+                variableContext
               );
             }
           }
@@ -162,6 +127,7 @@ class Policies {
     schema: PathSchema,
     policies: Policy[],
     validatedObjects: ValidatedDataObjects,
+    variableContext: VariableContext,
     options: {
       pathOnly: boolean;
       ignoreConditions: boolean;
@@ -184,6 +150,7 @@ class Policies {
             drnaToMatch,
             schema,
             validatedObjects,
+            variableContext,
             options
           )
       )
@@ -206,12 +173,11 @@ class Policies {
       };
     }
     const allQueries = [allValidResults.map((result) => result.query)];
-    // Merge queries based on their type
     const mergedQuery =
       typeof allQueries[0] === "object"
         ? this.Conditions.mergeObjectQueries(
-            allQueries as Array<Record<string, any>>
-          )
+          allQueries as Array<Record<string, any>>
+        )
         : this.Conditions.mergeStringQueries(allQueries[0] as string[]);
     return {
       valid: true,

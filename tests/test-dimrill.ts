@@ -12,7 +12,6 @@ const __dirname = dirname(__filename);
 
 async function testDimrill() {
   const dimrill = new Dimrill({
-    ivmMemoryLimit: 20,
     schemaPrefix: "blackeye",
   });
 
@@ -232,8 +231,6 @@ async function testDimrill() {
   } catch (error) {
     console.error("\n❌ Test failed:", error);
     process.exit(1);
-  } finally {
-    dimrill.destroyIvm();
   }
 }
 

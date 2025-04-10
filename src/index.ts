@@ -13,10 +13,12 @@ import Condition from "./lib/conditions";
 import { DimrillLinter } from "./lib/linter";
 import fs from "fs";
 import path from "path";
-import IvmSandbox from "./lib/ivmSandbox";
 import { ObjectId } from "bson"; // Add this import
 import { fileExtensionName } from "./constants";
 import { Variables } from "./lib/variables"; // Import Variables class
+import { VariableContext } from "./lib/variableContext"; // Import VariableContext
+import Operators from "./lib/operators/operators"; // Import Operators
+import MongoDbOperators from "./lib/operators/adapters/mongodb"; // Import MongoDbOperators
 
 export {
   type RootSchema,
@@ -34,16 +36,11 @@ const fsp = fs.promises;
 class Dimrill {
   constructor(
     options: {
-      ivmMemoryLimit?: number;
-      ivmTimeout?: number;
       schemaPrefix?: string;
-      autoLaunchIvm?: boolean;
+      unsafeEquals?: boolean;
     } = {}
   ) {
     this.opts = {
-      ivmMemoryLimit: 12,
-      ivmTimeout: 500,
-      autoLaunchIvm: true,
       schemaPrefix: "",
       unsafeEquals: false,
       ...options,
@@ -54,14 +51,9 @@ class Dimrill {
 
     this.schema = new Schema({ prefix: this.opts.schemaPrefix });
     this.DRNA = new DRNA();
-    this.ivmSandbox = new IvmSandbox({
-      memoryLimit: this.opts.ivmMemoryLimit ? this.opts.ivmMemoryLimit : 12,
-      timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 500,
-      unsafeEquals: this.opts.unsafeEquals ? this.opts.unsafeEquals : false,
-    });
-    this.policies = new Policies(this.DRNA, new Condition(), {
-      timeout: this.opts.ivmTimeout ? this.opts.ivmTimeout : 300,
-    });
+    this.operators = new Operators();
+    this.adapter = new MongoDbOperators();
+    this.policies = new Policies(this.DRNA, new Condition());
     this.policiesCompiler = new PoliciesCompiler(this.DRNA, this.schema);
     this.linter = null;
   }
@@ -77,11 +69,12 @@ class Dimrill {
 
   private readonly schemaLoadingList: Record<string, RootSchema> = {};
   private readonly policiesCompiler: PoliciesCompiler;
-  private readonly ivmSandbox: IvmSandbox;
   private readonly DRNA: DRNA;
   private readonly policies: Policies;
   private readonly schema: Schema;
   private linter: DimrillLinter | null = null;
+  private readonly operators: Operators;
+  private readonly adapter: MongoDbOperators;
 
   private validateFileExtension(filename: string): boolean {
     let fileType = path.extname(filename);
@@ -144,27 +137,6 @@ class Dimrill {
     return data;
   }
 
-  private async autolaunchIvm(): Promise<void> {
-    if (this.opts.autoLaunchIvm === true) {
-      await this.ivmSandbox.createIvm();
-    }
-  }
-
-  /**
-   * Destroy the IVM instance
-   */
-  public destroyIvm(): void {
-    this.ivmSandbox.destroy();
-  }
-
-  /**
-   * Create a new IVM instance using the options dimrill was initialized with
-   * @returns Promise
-   */
-  public async createIvm(): Promise<void> {
-    await this.ivmSandbox.createIvm();
-  }
-
   /**
    *  Autoload the schema files from a directory
    * @param directoryPath Path to directory containing the schema files
@@ -194,11 +166,6 @@ class Dimrill {
     });
 
     this.schema.compileSchema(schemaSet);
-
-    /*
-        Launch the IVM
-    */
-    await this.autolaunchIvm();
   }
 
   /**
@@ -238,10 +205,6 @@ class Dimrill {
       schemaSet.set(key, this.schema.validateSchema(value));
     });
     this.schema.compileSchema(schemaSet);
-    /*
-        Launch the IVM
-    */
-    await this.autolaunchIvm();
   }
 
   /**
@@ -309,21 +272,17 @@ class Dimrill {
     options: {
       ignoreConditions?: boolean;
     } = {
-      ignoreConditions: true,
-    }
+        ignoreConditions: true,
+      }
   ): Promise<string[]> {
-    const validatedObjects = {
-      variables: {},
-    };
-
-    let ivmContext = null;
     try {
-      ivmContext = await this.ivmSandbox.createContext(validatedObjects);
-
-      /*
-          Pass the Isolate and the Context to the Policies class
-      */
-      this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
+      // Create VariableContext with empty variables
+      const variableContext = new VariableContext(
+        {},
+        this.operators,
+        this.adapter,
+        { unsafeEquals: this.opts.unsafeEquals ?? false }
+      );
 
       const returnedDRNA: Array<string | boolean> = await Promise.all(
         drnaArray.map(async (drna) => {
@@ -336,7 +295,7 @@ class Dimrill {
               const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
                 drna[1],
                 schemaExists as PathSchema,
-                validatedObjects
+                {}
               );
 
               /*
@@ -347,7 +306,8 @@ class Dimrill {
                 synthetizedMatch,
                 schemaExists as PathSchema,
                 policies,
-                validatedObjects,
+                { variables: {} },
+                variableContext,
                 {
                   pathOnly: true,
                   ignoreConditions: Boolean(options.ignoreConditions),
@@ -374,20 +334,6 @@ class Dimrill {
     } catch (error) {
       console.error("Error in authorizeBulk:", error);
       return [];
-    } finally {
-      // Always clean up resources
-      if (ivmContext) {
-        try {
-          this.ivmSandbox.release(ivmContext);
-        } catch (e) {
-          console.error("Error releasing IVM context:", e);
-        }
-      }
-      try {
-        this.policies.destroyVm();
-      } catch (e) {
-        console.error("Error destroying VM:", e);
-      }
     }
   }
 
@@ -400,7 +346,7 @@ class Dimrill {
    * @returns The query or an object with the query and the valid status
    */
   public async authorize(
-    drna: string[],
+    drna: [string, string],
     policies: Policy[],
     {
       // eslint-disable-next-line
@@ -410,8 +356,8 @@ class Dimrill {
       validateData?: boolean;
       pathOnly?: boolean;
     } = {
-      pathOnly: false,
-    }
+        pathOnly: false,
+      }
   ): Promise<{
     query: string | object;
     valid: boolean;
@@ -419,8 +365,6 @@ class Dimrill {
     if (!options.validateData) {
       options.validateData = this.opts.validateData;
     }
-
-    let ivmContext = null;
     try {
       const schemaExists = this.DRNA.matchDrnaFromSchema(
         drna,
@@ -439,15 +383,17 @@ class Dimrill {
           string,
           VariableSchema
         >;
-        variables = Variables.castVariables(variables, schemaVariables);
+        variables = Variables.castVariables(variables, schemaVariables, [drna[0], drna[1]]);
       }
+      console.log("cleaned variables", variables);
 
-      ivmContext = await this.ivmSandbox.createContext(variables);
-
-      /*
-          Pass the Isolate and the Context to the Policies class
-      */
-      this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
+      // Create VariableContext
+      const variableContext = new VariableContext(
+        variables,
+        this.operators,
+        this.adapter,
+        { unsafeEquals: this.opts.unsafeEquals ?? false }
+      );
 
       /*
           Parse the DRNA to match the policy
@@ -467,6 +413,7 @@ class Dimrill {
         schemaExists,
         policies,
         options.pathOnly ? { variables: {} } : { variables },
+        variableContext,
         {
           pathOnly: options.pathOnly ? options.pathOnly : false,
           ignoreConditions: false,
@@ -481,22 +428,6 @@ class Dimrill {
     } catch (error) {
       console.error(`Error in authorize for DRNA: ${drna.join(",")}`, error);
       return { valid: false, query: {} };
-    } finally {
-      // Always ensure cleanup
-      if (ivmContext) {
-        try {
-          this.ivmSandbox.release(ivmContext);
-        } catch (e: any) {
-          console.error("Error releasing IVM context:", e);
-          throw new Error("Error releasing IVM context:");
-        }
-      }
-      try {
-        this.policies.destroyVm();
-      } catch (e) {
-        console.error("Error destroying VM:", e);
-        throw new Error("Error destroying VM:");
-      }
     }
   }
 

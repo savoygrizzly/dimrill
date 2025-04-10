@@ -233,10 +233,8 @@ And the following allows a user to access all schema portions for files, both fo
 
 The only cases in which this might not return true is where a Condition Enforce is defined in a schema and the user/entity does not meet the condition requirement, or is limited by the query returned by the adapter (if the enforced condition has a `ToQuery` modifier).
 
-Under the hood dimrill uses the awesome `isolated-vm`, to prevent remote code injections, which requires compilation on install.
-Please check the [documentation](https://github.com/laverdet/isolated-vm) for more informations.
 
-It's  strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill.
+It's  strongly recommended to implement your own app validation logic and to validate any user data you might want to pass to Dimrill matches the expected types beforehand
 If you know the data passed to Dimrill to be clean, you can disable it globally when creating the instance or case by case via the options on `authorize`.
 
 Because Dimrill can generate queries, it is important to ensure that the user input is validated before being passed to Dimrill. Currently with the only "out of the box" adapter supported being MongoDB, the major injection risk resides if you pass unvalidated and unsanitized input to `Equals` or `NotEquals` operators without an `EnforceTypeCast` in the schema (and if your policy also doesn't specify one). If you are using the `ToQuery` modifier and have enabled `unsafeEquals` via Dimrill constructor, you should ensure that the input is validated and sanitized before being passed to Dimrill even if given the generated query's structure injection risks are low.
@@ -246,11 +244,7 @@ Because Dimrill can generate queries, it is important to ensure that the user in
 ```
 new Dimrill(options?
     {
-        validateData:boolean, default true //Validate the data passed to authorizers
-        ivmTimeout: number, default 500 //timeout for the ivm in ms
-        ivmMemoryLimit: number, default 30, min 8 //max ivm memory in Mb set the value
         schemaPrefix: string, prefix all schemas with provided prefix, default "",
-        autoLaunchIvm:boolean, default true //
         unsafeEquals:boolean, default false //notEquals and Equals without catsing objects to string for comparison
     }
 ):Dimrill
@@ -258,29 +252,14 @@ new Dimrill(options?
 
 ### Options details
 
-`ivmTimeout`:
-Set the timeout for Isolated-vm execution in order to prevent DOS attacks.
-
-`ivmMemoryLimit`:
-Useful to save ressources, Dimrill shares by default a single IVM, therefore set this value according to the load you expect to face.
-A value too low might result in an error when new contexts are created to run authorizers.
 
 `schemaPrefix`:
 Prefixes all schemas with the specified value.
 
-`autoLaunchIvm`:
-By default Dimrill will create an ivm for you when compiling the schemas (either whgen calling autoload or compileSchemas).
-In order to avoid racing conditions make sure to **await** these functions.
+
 
 ### Methods
 
-`destroyIvm:void`:
-
-Should you want to delete the Dimrill instance you created, **CALL THIS FIRST** in order to release the memory used by a possible IVM.
-
-`createIvm:Promise<void>`:
-
-Create a new IVM instance using the options specified when dimrill was initialized.
 
 `autoload(directoryPath: string):Promise<void>`:
 
@@ -366,7 +345,7 @@ Authorize the request against provided DRNA Type and string, returns a Promise.
 
 Authorize an array of DRNA, by default this method **will not validate conditions, drna parameters, nor return generated queries**, it also does not currently accept validation objects (req, user, context).
 The goal of this method is to help _define_ what ressources a user _might_ have access to based on drna paths.
-Because AuthorizeBulk will keep the same ivm context to run all given drna, it is much more efficient,
+
 This method might come in handy if say, you wanted to generate a menu dynamically, depending on a user or entity's policies.
 
 The method will return strings in the following format: `"Action | Ressource",drna:stringSupplied`.

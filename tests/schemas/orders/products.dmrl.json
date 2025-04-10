@@ -1,6 +1,9 @@
 {
   "allowedProductCategories": {
-    "Type": ["Action", "Ressource"],
+    "Type": [
+      "Action",
+      "Ressource"
+    ],
     "Description": "This is a test description",
     "Arguments": {
       "pricelist": {
@@ -28,7 +31,7 @@
         "type": "objectIdArray"
       },
       "status": {
-        "type": "array"
+        "type": "stringArray"
       }
     },
     "Condition": {
