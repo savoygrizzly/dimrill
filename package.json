@@ -1,6 +1,6 @@
 {
   "name": "dimrill",
-  "version": "4.1.6",
+  "version": "4.1.7",
   "description": "Dimrill V4",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.mjs",
