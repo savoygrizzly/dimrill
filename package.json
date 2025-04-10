@@ -1,6 +1,6 @@
 {
   "name": "dimrill",
-  "version": "4.1.8",
+  "version": "4.1.9",
   "description": "Dimrill V4",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.mjs",
@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "bson": "^6.10.3",
-    "isolated-vm": "^5.0.4",
+    "isolated-vm": "^5.0.3",
     "lodash": "^4.17.21"
   }
 }
