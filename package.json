@@ -1,16 +1,16 @@
 {
   "name": "dimrill",
-  "version": "4.1.9",
+  "version": "5.0.0-pre.1",
   "description": "Dimrill V4",
-  "main": "./dist/cjs/src/index.js",
-  "module": "./dist/esm/src/index.mjs",
-  "types": "./dist/types/src/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/src/index.d.ts",
-      "require": "./dist/cjs/src/index.js",
-      "import": "./dist/esm/src/index.js",
-      "default": "./dist/esm/src/index.js"
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/esm/index.js"
     }
   },
   "files": [

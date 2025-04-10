@@ -385,7 +385,6 @@ class Dimrill {
         >;
         variables = Variables.castVariables(variables, schemaVariables, [drna[0], drna[1]]);
       }
-      console.log("cleaned variables", variables);
 
       // Create VariableContext
       const variableContext = new VariableContext(

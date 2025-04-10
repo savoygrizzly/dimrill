@@ -4,6 +4,14 @@ const packageJson = require("../package.json");
 
 const buildDir = "./dist";
 
+// Helper function to make paths relative to the build directory
+function makeRelative(p)
+{
+  if (!p) return p; // Handle undefined/null paths
+  // Remove leading './dist/' or 'dist/'
+  return p.startsWith("./dist/") ? `.${p.slice(6)}` : p.startsWith("dist/") ? p.slice(4) : p;
+}
+
 function createProductionPackageJson()
 {
   // Create a stripped down package.json for production
@@ -11,10 +19,17 @@ function createProductionPackageJson()
     name: packageJson.name,
     version: packageJson.version,
     description: packageJson.description,
-    main: packageJson.main,
-    module: packageJson.module,
-    types: packageJson.types,
-    exports: packageJson.exports,
+    main: makeRelative(packageJson.main),
+    module: makeRelative(packageJson.module),
+    types: makeRelative(packageJson.types),
+    exports: packageJson.exports ? JSON.parse(JSON.stringify(packageJson.exports), (key, value) =>
+    {
+      if (typeof value === 'string' && value.startsWith('./dist/'))
+      {
+        return makeRelative(value);
+      }
+      return value;
+    }) : undefined,
     license: packageJson.license,
     keywords: packageJson.keywords,
     repository: packageJson.repository,
