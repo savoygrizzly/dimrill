@@ -16,7 +16,7 @@ import path from "path";
 import IvmSandbox from "./lib/ivmSandbox";
 import { ObjectId } from "bson"; // Add this import
 import { fileExtensionName } from "./constants";
-import { Variables } from './lib/variables'; // Import Variables class
+import { Variables } from "./lib/variables"; // Import Variables class
 
 export {
   type RootSchema,
@@ -309,64 +309,86 @@ class Dimrill {
     options: {
       ignoreConditions?: boolean;
     } = {
-        ignoreConditions: true,
-      }
+      ignoreConditions: true,
+    }
   ): Promise<string[]> {
     const validatedObjects = {
       variables: {},
     };
 
-    const ivmContext = await this.ivmSandbox.createContext(validatedObjects);
+    let ivmContext = null;
+    try {
+      ivmContext = await this.ivmSandbox.createContext(validatedObjects);
 
-    /*
-        Pass the Isolate and the Context to the Policies class
-    */
-    this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
+      /*
+          Pass the Isolate and the Context to the Policies class
+      */
+      this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
 
-    const returnedDRNA: Array<string | boolean> = await Promise.all(
-      drnaArray.map(async (drna) => {
-        const schemaExists = this.DRNA.matchDrnaFromSchema(
-          drna,
-          this.schema.returnSchema()
-        );
-        if (schemaExists !== false) {
-          const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
-            drna[1],
-            schemaExists as PathSchema,
-            validatedObjects
-          );
+      const returnedDRNA: Array<string | boolean> = await Promise.all(
+        drnaArray.map(async (drna) => {
+          try {
+            const schemaExists = this.DRNA.matchDrnaFromSchema(
+              drna,
+              this.schema.returnSchema()
+            );
+            if (schemaExists !== false) {
+              const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
+                drna[1],
+                schemaExists as PathSchema,
+                validatedObjects
+              );
 
-          /*
-            Match the policy
-          */
-          const matchedPolicy = await this.policies.matchPolicy(
-            drna[0],
-            synthetizedMatch,
-            schemaExists as PathSchema,
-            policies,
-            validatedObjects,
-            {
-              pathOnly: true,
-              ignoreConditions: Boolean(options.ignoreConditions),
+              /*
+                Match the policy
+              */
+              const matchedPolicy = await this.policies.matchPolicy(
+                drna[0],
+                synthetizedMatch,
+                schemaExists as PathSchema,
+                policies,
+                validatedObjects,
+                {
+                  pathOnly: true,
+                  ignoreConditions: Boolean(options.ignoreConditions),
+                }
+              );
+
+              /*
+              Merge the results
+            */
+              const results = this.policies.mergePoliciesResults(matchedPolicy);
+              if (results.valid) {
+                return String(drna[0]) + "," + String(drna[1]);
+              }
             }
-          );
-
-          /*
-          Merge the results
-        */
-          const results = this.policies.mergePoliciesResults(matchedPolicy);
-          if (results.valid) {
-            return String(drna[0]) + "," + String(drna[1]);
+            return false;
+          } catch (error) {
+            console.error(`Error processing DRNA: ${drna.join(",")}`, error);
+            return false;
           }
+        })
+      );
+
+      return returnedDRNA.filter((v) => v) as string[];
+    } catch (error) {
+      console.error("Error in authorizeBulk:", error);
+      return [];
+    } finally {
+      // Always clean up resources
+      if (ivmContext) {
+        try {
+          this.ivmSandbox.release(ivmContext);
+        } catch (e) {
+          console.error("Error releasing IVM context:", e);
         }
-        return false;
-      })
-    );
-
-    this.ivmSandbox.release(ivmContext);
-    this.policies.destroyVm();
-
-    return returnedDRNA.filter((v) => v) as string[];
+      }
+      try {
+        this.policies.destroyVm();
+      } catch (e) {
+        console.error("Error destroying VM:", e);
+      }
+    }
   }
 
   /**
@@ -388,8 +410,8 @@ class Dimrill {
       validateData?: boolean;
       pathOnly?: boolean;
     } = {
-        pathOnly: false,
-      }
+      pathOnly: false,
+    }
   ): Promise<{
     query: string | object;
     valid: boolean;
@@ -397,66 +419,85 @@ class Dimrill {
     if (!options.validateData) {
       options.validateData = this.opts.validateData;
     }
-    const schemaExists = this.DRNA.matchDrnaFromSchema(
-      drna,
-      this.schema.returnSchema()
-    ) as PathSchema | false; // First, explicitly type the return value
 
-    if (schemaExists === false) {
-      throw new Error(
-        `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`
-      );
-    }
+    let ivmContext = null;
+    try {
+      const schemaExists = this.DRNA.matchDrnaFromSchema(
+        drna,
+        this.schema.returnSchema()
+      ) as PathSchema | false; // First, explicitly type the return value
 
-    // Use Variables.castVariables
-    if (Object.keys(variables).length > 0 && schemaExists.Variables) {
-      const schemaVariables = schemaExists.Variables as Record<
-        string,
-        VariableSchema
-      >;
-      variables = Variables.castVariables(variables, schemaVariables);
-    }
-
-    const ivmContext = await this.ivmSandbox.createContext(variables);
-
-    /*
-
-        Pass the Isolate and the Context to the Policies class
-    */
-    this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
-
-    /*
-        Parse the DRNA to match the policy
-    */
-    const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
-      drna[1],
-      schemaExists,
-      options.pathOnly ? { variables: {} } : { variables }
-    );
-
-    /*
-        Match the policy
-    */
-    const matchedPolicy = await this.policies.matchPolicy(
-      drna[0],
-      synthetizedMatch,
-      schemaExists,
-      policies,
-      options.pathOnly ? { variables: {} } : { variables },
-      {
-        pathOnly: options.pathOnly ? options.pathOnly : false,
-        ignoreConditions: false,
+      if (schemaExists === false) {
+        throw new Error(
+          `Invalid DRNA path: ${Array.isArray(drna) ? drna.join(",") : drna}`
+        );
       }
-    );
 
-    /*
-      Merge the results
-    */
-    const results = this.policies.mergePoliciesResults(matchedPolicy);
-    this.ivmSandbox.release(ivmContext);
-    this.policies.destroyVm();
+      // Use Variables.castVariables
+      if (Object.keys(variables).length > 0 && schemaExists.Variables) {
+        const schemaVariables = schemaExists.Variables as Record<
+          string,
+          VariableSchema
+        >;
+        variables = Variables.castVariables(variables, schemaVariables);
+      }
 
-    return results;
+      ivmContext = await this.ivmSandbox.createContext(variables);
+
+      /*
+          Pass the Isolate and the Context to the Policies class
+      */
+      this.policies.setVm(this.ivmSandbox.get().isolate, ivmContext);
+
+      /*
+          Parse the DRNA to match the policy
+      */
+      const synthetizedMatch = this.DRNA.synthetizeDrnaFromSchema(
+        drna[1],
+        schemaExists,
+        options.pathOnly ? { variables: {} } : { variables }
+      );
+
+      /*
+          Match the policy
+      */
+      const matchedPolicy = await this.policies.matchPolicy(
+        drna[0],
+        synthetizedMatch,
+        schemaExists,
+        policies,
+        options.pathOnly ? { variables: {} } : { variables },
+        {
+          pathOnly: options.pathOnly ? options.pathOnly : false,
+          ignoreConditions: false,
+        }
+      );
+
+      /*
+        Merge the results
+      */
+      const results = this.policies.mergePoliciesResults(matchedPolicy);
+      return results;
+    } catch (error) {
+      console.error(`Error in authorize for DRNA: ${drna.join(",")}`, error);
+      return { valid: false, query: {} };
+    } finally {
+      // Always ensure cleanup
+      if (ivmContext) {
+        try {
+          this.ivmSandbox.release(ivmContext);
+        } catch (e: any) {
+          console.error("Error releasing IVM context:", e);
+          throw new Error("Error releasing IVM context:");
+        }
+      }
+      try {
+        this.policies.destroyVm();
+      } catch (e) {
+        console.error("Error destroying VM:", e);
+        throw new Error("Error destroying VM:");
+      }
+    }
   }
 
   /**

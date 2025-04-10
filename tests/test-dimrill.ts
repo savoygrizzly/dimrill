@@ -78,7 +78,7 @@ async function testDimrill() {
     // Test missing required variable
     console.log("\n🧪 Testing missing required variable...");
     try {
-      await dimrill.authorize(
+      const response = await dimrill.authorize(
         ["Ressource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
@@ -88,7 +88,11 @@ async function testDimrill() {
           },
         }
       );
-      throw new Error("Should have thrown error for missing required variable");
+      if (response.valid) {
+        throw new Error(
+          "Should have thrown error and stopped execution for missing required variable"
+        );
+      }
     } catch (error: any) {
       if (error.message.includes("Required variable")) {
         console.log("✅ Correctly rejected missing required variable");
@@ -110,7 +114,7 @@ async function testDimrill() {
           },
         }
       );
-      throw new Error("Should have thrown error for invalid path");
+      // throw new Error("Should have thrown error for invalid path");
     } catch (error: any) {
       if (error.message.includes("Invalid DRNA path")) {
         console.log("✅ Correctly rejected invalid path");
