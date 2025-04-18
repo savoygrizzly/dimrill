@@ -473,5 +473,49 @@ class Dimrill {
   } | null {
     return this.getLinter().getSchemaDetails(path);
   }
+
+  /**
+   * Load a schema from a stringified JSON string with path-based prefixing
+   * @param jsonString The stringified JSON schema
+   * @param filePath The virtual file path (e.g. "orders/permissions.dmrl.json")
+   * @returns Promise
+   */
+  public loadSchemaFromString(jsonString: string, filePath: string): void {
+    try {
+      // Normalize file path (replace backslashes with forward slashes)
+      const normalizedPath = filePath.replace(/\\/g, '/');
+
+      // Validate file extension
+      if (!this.validateFileExtension(normalizedPath)) {
+        throw new Error(
+          `Invalid file type: ${normalizedPath}, extension must be: ${fileExtensionName.join(
+            ", "
+          )}`
+        );
+      }
+
+      // Parse the JSON string
+      const schema = JSON.parse(jsonString);
+
+      // Validate schema
+      const validatedSchema = this.schema.validateSchema(schema);
+
+      // Check if the path contains directories
+      if (normalizedPath.includes('/')) {
+        // Extract directory structure as prefix
+        const parts = normalizedPath.split('/');
+        const fileName = parts.pop() || '';
+        const prefix = parts.join('.');
+
+        // Store with prefix:filename format
+        this.schemaLoadingList[`${prefix}:${fileName}`] = validatedSchema;
+      } else {
+        // No directory structure, store with filename only
+        this.schemaLoadingList[normalizedPath] = validatedSchema;
+      }
+    } catch (error) {
+      throw new Error(`Error processing schema: ${error}`);
+    }
+  }
 }
 export default Dimrill;

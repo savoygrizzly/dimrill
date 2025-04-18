@@ -10,15 +10,15 @@ const __dirname = dirname(__filename);
 
 async function testLinter() {
   const dimrill = new Dimrill({
-    ivmMemoryLimit: 20,
     schemaPrefix: "blackeye",
   });
 
   try {
     console.log("\n📝 Loading schemas for linter tests...");
-    await dimrill.autoload(path.join(__dirname, "../tests/schemas"), {
-      recursive: true,
-    });
+    // await dimrill.autoload(path.join(__dirname, "../tests/schemas"), {
+    //   recursive: true,
+    // });
+    await dimrill.loadSchema(path.join(__dirname, "../tests/schemas/orders/"));
     console.log("✅ Schemas loaded successfully");
     // Test schema details retrieval
     console.log("\n🧪 Testing schema details retrieval...");
