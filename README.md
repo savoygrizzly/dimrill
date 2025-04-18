@@ -139,6 +139,24 @@ await DimrillAuthorizer.autoload(path.join(__dirname, "schemas")); // or a strin
     Files will then be compiled and the schema will be initialized
 */
 
+// Alternatively, you can load schemas directly from strings
+const schemaJson = `{
+  "createOrder": {
+    "Type": ["Ressource", "Action"],
+    "Arguments": {
+      "pricelist": {
+        "type": "string"
+      }
+    }
+  }
+}`;
+
+// Load the schema with a virtual path that includes a directory structure
+DimrillAuthorizer.loadSchemaFromString(schemaJson, "orders/permissions.dmrl.json");
+
+// Then compile all loaded schemas
+await DimrillAuthorizer.compileSchemas();
+
 const valid = await DimrillAuthorizer.authorize(
   [
     "Action",
@@ -270,9 +288,20 @@ The schema will then be initialized and other files cannot be added.
 
 Loads files at the specified paths but does not initialize the Schemas.
 
+`loadSchemaFromString(jsonString: string, filePath: string):void`:
+
+Loads a schema from a stringified JSON string with path-based prefixing. This allows loading schemas directly from strings instead of files.
+
+- `jsonString`: A valid JSON string containing the schema definition
+- `filePath`: A virtual file path (e.g., "orders/permissions.dmrl.json")
+
+The method supports path-based prefixing similar to `autoload` - if the `filePath` contains directory separators (e.g., "orders/permissions.dmrl.json"), the directory structure will be used as a prefix in the schema (e.g., "orders:permissions").
+
+This is useful when schemas need to be loaded dynamically or from sources other than local files.
+
 `compileSchemas():Promise<void>`:
 
-Compile schemas loaded with `loadSchema` and initialize the Schemas.
+Compile schemas loaded with `loadSchema` or `loadSchemaFromString` and initialize the Schemas.
 
 `schemaHasCompiled():boolean`:
 
