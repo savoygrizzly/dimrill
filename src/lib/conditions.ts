@@ -6,39 +6,29 @@ import {
   SchemaCastTypes,
 } from "../constants";
 import TypeCasters from "./operators/typeCasters";
-import { Isolate, Context } from "isolated-vm";
+import { VariableContext } from "./variableContext";
+
 class Condition {
   constructor(
     options: {
       adapter?: string;
     } = {
-      adapter: "mongodb",
-    }
+        adapter: "mongodb",
+      }
   ) {
     this.typeCasters = new TypeCasters();
     this.options = options;
   }
 
   private readonly typeCasters: TypeCasters;
-  private isolatedVmContext: Context | null = null;
-  private isolatedVm: Isolate | null = null;
   private readonly options: {
     adapter?: string;
   };
 
-  public setVm(isolate: any, context: any): void {
-    this.isolatedVmContext = context;
-    this.isolatedVm = isolate;
-  }
-
-  public unsetVm(): void {
-    this.isolatedVmContext = null;
-    this.isolatedVm = null;
-  }
-
   public async runConditions(
     condition: StatementCondition | undefined,
-    schema: ConditionSchema
+    schema: ConditionSchema,
+    variableContext: VariableContext
   ): Promise<{
     valid: boolean;
     query: object | string;
@@ -121,7 +111,8 @@ class Condition {
           mainOperator,
           { operand, toQuery, castType },
           value,
-          schema
+          schema,
+          variableContext
         );
       })
     );
@@ -209,7 +200,8 @@ class Condition {
       castType: string | undefined;
     },
     values: object,
-    schema: ConditionSchema
+    schema: ConditionSchema,
+    variableContext: VariableContext
   ): Promise<{
     valid: boolean;
     query: object | string;
@@ -231,7 +223,8 @@ class Condition {
           return await this.runAdapter(
             mainOperator,
             variables,
-            modifiers.castType ?? schema?.Condition?.QueryEnforceTypeCast
+            modifiers.castType ?? schema?.Condition?.QueryEnforceTypeCast,
+            variableContext
           );
         })
       );
@@ -254,7 +247,11 @@ class Condition {
     ) {
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
-          return await this.runCondition(mainOperator, variables);
+          return await this.runCondition(
+            mainOperator,
+            variables,
+            variableContext
+          );
         })
       );
       // Process results
@@ -290,7 +287,7 @@ class Condition {
             if (
               SchemaCastTypes.includes(enforcedTypeCast) &&
               typeof this.typeCasters[enforcedTypeCast as keyof TypeCasters] ===
-                "function"
+              "function"
             ) {
               if (
                 typeof value === "object" &&
@@ -333,39 +330,20 @@ class Condition {
   private async runAdapter(
     operator: string,
     valueArray: string[],
-    castType: string | any
+    castType: string | any,
+    variableContext: VariableContext
   ): Promise<Record<string, object> | string> {
-    // Try to ensure the context is available
-    if (!this.isolatedVmContext) {
-      // Add a short retry to see if context becomes available
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      if (!this.isolatedVmContext) {
-        throw new Error("Isolated VM context is not set");
-      }
-    }
-
     try {
-      const result = await this.isolatedVmContext.eval(`
-      (function() {
-        const formattedValue1 = formatValue(${JSON.stringify(
-          valueArray[0]
-        )}, groupedContext);
-        const formattedValue2 = formatValue(${JSON.stringify(
-          valueArray[1]
-        )}, groupedContext);
+      const formattedValue1 = variableContext.formatValue(valueArray[0]);
+      const formattedValue2 = variableContext.formatValue(valueArray[1]);
 
-        const query = __adapterClass__.apply(
-          undefined,
-          ["${operator}","${castType}", formattedValue1, formattedValue2],
-          {
-            arguments: { copy: true },
-          }
-          );
-        return JSON.stringify(query); //make transferable
-      })()
-      `);
-
-      return JSON.parse(result as string); // quick hack to pass thru the sandbox
+      const query = variableContext.runAdapterOperator(
+        operator,
+        castType,
+        formattedValue1,
+        formattedValue2
+      );
+      return query;
     } catch (error) {
       console.error(`Error in runAdapter for operator ${operator}: ${error}`);
       // Return a safe default value based on the adapter's expected return type
@@ -375,37 +353,18 @@ class Condition {
 
   private async runCondition(
     operator: string,
-    valueArray: string[]
+    valueArray: string[],
+    variableContext: VariableContext
   ): Promise<boolean> {
-    // Try to ensure the context is available
-    if (!this.isolatedVmContext) {
-      // Add a short retry to see if context becomes available
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      if (!this.isolatedVmContext) {
-        throw new Error("Isolated VM context is not set");
-      }
-    }
-
     try {
-      const result = await this.isolatedVmContext.eval(`
-      (function() {
-      const formattedValue1 = formatValue(${JSON.stringify(
-        valueArray[0]
-      )}, groupedContext);
-      const formattedValue2 = formatValue(${JSON.stringify(
-        valueArray[1]
-      )}, groupedContext);
+      const formattedValue1 = variableContext.formatValue(valueArray[0]);
+      const formattedValue2 = variableContext.formatValue(valueArray[1]);
 
-      return  (__operatorsClass__.apply(
-        undefined,
-        ["${operator}", formattedValue1, formattedValue2],
-        {
-          arguments: { copy: true },
-
-        }
-      ));
-      })()
-      `);
+      const result = variableContext.runOperatorCondition(
+        operator,
+        formattedValue1,
+        formattedValue2
+      );
       return result;
     } catch (error) {
       console.error(`Error in runCondition for operator ${operator}: ${error}`);

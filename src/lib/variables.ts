@@ -4,7 +4,8 @@ import { VariableSchema } from "../types/custom";
 export class Variables {
   public static castVariables(
     variables: Record<string, unknown>,
-    schemaVariables: Record<string, VariableSchema>
+    schemaVariables: Record<string, VariableSchema>,
+    drnaPath: [string, string]
   ): Record<string, unknown> {
     // Create a new variables object with cast values
     const castVariables: Record<string, unknown> = {};
@@ -46,7 +47,7 @@ export class Variables {
               !Array.isArray(value) ||
               !value.every((item) => typeof item === "string")
             ) {
-              throw new Error(`Variable "${key}" must be an array of strings`);
+              throw new Error(`Variable "${key}" must be an array of strings on path ${drnaPath[0]} ${drnaPath[1]}`);
             }
             castVariables[key] = value;
             break;

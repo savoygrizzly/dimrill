@@ -1,6 +1,9 @@
 {
   "allowedProductCategories": {
-    "Type": ["Action", "Ressource"],
+    "Type": [
+      "Action",
+      "Ressource"
+    ],
     "Description": "This is a test description",
     "Arguments": {
       "pricelist": {
@@ -28,7 +31,45 @@
         "type": "objectIdArray"
       },
       "status": {
-        "type": "array"
+        "type": "stringArray"
+      }
+    },
+    "Condition": {
+      "QueryEnforceTypeCast": {
+        "organizations": "ToObjectIdArray",
+        "categories": "ToObjectIdArray"
+      }
+    }
+  },
+  "listProductCategories": {
+    "Type": [
+      "Action"
+    ],
+    "Description": "This is a test description",
+    "Arguments": {
+      "pricelist": {
+        "type": "string"
+      },
+      "orderCurrency": {
+        "type": "string"
+      },
+      "organizations": {
+        "type": "objectIdArray"
+      }
+    },
+    "Variables": {
+      "pricelist": {
+        "type": "string"
+      },
+      "customerId": {
+        "type": "objectIdArray"
+      },
+      "orderCurrency": {
+        "type": "string",
+        "required": true
+      },
+      "organizations": {
+        "type": "objectIdArray"
       }
     },
     "Condition": {

@@ -4,7 +4,6 @@ import { ObjectId } from "bson";
 import util from "util";
 
 const dimrill = new Dimrill({
-  ivmMemoryLimit: 20,
   schemaPrefix: "blackeye",
 });
 
@@ -99,7 +98,6 @@ describe("Dimrill Authorization Tests", () => {
 
   afterAll(() => {
     console.log("Cleaning up...");
-    dimrill.destroyIvm();
   });
 
   test("Should load schemas successfully", () => {

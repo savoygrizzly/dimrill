@@ -12,7 +12,6 @@ const __dirname = dirname(__filename);
 
 async function testDimrill() {
   const dimrill = new Dimrill({
-    ivmMemoryLimit: 20,
     schemaPrefix: "blackeye",
   });
 
@@ -25,7 +24,6 @@ async function testDimrill() {
           Ressource: [
             "blackeye:orders:allowedProductCategories&orderCurrency/EUR",
           ],
-          Action: ["blackeye:orders:allowedProductCategories"],
           Condition: {
             "InArray:ToQuery:AnyValues": {
               status: ["{{$status}}", "banned"],
@@ -35,7 +33,7 @@ async function testDimrill() {
         },
         {
           Effect: "Allow",
-          Ressource: ["blackeye:products:categories:*"],
+          Action: ["blackeye:orders:*"],
         },
       ],
     },
@@ -228,12 +226,31 @@ async function testDimrill() {
       "Multiple AnyValues conditions should be combined with $or"
     );
 
+    // test authorize bulk
+    console.log("\n🧪 Testing authorize bulk...");
+    const resultBulk = await dimrill.authorizeBulk(
+      [
+        ["Ressource", "blackeye:orders:allowedProductCategories"],
+        ["Action", "blackeye:orders:listProductCategories"],
+        ["Ressource", "blackeye:orders:listProductCategories"],
+      ],
+      distributorPolicies as any,
+      {
+        ignoreConditions: true,
+      }
+    );
+    assertMatch(
+      resultBulk,
+      [
+        "Ressource,blackeye:orders:allowedProductCategories",
+        "Action,blackeye:orders:listProductCategories",
+      ],
+      "Authorization bulk should return valid true"
+    );
     console.log("\n✅ All tests passed!");
   } catch (error) {
     console.error("\n❌ Test failed:", error);
     process.exit(1);
-  } finally {
-    dimrill.destroyIvm();
   }
 }
 
