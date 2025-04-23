@@ -1,6 +1,6 @@
 {
   "name": "dimrill",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Dimrill V5",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -24,7 +24,8 @@
     "prepare-package": "node ./scripts/prepare-package-json",
     "test": "jest",
     "test:manual": "tsx tests/test-dimrill.ts",
-    "test:linter": "tsx tests/test-linter.ts",
+    "test:policy-linter": "tsx tests/test-policy-linter.ts",
+    "test:complex-policy-linter": "tsx tests/test-complex-policy-linter.ts",
     "test:string-load": "tsx tests/test-string-load.ts",
     "clean": "tsc --build --clean",
     "lint": "eslint src tests --ext .ts"

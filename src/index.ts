@@ -4,6 +4,8 @@ import {
   type PathSchema,
   type Policy,
   type VariableSchema,
+  type Statement,
+  type StatementCondition,
 } from "./types/custom";
 import Schema from "./lib/schema";
 import PoliciesCompiler from "./lib/policiesCompiler";
@@ -450,13 +452,71 @@ class Dimrill {
     path: string,
     variables: Record<string, unknown>
   ): Array<{
-    type: "variable" | "argument" | "syntax";
+    type: "variable" | "argument" | "syntax" | "condition" | "policy";
     message: string;
     path?: string;
     expected?: string;
     received?: string;
+    statementIndex?: number;
+    line?: number;
+    column?: number;
   }> {
     return this.getLinter().validateVariables(path, variables);
+  }
+
+  /**
+   * Validate a policy against the schema
+   */
+  public validatePolicy(
+    policy: Policy
+  ): Array<{
+    type: "variable" | "argument" | "syntax" | "condition" | "policy";
+    message: string;
+    path?: string;
+    expected?: string;
+    received?: string;
+    statementIndex?: number;
+    line?: number;
+    column?: number;
+  }> {
+    return this.getLinter().validatePolicy(policy);
+  }
+
+  /**
+   * Validate a statement against the schema
+   */
+  public validateStatement(
+    statement: Statement
+  ): Array<{
+    type: "variable" | "argument" | "syntax" | "condition" | "policy";
+    message: string;
+    path?: string;
+    expected?: string;
+    received?: string;
+    statementIndex?: number;
+    line?: number;
+    column?: number;
+  }> {
+    return this.getLinter().validateStatement(statement);
+  }
+
+  /**
+   * Validate conditions against schema
+   */
+  public validateConditions(
+    conditions: StatementCondition,
+    statement: Statement
+  ): Array<{
+    type: "variable" | "argument" | "syntax" | "condition" | "policy";
+    message: string;
+    path?: string;
+    expected?: string;
+    received?: string;
+    statementIndex?: number;
+    line?: number;
+    column?: number;
+  }> {
+    return this.getLinter().validateConditions(conditions, statement);
   }
 
   /**

@@ -25,7 +25,7 @@ yarn add dimrill
 
 ## Core Concepts
 
-Dimrill’s architecture rests on three pillars:
+Dimrill's architecture rests on three pillars:
 
 1. **DRNA (Dynamic Resource Naming Authority):** A string format to uniquely identify resources and actions. Examples:
    - `orders:create` (an action).
@@ -230,9 +230,9 @@ Based on the `VariableSchema` type, variables can be:
 - `date`: Date strings or objects (e.g., creation date).
 
 ### Properties
-- `type`: Required. Specifies the variable’s data type.
+- `type`: Required. Specifies the variable's data type.
 - `required`: Optional. If `true`, the variable must be provided during authorization.
-- `description`: Optional. Documents the variable’s purpose.
+- `description`: Optional. Documents the variable's purpose.
 
 ### Example
 ```json
@@ -252,7 +252,7 @@ Based on the `VariableSchema` type, variables can be:
 
 ### Validation
 
-The linter enforces strict type checking via `validateVariables`. If a variable’s type does not match its schema definition, an error is thrown, halting authorization.
+The linter enforces strict type checking via `validateVariables`. If a variable's type does not match its schema definition, an error is thrown, halting authorization.
 
 *Example:*
 
@@ -418,18 +418,111 @@ const result = await dimrill.authorize(
 - Use specific DRNA paths over wildcards (`*`).
 - Leverage schema `Enforce` conditions for mandatory rules.
 
-## Linter Example
-Validate variables and schema details for development.
+## Linter
+
+Dimrill's linter provides robust validation tools for schemas, policies, statements, conditions, and variables during development, enhancing security and ensuring consistency before runtime.
+
+### Capabilities
+
+- **Schema Validation**: Verify schema structure and relationships.
+- **Policy Validation**: Analyze complete policies against schemas.
+- **Statement Validation**: Check individual statements for correctness.
+- **Variable Validation**: Ensure variables match their declared types.
+- **Condition Validation**: Verify condition operators and variable compatibility.
+- **Template Variable Detection**: Support for `{{$variableName}}` syntax in conditions.
+- **Parameterized Path Validation**: Handle DRNA paths with parameters (`resource&param/value`).
+- **Wildcard Support**: Properly validate paths with wildcards (`*`).
+- **Complex Operator Validation**: Support compound operators (`InArray:ToQuery:AnyValues`).
+- **IDE Integration**: Format errors for editor integration.
+
+### Usage Examples
+
+#### Validating Variables
+
+Check if variables match their schema definition:
 
 ```javascript
 const dimrill = new Dimrill();
 await dimrill.autoload("schemas");
 
 const errors = dimrill.validateVariables("orders:create", {
-  userId: 123 // Invalid type
+  userId: 123, // Invalid: should be string
+  orderValue: 150
 });
-console.log(errors); // [{ type: "variable", message: "userId must be string" }]
-
-const details = dimrill.getSchemaDetails("orders:create");
-console.log(details.variables); // { userId: { type: "string", required: true } }
+console.log(errors); 
+// [{ type: "variable", message: "userId must be string", path: "userId", expected: "string", received: "number" }]
 ```
+
+#### Validating an Entire Policy
+
+Validate a policy against your schema:
+
+```javascript
+const policy = {
+  Version: "1.0",
+  Statement: [
+    {
+      Effect: "Allow",
+      Action: ["orders:create"],
+      Condition: {
+        "StringEquals": { "userRole": "admin" },
+        "NumericGreaterThanEquals:ToQuery": { "orderValue": 100 }
+      }
+    }
+  ]
+};
+
+const policyErrors = dimrill.validatePolicy(policy);
+if (policyErrors.length === 0) {
+  console.log("Policy is valid!");
+} else {
+  console.error("Policy has issues:", policyErrors);
+}
+```
+
+#### Validating Policies with Template Variables
+
+The linter recognizes template variables in the format `{{$varName}}`:
+
+```javascript
+const templatePolicy = {
+  Version: "1.0",
+  Statement: [
+    {
+      Effect: "Allow",
+      Ressource: ["orders:view&ownerId/{{$userId}}"],
+      Condition: {
+        "InArray:ToQuery:AnyValues": {
+          status: ["{{$status}}", "active"]
+        }
+      }
+    }
+  ]
+};
+
+const templateErrors = dimrill.validatePolicy(templatePolicy);
+// Validates if $userId and $status variables exist in the schema
+```
+
+#### Inspecting Schema Details
+
+Retrieve detailed information about a schema:
+
+```javascript
+const details = dimrill.getSchemaDetails("orders:create");
+console.log(details.variables); // { userId: { type: "string", required: true }, ... }
+console.log(details.arguments); // Arguments defined for this path
+console.log(details.conditions); // Available conditions and operators
+```
+
+### IDE Integration
+
+The linter can format errors for integration with code editors:
+
+```javascript
+const errors = dimrill.validatePolicy(policy);
+const formattedErrors = dimrill.getLinter().formatForIDE(errors);
+// Returns markers and annotations for editor integration
+```
+
+By leveraging the linter for policy creations, you can catch authorization issues early between the schema, your policy and your integrations, and ensure your policies align perfectly with your defined schemas.
