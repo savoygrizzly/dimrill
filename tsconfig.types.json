@@ -3,6 +3,18 @@
   "compilerOptions": {
     "outDir": "./dist/types",
     "declaration": true,
-    "emitDeclarationOnly": true
-  }
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "removeComments": false
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "examples",
+    "tests",
+    "node_modules",
+    "scripts"
+  ]
 }

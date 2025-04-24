@@ -6,7 +6,7 @@ import {
   type VariableSchema,
   type Statement,
   type StatementCondition,
-} from "./types/custom";
+} from "./types";
 import Schema from "./lib/schema";
 import PoliciesCompiler from "./lib/policiesCompiler";
 import DRNA from "./lib/drna";
@@ -32,6 +32,9 @@ export {
   type AuthorizationResult,
   type _CompilationResults,
 } from "./types/custom";
+
+// Export all types
+export * from './types';
 
 const fsp = fs.promises;
 

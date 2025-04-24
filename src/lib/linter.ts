@@ -258,7 +258,7 @@ export class DimrillLinter {
         }
 
         // Validate each statement
-        policy.Statement.forEach((statement, index) => {
+        policy.Statement.forEach((statement: Statement, index: number) => {
             const statementErrors = this.validateStatement(statement);
             statementErrors.forEach(error => {
                 error.statementIndex = index;
@@ -297,7 +297,7 @@ export class DimrillLinter {
         // Validate Actions and Resources
         if (statement.Action && Array.isArray(statement.Action)) {
             // Check each action
-            statement.Action.forEach(action => {
+            statement.Action.forEach((action: string) => {
                 const actionErrors = this.validateDRNAPath(action, 'Action');
                 errors.push(...actionErrors);
             });
@@ -305,7 +305,7 @@ export class DimrillLinter {
 
         if (statement.Ressource && Array.isArray(statement.Ressource)) {
             // Check each resource
-            statement.Ressource.forEach(resource => {
+            statement.Ressource.forEach((resource: string) => {
                 const resourceErrors = this.validateDRNAPath(resource, 'Ressource');
                 errors.push(...resourceErrors);
             });
@@ -441,7 +441,7 @@ export class DimrillLinter {
             }
 
             // Extract and validate template variables in condition values
-            for (const [variable, value] of Object.entries(conditionMap)) {
+            for (const [variable, value] of Object.entries(conditionMap as Record<string, unknown>)) {
                 // Extract template variables from the condition value
                 const templateVars = this.extractTemplateVariables(value);
 
