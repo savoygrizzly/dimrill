@@ -43,7 +43,8 @@
   },
   "listProductCategories": {
     "Type": [
-      "Action"
+      "Action",
+      "Ressource"
     ],
     "Description": "This is a test description",
     "Arguments": {

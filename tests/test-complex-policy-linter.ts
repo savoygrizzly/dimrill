@@ -33,6 +33,7 @@ async function testComplexPolicyLinter() {
                     Effect: "Allow",
                     Ressource: [
                         "blackeye:orders:allowedProductCategories&orderCurrency/EUR",
+                        "blackeye:orders:listProductCategories",
                     ],
                     Condition: {
                         "InArray:ToQuery:AnyValues": {
