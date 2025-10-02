@@ -1,9 +1,6 @@
 {
   "allowedProductCategories": {
-    "Type": [
-      "Action",
-      "Ressource"
-    ],
+    "Type": ["Action", "Resource"],
     "Description": "This is a test description",
     "Arguments": {
       "pricelist": {
@@ -42,10 +39,7 @@
     }
   },
   "listProductCategories": {
-    "Type": [
-      "Action",
-      "Ressource"
-    ],
+    "Type": ["Action", "Resource"],
     "Description": "This is a test description",
     "Arguments": {
       "pricelist": {

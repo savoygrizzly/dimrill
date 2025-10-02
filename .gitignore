@@ -2,6 +2,5 @@
 package-lock.json
 .npmignore
 /dist
-*.DS_Store
-.DS_Store
+
 .DS_Store

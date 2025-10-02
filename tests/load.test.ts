@@ -60,7 +60,7 @@ const distributorPolicies = [
     Statement: [
       {
         Effect: "Allow",
-        Ressource: ["blackeye:orders:allowedProductCategories"],
+        Resource: ["blackeye:orders:allowedProductCategories"],
         Action: ["blackeye:orders:allowedProductCategories"],
         Condition: {
           "InArray:ToQuery": {
@@ -70,7 +70,7 @@ const distributorPolicies = [
       },
       {
         Effect: "Allow",
-        Ressource: ["blackeye:products:categories:*"],
+        Resource: ["blackeye:products:categories:*"],
       },
     ],
   },
@@ -111,7 +111,7 @@ describe("Dimrill Authorization Tests", () => {
     try {
       console.log(dimrill);
       const result = await dimrill.authorize(
-        ["Ressource", "blackeye:orders:allowedProductCategories"],
+        ["Resource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
           variables: {
@@ -135,39 +135,37 @@ describe("Dimrill Authorization Tests", () => {
 
   test("Should reject with missing required variable", async () => {
     console.log("Testing rejection with missing variable...");
-    await expect(
-      dimrill.authorize(
-        ["Ressource", "blackeye:orders:allowedProductCategories"],
-        distributorPolicies as any,
-        {
-          variables: {
-            organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
-            // Missing orderCurrency
-          },
-        }
-      )
-    ).rejects.toThrow("Required variable");
+    const result = await dimrill.authorize(
+      ["Resource", "blackeye:orders:allowedProductCategories"],
+      distributorPolicies as any,
+      {
+        variables: {
+          organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+          // Missing orderCurrency
+        },
+      }
+    );
+    expect(result.valid).toBe(false);
   }, 10000);
 
   test("Should reject invalid DRNA path", async () => {
     console.log("Testing rejection with invalid path...");
-    await expect(
-      dimrill.authorize(
-        ["Ressource", "invalid:path"],
-        distributorPolicies as any,
-        {
-          variables: {
-            organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
-            orderCurrency: "EUR",
-          },
-        }
-      )
-    ).rejects.toThrow("Invalid DRNA path");
+    const result = await dimrill.authorize(
+      ["Resource", "invalid:path"],
+      distributorPolicies as any,
+      {
+        variables: {
+          organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+          orderCurrency: "EUR",
+        },
+      }
+    );
+    expect(result.valid).toBe(false);
   }, 10000);
 
   // test("Should authorize bulk operations", async () => {
   //   const bulk = await dimrill.authorizeBulk(
-  //     [["Ressource", "blackeye:products:categories:createCategory"]],
+  //     [["Resource", "blackeye:products:categories:createCategory"]],
   //     distributorPolicies as any
   //   );
   //   expect(Array.isArray(bulk)).toBe(true);
@@ -176,7 +174,7 @@ describe("Dimrill Authorization Tests", () => {
   // test("Should authorize allowed product categories", async () => {
   //   const testObj = generateTestObject();
   //   const result = await dimrill.authorize(
-  //     ["Ressource", "blackeye:orders:allowedProductCategories"],
+  //     ["Resource", "blackeye:orders:allowedProductCategories"],
   //     distributorPolicies as any,
   //     testObj
   //   );

@@ -96,8 +96,7 @@ class Schema {
         if (isEndpoint) {
           if (
             !Array.isArray(value.Type) ||
-            (!value.Type.includes("Action") &&
-              !value.Type.includes("Ressource"))
+            (!value.Type.includes("Action") && !value.Type.includes("Resource"))
           ) {
             throw new Error(
               `Missing or invalid 'Type' key at: ${currentPath.join(":")}`
@@ -190,7 +189,7 @@ class Schema {
   private validateSchemaType(value: any): boolean {
     return (
       Array.isArray(value) &&
-      ["Action", "Ressource"].some((i) => value.includes(i))
+      ["Action", "Resource"].some((i) => value.includes(i))
     ); // Placeholder return, adjust according to actual validation logic
   }
 

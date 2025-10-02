@@ -21,7 +21,7 @@ async function testDimrill() {
       Statement: [
         {
           Effect: "Allow",
-          Ressource: [
+          Resource: [
             "blackeye:orders:allowedProductCategories&orderCurrency/EUR",
           ],
           Condition: {
@@ -48,7 +48,7 @@ async function testDimrill() {
 
     console.log("\n🧪 Testing authorization...");
     const result = await dimrill.authorize(
-      ["Ressource", "blackeye:orders:allowedProductCategories"],
+      ["Resource", "blackeye:orders:allowedProductCategories"],
       distributorPolicies as any,
       {
         variables: {
@@ -77,7 +77,7 @@ async function testDimrill() {
     console.log("\n🧪 Testing missing required variable...");
     try {
       const response = await dimrill.authorize(
-        ["Ressource", "blackeye:orders:allowedProductCategories"],
+        ["Resource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
           variables: {
@@ -103,7 +103,7 @@ async function testDimrill() {
     console.log("\n🧪 Testing invalid path...");
     try {
       await dimrill.authorize(
-        ["Ressource", "invalid:path"],
+        ["Resource", "invalid:path"],
         distributorPolicies as any,
         {
           variables: {
@@ -125,7 +125,7 @@ async function testDimrill() {
     console.log("\n🧪 Testing legacy objects removal...");
     try {
       const result = await dimrill.authorize(
-        ["Ressource", "blackeye:orders:allowedProductCategories"],
+        ["Resource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
           // These should be ignored
@@ -158,7 +158,7 @@ async function testDimrill() {
 
       // Verify the same works with only variables
       const resultOnlyVariables = await dimrill.authorize(
-        ["Ressource", "blackeye:orders:allowedProductCategories"],
+        ["Resource", "blackeye:orders:allowedProductCategories"],
         distributorPolicies as any,
         {
           variables: {
@@ -182,14 +182,14 @@ async function testDimrill() {
     // Test AnyValues with multiple conditions
     console.log("\n🧪 Testing AnyValues with multiple conditions...");
     const resultMultipleAnyValues = await dimrill.authorize(
-      ["Ressource", "blackeye:orders:allowedProductCategories"],
+      ["Resource", "blackeye:orders:allowedProductCategories"],
       [
         {
           Version: "1.0",
           Statement: [
             {
               Effect: "Allow",
-              Ressource: ["blackeye:orders:allowedProductCategories"],
+              Resource: ["blackeye:orders:allowedProductCategories"],
               Action: ["blackeye:orders:allowedProductCategories"],
               Condition: {
                 "InArray:ToQuery:AnyValues": {
@@ -230,9 +230,9 @@ async function testDimrill() {
     console.log("\n🧪 Testing authorize bulk...");
     const resultBulk = await dimrill.authorizeBulk(
       [
-        ["Ressource", "blackeye:orders:allowedProductCategories"],
+        ["Resource", "blackeye:orders:allowedProductCategories"],
         ["Action", "blackeye:orders:listProductCategories"],
-        ["Ressource", "blackeye:orders:listProductCategories"],
+        ["Resource", "blackeye:orders:listProductCategories"],
       ],
       distributorPolicies as any,
       {
@@ -242,7 +242,7 @@ async function testDimrill() {
     assertMatch(
       resultBulk,
       [
-        "Ressource,blackeye:orders:allowedProductCategories",
+        "Resource,blackeye:orders:allowedProductCategories",
         "Action,blackeye:orders:listProductCategories",
       ],
       "Authorization bulk should return valid true"

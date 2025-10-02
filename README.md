@@ -1,10 +1,18 @@
 # Dimrill
 
-**VERSION 5.X.X**
+**VERSION 5.1.X**
 
 > _"Dimrill, like the ancient gate of Nanduhirion, stands resolute, its silent decrees sifting friend from foe in the twilight of access."_
 
 Dimrill is a policy-based authorization framework for Node.js, designed for fine-grained access control. It empowers developers to define permissions based on resources, actions, and dynamic contexts, transcending traditional role-based access control (RBAC).
+
+## **IMPORTANT NOTICE**:
+
+**From version 5.1.X onward**
+
+The spelling mistake for `"Ressource"` has been corrected to `"Resource"`, which means any stored policy, policy example or code will need to be updated to use the corrected syntax.
+
+For anyone out there using this, I am really sorry about what it entails, however i believe it best to be fixed. For codebases it's only a regex replace away.
 
 ## Features
 
@@ -43,9 +51,11 @@ Dimrill's architecture rests on three pillars:
 ## Quick Start
 
 ### 1. Define a Schema
+
 Create `.dmrl` or `.dmrl.json` files to define your authorization endpoints.
 
 _Example (`schemas/orders.dmrl.json`):_
+
 ```json
 {
   "createOrder": {
@@ -63,9 +73,11 @@ _Example (`schemas/orders.dmrl.json`):_
 ```
 
 ### 2. Define Policies
+
 Create policy objects to specify permissions.
 
 _Example:_
+
 ```javascript
 const managerPolicy = [
   {
@@ -73,10 +85,10 @@ const managerPolicy = [
     Statement: [
       {
         Effect: "Allow",
-        Action: ["orders:*"] // All order actions
-      }
-    ]
-  }
+        Action: ["orders:*"], // All order actions
+      },
+    ],
+  },
 ];
 
 const userPolicy = [
@@ -88,19 +100,21 @@ const userPolicy = [
         Action: ["orders:createOrder"],
         Condition: {
           "NumericGreaterThanEquals:ToQuery": {
-            orderValue: 100 // Only allow if orderValue >= 100
-          }
-        }
-      }
-    ]
-  }
+            orderValue: 100, // Only allow if orderValue >= 100
+          },
+        },
+      },
+    ],
+  },
 ];
 ```
 
 ### 3. Authorize
+
 Use Dimrill to check access and generate queries.
 
 _Example:_
+
 ```javascript
 import Dimrill from "dimrill";
 import path from "path";
@@ -113,7 +127,7 @@ async function checkAuth() {
 
   // Or load from a JSON string
   const schemaString = JSON.stringify({
-    viewReport: { Type: ["Action"], Description: "View reports" }
+    viewReport: { Type: ["Action"], Description: "View reports" },
   });
   dimrill.loadSchemaFromString(schemaString, "reports/admin.dmrl.json");
   await dimrill.compileSchemas();
@@ -139,12 +153,15 @@ checkAuth();
 ## API Reference
 
 ### Constructor
+
 `new Dimrill(options?)`
+
 - `options`:
   - `schemaPrefix: string` (default: `""`): Prefix for schema paths.
   - `unsafeEquals: boolean` (default: `false`): Enables direct object comparisons for `Equals`/`NotEquals` operators. Use cautiously.
 
 ### Schema Management
+
 - `autoload(directoryPath: string, { recursive?: boolean }): Promise<void>`: Loads and compiles `.dmrl` or `.dmrl.json` files from a directory. If `recursive: true`, subdirectories create nested prefixes (e.g., `orders.sub:filename`).
 - `loadSchema(paths: string | string[]): Promise<void>`: Loads schema files without compiling.
 - `loadSchemaFromString(jsonString: string, filePath: string): void`: Loads a schema from a JSON string, using `filePath` for prefixing (e.g., `orders/permissions.dmrl.json` becomes `orders:permissions`).
@@ -158,13 +175,16 @@ checkAuth();
   - `remove(element: any)`: Removes from an array.
 
 ### Authorization
+
 - `authorize(drna: ["Action" | "Resource", string], policies: Policy[], context: { variables: Record<string, unknown> }, { pathOnly?: boolean }): Promise<{ valid: boolean, query: object }>`: Checks access for a DRNA, returning validity and a MongoDB query fragment.
 - `authorizeBulk(drnaArray: string[][], policies: Policy[], { ignoreConditions?: boolean }): Promise<string[]>`: Validates multiple DRNAs, ignoring conditions by default. Ideal for UI permissions.
 
 ### Policy Validation
+
 - `compilePolicies(policies: Policy[]): Map<number, _CompilationResults>`: Validates policies against the schema, returning results per policy.
 
 ### Linter & Introspection
+
 - `getLinter(): DimrillLinter`: Returns a linter instance (requires compiled schema).
 - `validateVariables(path: string, variables: Record<string, unknown>): LinterError[]`: Validates variables for a DRNA path.
 - `getSchemaDetails(path: string): SchemaDetails | null`: Retrieves schema details (variables, arguments, conditions).
@@ -172,9 +192,11 @@ checkAuth();
 See `src/types/custom.d.ts` for type definitions.
 
 ## Schema Structure
+
 Schemas are nested JSON objects defining authorization endpoints.
 
 _Example:_
+
 ```json
 {
   "orders": {
@@ -193,9 +215,11 @@ _Example:_
 ```
 
 ## Policy Structure
+
 Policies are arrays of objects with `Version` and `Statement` arrays.
 
 _Example:_
+
 ```json
 [
   {
@@ -214,10 +238,13 @@ _Example:_
 ```
 
 ## Variables
+
 Variables, defined in schemas under the `Variables` key, provide contextual data for authorization, guarding the paths of access with precision. They are passed to the `authorize` method and strictly validated against their defined types. Type mismatches throw errors, ensuring robust security and preventing invalid data from compromising the system.
 
 ### Supported Types
+
 Based on the `VariableSchema` type, variables can be:
+
 - `string`: Text values (e.g., user IDs).
 - `number`: Numeric values (e.g., order amounts).
 - `boolean`: True/false values (e.g., isActive).
@@ -230,18 +257,24 @@ Based on the `VariableSchema` type, variables can be:
 - `date`: Date strings or objects (e.g., creation date).
 
 ### Properties
+
 - `type`: Required. Specifies the variable's data type.
 - `required`: Optional. If `true`, the variable must be provided during authorization.
 - `description`: Optional. Documents the variable's purpose.
 
 ### Example
+
 ```json
 {
   "orders": {
     "create": {
       "Type": ["Action"],
       "Variables": {
-        "userId": { "type": "string", "required": true, "description": "User's unique ID" },
+        "userId": {
+          "type": "string",
+          "required": true,
+          "description": "User's unique ID"
+        },
         "orderValue": { "type": "number", "description": "Total order amount" },
         "departmentIds": { "type": "objectIdArray", "required": true }
       }
@@ -254,7 +287,7 @@ Based on the `VariableSchema` type, variables can be:
 
 The linter enforces strict type checking via `validateVariables`. If a variable's type does not match its schema definition, an error is thrown, halting authorization.
 
-*Example:*
+_Example:_
 
 ```javascript
 const dimrill = new Dimrill();
@@ -264,7 +297,7 @@ try {
   const errors = dimrill.validateVariables("orders:create", {
     userId: 123, // Invalid: should be string
     orderValue: 150,
-    departmentIds: ["507f1f77bcf86cd799439011"] // Valid ObjectId
+    departmentIds: ["507f1f77bcf86cd799439011"], // Valid ObjectId
   });
 } catch (error) {
   console.error(error.message); // "Type mismatch: userId must be string, received number"
@@ -275,13 +308,19 @@ try {
 
 Variables are passed to `authorize` and used in conditions or DRNA parameters, with strict typing ensuring data integrity.
 
-*Example:*
+_Example:_
 
 ```javascript
 const result = await dimrill.authorize(
   ["Action", "orders:create"],
   userPolicy,
-  { variables: { userId: "user-123", orderValue: 150, departmentIds: ["507f1f77bcf86cd799439011"] } }
+  {
+    variables: {
+      userId: "user-123",
+      orderValue: 150,
+      departmentIds: ["507f1f77bcf86cd799439011"],
+    },
+  }
 );
 ```
 
@@ -298,7 +337,7 @@ In schemas, the `Condition` key specifies:
 - `QueryEnforceTypeCast`: Forces type casting for query values (e.g., `ToObjectId`).
 - `Enforce`: Mandatory conditions applied to all policies (e.g., `isActive: true`).
 
-*Example:*
+_Example:_
 
 ```json
 {
@@ -325,7 +364,7 @@ In policies, conditions are defined under the `Condition` key using the format: 
 - **Query Operator**: `ToQuery` generates a MongoDB query fragment instead of evaluating directly.
 - **Type Caster**: Forces right-hand side values to a type (e.g., `ToString`, `ToObjectId`, `ToDate`).
 
-*Example:*
+_Example:_
 
 ```json
 {
@@ -337,7 +376,9 @@ In policies, conditions are defined under the `Condition` key using the format: 
       "Condition": {
         "StringEquals": { "userRole": "admin" },
         "NumericGreaterThanEquals:ToQuery": { "orderValue": 100 },
-        "InArray:AnyValues:ToObjectIdArray": { "{{$userDepartments}}": ["dept1", "dept2"] }
+        "InArray:AnyValues:ToObjectIdArray": {
+          "{{$userDepartments}}": ["dept1", "dept2"]
+        }
       }
     }
   ]
@@ -370,7 +411,7 @@ Produces: `{ orderValue: { $gte: 100 } }`
 
 Combine schema and policy conditions for robust authorization.
 
-*Schema:*
+_Schema:_
 
 ```json
 {
@@ -378,13 +419,16 @@ Combine schema and policy conditions for robust authorization.
     "create": {
       "Type": ["Action"],
       "Variables": { "userId": { "type": "string", "required": true } },
-      "Condition": { "Operators": ["StringEquals"], "QueryEnforceTypeCast": { "userId": "ToObjectId" } }
+      "Condition": {
+        "Operators": ["StringEquals"],
+        "QueryEnforceTypeCast": { "userId": "ToObjectId" }
+      }
     }
   }
 }
 ```
 
-*Policy:*
+_Policy:_
 
 ```json
 [
@@ -401,18 +445,17 @@ Combine schema and policy conditions for robust authorization.
 ]
 ```
 
-*Authorization:*
+_Authorization:_
 
 ```javascript
-const result = await dimrill.authorize(
-  ["Action", "orders:create"],
-  policies,
-  { variables: { userId: "507f1f77bcf86cd799439011" } }
-);
+const result = await dimrill.authorize(["Action", "orders:create"], policies, {
+  variables: { userId: "507f1f77bcf86cd799439011" },
+});
 // Result: { valid: true, query: { userId: ObjectId("507f1f77bcf86cd799439011") } }
 ```
 
 ## Security Notes
+
 - Validate all inputs to `authorize` to prevent injection.
 - Avoid `unsafeEquals: true` unless necessary.
 - Use specific DRNA paths over wildcards (`*`).
@@ -447,9 +490,9 @@ await dimrill.autoload("schemas");
 
 const errors = dimrill.validateVariables("orders:create", {
   userId: 123, // Invalid: should be string
-  orderValue: 150
+  orderValue: 150,
 });
-console.log(errors); 
+console.log(errors);
 // [{ type: "variable", message: "userId must be string", path: "userId", expected: "string", received: "number" }]
 ```
 
@@ -465,11 +508,11 @@ const policy = {
       Effect: "Allow",
       Action: ["orders:create"],
       Condition: {
-        "StringEquals": { "userRole": "admin" },
-        "NumericGreaterThanEquals:ToQuery": { "orderValue": 100 }
-      }
-    }
-  ]
+        StringEquals: { userRole: "admin" },
+        "NumericGreaterThanEquals:ToQuery": { orderValue: 100 },
+      },
+    },
+  ],
 };
 
 const policyErrors = dimrill.validatePolicy(policy);
@@ -490,14 +533,14 @@ const templatePolicy = {
   Statement: [
     {
       Effect: "Allow",
-      Ressource: ["orders:view&ownerId/{{$userId}}"],
+      Resource: ["orders:view&ownerId/{{$userId}}"],
       Condition: {
         "InArray:ToQuery:AnyValues": {
-          status: ["{{$status}}", "active"]
-        }
-      }
-    }
-  ]
+          status: ["{{$status}}", "active"],
+        },
+      },
+    },
+  ],
 };
 
 const templateErrors = dimrill.validatePolicy(templatePolicy);
