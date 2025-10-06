@@ -238,6 +238,109 @@ async function testPolicyLinter() {
       "Valid condition should produce no errors"
     );
 
+    // Test QueryKeys validation
+    console.log("\n🧪 Testing QueryKeys validation in linter...");
+
+    // Valid QueryKeys
+    const validQueryKeysPolicy: Policy = {
+      Version: "2023-10-17",
+      Statement: [
+        {
+          Effect: "Allow" as const,
+          Action: ["blackeye:orders:allowedProductCategories"],
+          Condition: {
+            "InArray:ToQuery": {
+              organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+              status: ["active"],
+            },
+          },
+        },
+      ],
+    };
+
+    const validQueryKeysResult = dimrill.validatePolicy(validQueryKeysPolicy);
+    assertMatch(
+      validQueryKeysResult,
+      [],
+      "Valid QueryKeys should produce no errors"
+    );
+
+    // Invalid QueryKeys
+    const invalidQueryKeysPolicy: Policy = {
+      Version: "2023-10-17",
+      Statement: [
+        {
+          Effect: "Allow" as const,
+          Action: ["blackeye:orders:allowedProductCategories"],
+          Condition: {
+            "InArray:ToQuery": {
+              invalidKey: ["value"], // This key is not in QueryKeys
+            },
+          },
+        },
+      ],
+    };
+
+    const invalidQueryKeysResult =
+      dimrill.validatePolicy(invalidQueryKeysPolicy);
+    assertMatch(
+      invalidQueryKeysResult.some((error) =>
+        error.message.includes("Query key") &&
+        error.message.includes("invalidKey")
+      ),
+      true,
+      "Should detect invalid query key"
+    );
+
+    // Mixed valid and invalid QueryKeys
+    const mixedQueryKeysPolicy: Policy = {
+      Version: "2023-10-17",
+      Statement: [
+        {
+          Effect: "Allow" as const,
+          Action: ["blackeye:orders:allowedProductCategories"],
+          Condition: {
+            "StringEquals:ToQuery": {
+              status: "active", // valid
+              invalidField: "value", // invalid
+            },
+          },
+        },
+      ],
+    };
+
+    const mixedQueryKeysResult = dimrill.validatePolicy(mixedQueryKeysPolicy);
+    assertMatch(
+      mixedQueryKeysResult.some((error) =>
+        error.message.includes("invalidField")
+      ),
+      true,
+      "Should detect invalid key in mixed conditions"
+    );
+
+    // Test that non-ToQuery conditions don't get validated for QueryKeys
+    const nonToQueryPolicy: Policy = {
+      Version: "2023-10-17",
+      Statement: [
+        {
+          Effect: "Allow" as const,
+          Action: ["blackeye:orders:allowedProductCategories"],
+          Condition: {
+            StringEquals: {
+              orderCurrency: "EUR", // This should validate against variables, not QueryKeys
+            },
+          },
+        },
+      ],
+    };
+
+    const nonToQueryResult = dimrill.validatePolicy(nonToQueryPolicy);
+    assertMatch(
+      nonToQueryResult,
+      [],
+      "Non-ToQuery conditions should not be validated against QueryKeys"
+    );
+
     console.log("\n✅ All policy linter tests passed!");
   } catch (error) {
     console.error("\n❌ Policy linter test failed:", error);

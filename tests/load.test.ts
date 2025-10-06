@@ -163,6 +163,109 @@ describe("Dimrill Authorization Tests", () => {
     expect(result.valid).toBe(false);
   }, 10000);
 
+  test("Should validate QueryKeys - allow valid keys", async () => {
+    console.log("Testing QueryKeys validation with valid keys...");
+    const validPolicy = [
+      {
+        Version: "1.0",
+        Statement: [
+          {
+            Effect: "Allow",
+            Resource: ["blackeye:orders:allowedProductCategories"],
+            Condition: {
+              "InArray:ToQuery": {
+                organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+                status: ["active"],
+              },
+            },
+          },
+        ],
+      },
+    ];
+
+    const result = await dimrill.authorize(
+      ["Resource", "blackeye:orders:allowedProductCategories"],
+      validPolicy as any,
+      {
+        variables: {
+          orderCurrency: "EUR",
+        },
+      }
+    );
+    expect(result.valid).toBe(true);
+  }, 10000);
+
+  test("Should validate QueryKeys - reject invalid keys", async () => {
+    console.log("Testing QueryKeys validation with invalid keys...");
+    const invalidPolicy = [
+      {
+        Version: "1.0",
+        Statement: [
+          {
+            Effect: "Allow",
+            Resource: ["blackeye:orders:allowedProductCategories"],
+            Condition: {
+              "InArray:ToQuery": {
+                invalidKey: ["value"], // This key is not in QueryKeys
+              },
+            },
+          },
+        ],
+      },
+    ];
+
+    try {
+      const result = await dimrill.authorize(
+        ["Resource", "blackeye:orders:allowedProductCategories"],
+        invalidPolicy as any,
+        {
+          variables: {
+            orderCurrency: "EUR",
+          },
+        }
+      );
+      // Should either throw or return valid: false
+      expect(result.valid).toBe(false);
+    } catch (error: any) {
+      // Should throw a security error
+      expect(error.message).toContain("Query key");
+      expect(error.message).toContain("invalidKey");
+    }
+  }, 10000);
+
+  test("Should validate QueryKeys with dynamic variables", async () => {
+    console.log("Testing QueryKeys validation with variables...");
+    const policyWithVariables = [
+      {
+        Version: "1.0",
+        Statement: [
+          {
+            Effect: "Allow",
+            Resource: ["blackeye:orders:allowedProductCategories"],
+            Condition: {
+              "InArray:ToQuery": {
+                organizations: "{{$organizations}}",
+                status: ["active", "pending"],
+              },
+            },
+          },
+        ],
+      },
+    ];
+
+    const result = await dimrill.authorize(
+      ["Resource", "blackeye:orders:allowedProductCategories"],
+      policyWithVariables as any,
+      {
+        variables: {
+          organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+          orderCurrency: "EUR",
+        },
+      }
+    );
+    expect(result.valid).toBe(true);
+  }, 10000);
+
   // test("Should authorize bulk operations", async () => {
   //   const bulk = await dimrill.authorizeBulk(
   //     [["Resource", "blackeye:products:categories:createCategory"]],

@@ -71,6 +71,7 @@ export interface ConditionSchema {
   Operators?: string[];
   QueryOperators?: string[];
   QueryEnforceTypeCast?: Record<string, string>;
+  QueryKeys?: string[];
   [key: string]: any;
 }
 

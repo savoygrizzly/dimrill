@@ -25,6 +25,7 @@ interface SchemaDetails {
   conditions?: {
     queryEnforceTypeCast?: Record<string, string>;
     operators?: string[];
+    queryKeys?: string[];
   };
   type?: string[];
 }
@@ -91,10 +92,15 @@ export class DimrillLinter {
       }
     }
 
+    const condition = (current as PathSchema).Condition;
     return {
       variables: (current as PathSchema).Variables,
       arguments: (current as PathSchema).Arguments as any,
-      conditions: (current as PathSchema).Condition as any,
+      conditions: condition ? {
+        queryEnforceTypeCast: condition.QueryEnforceTypeCast,
+        operators: condition.Operators,
+        queryKeys: condition.QueryKeys,
+      } : undefined,
       type: (current as PathSchema).Type,
     };
   }
@@ -488,6 +494,18 @@ export class DimrillLinter {
         });
       }
 
+      // Check if this is a ToQuery operator and validate QueryKeys
+      const isToQuery = operator.includes("ToQuery");
+      if (isToQuery) {
+        // Validate QueryKeys for ToQuery operators
+        this.validateQueryKeys(
+          operator,
+          conditionMap as Record<string, unknown>,
+          drnaPaths,
+          errors
+        );
+      }
+
       // Extract and validate template variables in condition values
       for (const [variable, value] of Object.entries(
         conditionMap as Record<string, unknown>
@@ -529,6 +547,52 @@ export class DimrillLinter {
     }
 
     return errors;
+  }
+
+  /**
+   * Validate query keys for ToQuery operators against schema QueryKeys
+   */
+  private validateQueryKeys(
+    operator: string,
+    conditionMap: Record<string, unknown>,
+    drnaPaths: string[],
+    errors: LinterError[]
+  ): void {
+    // Get QueryKeys from all schemas referenced in the DRNA paths
+    const allowedKeysSet = new Set<string>();
+    let hasQueryKeys = false;
+
+    drnaPaths.forEach((path) => {
+      const basePath = path.split(/[&/]/)[0];
+      // Skip paths with wildcards
+      if (basePath.includes("*")) return;
+
+      const details = this.getSchemaDetails(basePath);
+      if (details?.conditions?.queryKeys) {
+        hasQueryKeys = true;
+        details.conditions.queryKeys.forEach((key: string) => {
+          allowedKeysSet.add(key);
+        });
+      }
+    });
+
+    // If QueryKeys is defined in the schema, validate the condition keys
+    if (hasQueryKeys) {
+      const conditionKeys = Object.keys(conditionMap);
+      const allowedKeys = Array.from(allowedKeysSet);
+
+      conditionKeys.forEach((key) => {
+        if (!allowedKeysSet.has(key)) {
+          errors.push({
+            type: "condition",
+            message: `Query key "${key}" is not allowed in ToQuery conditions. Allowed keys: ${allowedKeys.join(", ")}`,
+            path: `${operator}.${key}`,
+            expected: allowedKeys.join(", "),
+            received: key,
+          });
+        }
+      });
+    }
   }
 
   /**
