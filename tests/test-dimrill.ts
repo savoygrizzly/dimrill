@@ -213,7 +213,9 @@ async function testDimrill() {
 
     // Just check that it's valid and has $or structure
     if (!resultMultipleAnyValues.valid || !resultMultipleAnyValues.query.$or) {
-      throw new Error("Multiple AnyValues conditions should be combined with $or");
+      throw new Error(
+        "Multiple AnyValues conditions should be combined with $or"
+      );
     }
     console.log("✅ Multiple AnyValues conditions correctly combined with $or");
 
@@ -309,7 +311,10 @@ async function testDimrill() {
       }
       console.log("✅ Correctly rejected invalid query key (returned invalid)");
     } catch (error: any) {
-      if (error.message.includes("Query key") || error.message.includes("invalidKey")) {
+      if (
+        error.message.includes("Query key") ||
+        error.message.includes("invalidKey")
+      ) {
         console.log("✅ Correctly rejected invalid query key (threw error)");
       } else {
         throw error;
