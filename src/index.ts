@@ -531,6 +531,7 @@ class Dimrill {
     conditions?: {
       queryEnforceTypeCast?: Record<string, string>;
       operators?: string[];
+      queryKeys?: string[];
     };
     type?: string[];
   } | null {

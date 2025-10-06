@@ -217,6 +217,20 @@ class Condition {
       (!schema?.Condition?.QueryOperators ||
         schema?.Condition?.QueryOperators.includes(mainOperator))
     ) {
+      // SECURITY: Validate query keys before building the query
+      if (schema?.Condition?.QueryKeys) {
+        const queryKeys = Object.keys(values);
+        const allowedKeys = schema.Condition.QueryKeys;
+        
+        for (const key of queryKeys) {
+          if (!allowedKeys.includes(key)) {
+            throw new Error(
+              `Security Error: Query key "${key}" is not allowed. Allowed keys: ${allowedKeys.join(", ")}`
+            );
+          }
+        }
+      }
+      
       returnValue.valid = true;
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
