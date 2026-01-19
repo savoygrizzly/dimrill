@@ -1,0 +1,14 @@
+{
+  "editPolicy": {
+    "Type": ["Action", "Resource"],
+    "Description": "Edit an existing policy",
+    "Arguments": {},
+    "Variables": {}
+  },
+  "createPolicy": {
+    "Type": ["Action", "Resource"],
+    "Description": "Create a new policy",
+    "Arguments": {},
+    "Variables": {}
+  }
+}
