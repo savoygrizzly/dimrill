@@ -486,6 +486,26 @@ class Dimrill {
   }
 
   /**
+   * Validate multiple policies against the schema
+   * Each error includes a policyIndex indicating which policy it belongs to
+   */
+  public validatePolicies(
+    policies: Policy[]
+  ): Array<{
+    type: "variable" | "argument" | "syntax" | "condition" | "policy";
+    message: string;
+    path?: string;
+    expected?: string;
+    received?: string;
+    statementIndex?: number;
+    policyIndex?: number;
+    line?: number;
+    column?: number;
+  }> {
+    return this.getLinter().validatePolicies(policies);
+  }
+
+  /**
    * Validate a statement against the schema
    */
   public validateStatement(

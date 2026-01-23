@@ -17,14 +17,13 @@
 			},
 			{
 				"Effect": "Allow",
-				"Resource": ["blackeye:files:orders:selectableOrderBuyers"],
+				"Action": ["blackeye:files:orders:getCreateOrderFields"],
 				"Condition": {
-					"InArray:ToQuery:ToObjectIdArray": {
-						"_id": "{{$organizations}}"
-					},
-					"ToQuery:Bool": {
-						"isManufacturer": false,
-						"isProducer": false
+					"InArray": {
+						"{{$pricelist}}": "{{!allowedPricelists}}",
+						"{{$currencyCode}}": "{{!allowedOrderCurrencies}}",
+						"{{$sellerId}}": "{{!sellerIds}}",
+						"{{$customerId}}": "{{$organizations}}"
 					}
 				}
 			}

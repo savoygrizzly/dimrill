@@ -70,6 +70,9 @@ export class DimrillLinter {
   // Regex to extract template variables from strings
   private readonly templateVarRegex = /\{\{\$([\w\d_]+)\}\}/g;
 
+  // Regex to check if a string is a template variable key (like {{$varName}})
+  private readonly templateKeyRegex = /^\{\{\$([\w\d_]+)\}\}$/;
+
   constructor(schema: RootSchema) {
     this.schema = schema;
   }
@@ -103,6 +106,15 @@ export class DimrillLinter {
       } : undefined,
       type: (current as PathSchema).Type,
     };
+  }
+
+  /**
+   * Check if a key is a template variable pattern and extract the variable name
+   * Returns the variable name if it's a template key, null otherwise
+   */
+  private extractTemplateKeyVariable(key: string): string | null {
+    const match = key.match(this.templateKeyRegex);
+    return match ? match[1] : null;
   }
 
   /**
@@ -287,6 +299,26 @@ export class DimrillLinter {
       statementErrors.forEach((error) => {
         error.statementIndex = index;
         errors.push(error);
+      });
+    });
+
+    return errors;
+  }
+
+  /**
+   * Validate multiple policies against the schema
+   * Each error includes a policyIndex indicating which policy it belongs to
+   */
+  public validatePolicies(policies: Policy[]): (LinterError & { policyIndex?: number })[] {
+    const errors: (LinterError & { policyIndex?: number })[] = [];
+
+    policies.forEach((policy, policyIndex) => {
+      const policyErrors = this.validatePolicy(policy);
+      policyErrors.forEach((error) => {
+        errors.push({
+          ...error,
+          policyIndex,
+        });
       });
     });
 
@@ -507,7 +539,7 @@ export class DimrillLinter {
       }
 
       // Extract and validate template variables in condition values
-      for (const [variable, value] of Object.entries(
+      for (const [conditionKey, value] of Object.entries(
         conditionMap as Record<string, unknown>
       )) {
         // Extract template variables from the condition value
@@ -519,28 +551,49 @@ export class DimrillLinter {
             errors.push({
               type: "condition",
               message: `Template variable "$${templateVar}" used in condition does not exist in the referenced schemas`,
-              path: `${operator}.${variable}.template`,
+              path: `${operator}.${conditionKey}.template`,
             });
           }
         });
 
-        // Check if the condition variable itself exists in schema
-        if (!availableVariables.has(variable)) {
-          errors.push({
-            type: "condition",
-            message: `Variable "${variable}" used in condition does not exist in the referenced schemas`,
-            path: `${operator}.${variable}`,
-          });
+        // Check if the condition key is a template variable (e.g., {{$customerId}})
+        const templateKeyVar = this.extractTemplateKeyVariable(conditionKey);
+
+        if (templateKeyVar) {
+          // The key is a template variable like {{$customerId}}
+          // Validate that the referenced variable exists in schema
+          if (!availableVariables.has(templateKeyVar)) {
+            errors.push({
+              type: "condition",
+              message: `Variable "$${templateKeyVar}" used as condition key does not exist in the referenced schemas`,
+              path: `${operator}.${conditionKey}`,
+            });
+          }
+          // Skip type validation for template variable keys since the actual key is determined at runtime
         } else {
-          // Check variable type compatibility with operator
-          // Skip for values containing template variables
-          if (templateVars.length === 0) {
-            this.validateVariableTypeForOperator(
-              variable,
-              baseOperator,
-              drnaPaths,
-              errors
-            );
+          // Regular key (not a template variable)
+          // For ToQuery operators, keys should be QueryKeys, not schema variables
+          // The QueryKeys validation is handled separately in validateQueryKeys
+          if (!isToQuery) {
+            // Check if the condition variable itself exists in schema
+            if (!availableVariables.has(conditionKey)) {
+              errors.push({
+                type: "condition",
+                message: `Variable "${conditionKey}" used in condition does not exist in the referenced schemas`,
+                path: `${operator}.${conditionKey}`,
+              });
+            } else {
+              // Check variable type compatibility with operator
+              // Skip for values containing template variables
+              if (templateVars.length === 0) {
+                this.validateVariableTypeForOperator(
+                  conditionKey,
+                  baseOperator,
+                  drnaPaths,
+                  errors
+                );
+              }
+            }
           }
         }
       }
@@ -582,6 +635,12 @@ export class DimrillLinter {
       const allowedKeys = Array.from(allowedKeysSet);
 
       conditionKeys.forEach((key) => {
+        // Skip validation for template variable keys (e.g., {{$customerId}})
+        // These are dynamic keys determined at runtime
+        if (this.extractTemplateKeyVariable(key)) {
+          return;
+        }
+
         if (!allowedKeysSet.has(key)) {
           errors.push({
             type: "condition",
