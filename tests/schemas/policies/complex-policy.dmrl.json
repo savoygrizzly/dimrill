@@ -1,0 +1,33 @@
+[
+	{
+		"Version": "1.0",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Action": ["blackeye:files:orders:convertOrder"],
+				"Condition": {
+					"InArray": {
+						"{{$customerId}}": "{{$organizations}}",
+						"{{$orderState}}": ["draft"]
+					},
+					"StringEquals": {
+						"{{$toOrderState}}": "salesOrder"
+					}
+				}
+			},
+			{
+				"Effect": "Allow",
+				"Resource": ["blackeye:files:orders:selectableOrderBuyers"],
+				"Condition": {
+					"InArray:ToQuery:ToObjectIdArray": {
+						"_id": "{{$organizations}}"
+					},
+					"ToQuery:Bool": {
+						"isManufacturer": false,
+						"isProducer": false
+					}
+				}
+			}
+		]
+	}
+]

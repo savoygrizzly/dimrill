@@ -1,0 +1,613 @@
+{
+	"mentionUser": {
+		"Description": "Mention a user in an order",
+		"Type": ["Action"],
+		"Arguments": {
+			"orderId": {
+				"type": "string"
+			},
+			"userId": {
+				"type": "string"
+			}
+		},
+		"Variables": {
+			"orderId": {
+				"type": "string"
+			},
+			"userId": {
+				"type": "string"
+			},
+			"commenterOrgs": {
+				"type": "objectIdArray"
+			},
+			"mentionedUserId": {
+				"type": "objectId"
+			},
+			"mentionedUserOrgs": {
+				"type": "objectIdArray"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"customerId": {
+				"type": "objectId"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"orderId": "ToObjectId",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId",
+				"commenterOrgs": "ToObjectIdArray",
+				"mentionedUserId": "ToObjectId",
+				"mentionedUserOrgs": "ToObjectIdArray"
+			}
+		}
+	},
+	"selectableOrderPricelists": {
+		"Description": "List the available pricelists for a given order",
+		"Type": ["Resource"],
+		"Variables": {
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"pricelist": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray"
+			}
+		}
+	},
+	"selectableOrderSellers": {
+		"Description": "List the available sellers for a given order",
+		"Type": ["Resource"],
+		"Variables": {
+			"organization": {
+				"type": "objectId"
+			},
+			"userSub": {
+				"type": "objectId"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"organization": "ToObjectId"
+			},
+			"Enforce": {
+				"ToQuery:Bool": {
+					"isSeller": true
+				}
+			}
+		}
+	},
+	"selectableOrderBuyers": {
+		"Description": "List the available buyers for a given order",
+		"Type": ["Resource"],
+		"Variables": {
+			"organization": {
+				"type": "objectId"
+			},
+			"userSub": {
+				"type": "objectId"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"userSub": "ToObjectId"
+			}
+		}
+	},
+	"getCreateOrder": {
+		"Description": "Get the basic fields required to create an order",
+		"Type": ["Resource"],
+		"Variables": {
+			"organizations": {
+				"type": "objectIdArray"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray"
+			}
+		}
+	},
+	"getCreateOrderFields": {
+		"Description": "Get the address fields required to create an order",
+		"Type": ["Action"],
+		"Arguments": {
+			"pricelist": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			}
+		},
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "string"
+			},
+			"sellerId": {
+				"type": "string"
+			},
+			"accountingOrgId": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"customerId": "ToObjectId",
+				"sellerId": "ToObjectId"
+			}
+		}
+	},
+	"createOrder": {
+		"Description": "Create an order",
+		"Type": ["Action", "Resource"],
+		"Arguments": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"sellerId": {
+				"type": "string"
+			},
+			"accountingOrgId": {
+				"type": "string"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"duplicateOrder": {
+		"Description": "Duplicate an order",
+		"Type": ["Action"],
+		"Arguments": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"sellerId": {
+				"type": "string"
+			},
+			"accountingOrgId": {
+				"type": "string"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"toOrderState": {
+				"type": "string"
+			}
+		},
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"toOrderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"convertOrder": {
+		"Description": "Convert an order to a different order state",
+		"Type": ["Action"],
+		"Arguments": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"sellerId": {
+				"type": "string"
+			},
+			"accountingOrgId": {
+				"type": "string"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			},
+			"toOrderState": {
+				"type": "string"
+			}
+		},
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"toOrderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"convertAndDuplicateStates": {
+		"Description": "Used to generate the states for the convert and duplicate actions for UI.",
+		"Type": ["Resource"],
+		"Arguments": {},
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"toOrderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"deleteOrder": {
+		"Description": "Delete an order",
+		"Type": ["Action", "Resource"],
+		"Arguments": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"sellerId": {
+				"type": "string"
+			},
+			"accountingOrgId": {
+				"type": "string"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"addTags": {
+		"Description": "Set tags on a product",
+		"Type": ["Action", "Resource"],
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"removeTags": {
+		"Description": "Set tags on a product",
+		"Type": ["Action", "Resource"],
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			}
+		}
+	},
+	"getApplicableTags": {
+		"Description": "Set tags on a product",
+		"Type": ["Action", "Resource"],
+		"Variables": {
+			"pricelist": {
+				"type": "string"
+			},
+			"customerId": {
+				"type": "objectId"
+			},
+			"sellerId": {
+				"type": "objectId"
+			},
+			"accountingOrgId": {
+				"type": "objectId"
+			},
+			"orderState": {
+				"type": "string"
+			},
+			"currencyCode": {
+				"type": "string"
+			},
+			"organizations": {
+				"type": "objectIdArray"
+			},
+			"billingCountryCode": {
+				"type": "string"
+			},
+			"deliveryCountryCode": {
+				"type": "string"
+			}
+		},
+		"Condition": {
+			"QueryEnforceTypeCast": {
+				"organizations": "ToObjectIdArray",
+				"sellerId": "ToObjectId",
+				"accountingOrgId": "ToObjectId",
+				"customerId": "ToObjectId"
+			},
+			"QueryKeys": [
+				"seller.organization",
+				"seller.accountingOrg",
+				"buyer.organization",
+				"currencyCode"
+			]
+		}
+	}
+}
