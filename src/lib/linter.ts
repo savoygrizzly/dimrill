@@ -7,6 +7,12 @@ import {
   type StatementCondition,
 } from "../types/custom";
 import { ObjectId } from "bson";
+import {
+  SchemaOperators,
+  SchemaConditionsOnlyOperators,
+  SchemaOperands,
+  SchemaCastTypes,
+} from "../constants";
 
 interface LinterError {
   type: "variable" | "argument" | "syntax" | "condition" | "policy";
@@ -32,40 +38,99 @@ interface SchemaDetails {
 
 export class DimrillLinter {
   private schema: RootSchema;
-  // Expanded list of supported operators in conditions
-  private readonly supportedOperators = [
-    // Basic operators
+
+  // Base operators that can be used standalone
+  private readonly baseOperators = [
+    // String operators
     "StringEquals",
     "StringNotEquals",
     "StringEqualsIgnoreCase",
+    "StringContains",
+    "StringNotContains",
+    // Number operators
     "NumberEquals",
     "NumberNotEquals",
     "NumberLessThan",
     "NumberLessThanEquals",
     "NumberGreaterThan",
     "NumberGreaterThanEquals",
+    // Date operators
     "DateEquals",
     "DateNotEquals",
     "DateLessThan",
     "DateLessThanEquals",
     "DateGreaterThan",
     "DateGreaterThanEquals",
+    // Boolean operators
     "BooleanEquals",
+    "Bool",
+    // Array operators
     "ArrayContains",
     "ArrayNotContains",
-    // Complex operators
     "InArray",
-    "InArray:ToQuery",
-    "InArray:ToQuery:AnyValues",
-    "InArray:ToQuery:AllValues",
     "NotInArray",
-    "NotInArray:ToQuery",
-    "NotInArray:ToQuery:AnyValues",
-    "NotInArray:ToQuery:AllValues",
-    "StringContains",
-    "StringNotContains",
+    "ArraysIntersect",
+    "ArraysNoIntersect",
+    // Special operators
     "If",
+    // Legacy operators from SchemaOperators
+    ...SchemaOperators,
+    ...SchemaConditionsOnlyOperators,
   ];
+
+  // Valid modifiers that can be combined with base operators
+  private readonly validModifiers = [
+    "ToQuery",
+    ...SchemaOperands,
+    ...SchemaCastTypes,
+  ];
+
+  /**
+   * Validate if an operator string is valid
+   * Supports compound operators like "InArray:ToQuery", "ToQuery:InArray", "ToQuery:Bool", etc.
+   */
+  private isValidOperator(operator: string): boolean {
+    // Check if it's a simple operator
+    if (this.baseOperators.includes(operator)) {
+      return true;
+    }
+
+    // Split compound operator and validate each part
+    const parts = operator.split(":");
+    if (parts.length === 1) {
+      return false;
+    }
+
+    // Check that we have at least one base operator and all other parts are valid modifiers
+    let hasBaseOperator = false;
+    for (const part of parts) {
+      if (this.baseOperators.includes(part)) {
+        hasBaseOperator = true;
+      } else if (!this.validModifiers.includes(part)) {
+        return false;
+      }
+    }
+
+    return hasBaseOperator;
+  }
+
+  /**
+   * Get a list of example supported operators for error messages
+   */
+  private getSupportedOperatorsExamples(): string {
+    const examples = [
+      "StringEquals",
+      "NumberEquals",
+      "BooleanEquals",
+      "Bool",
+      "InArray",
+      "InArray:ToQuery",
+      "ToQuery:InArray",
+      "ToQuery:Bool",
+      "NotInArray:ToQuery:AnyValues",
+    ];
+    return examples.join(", ") + ", etc.";
+  }
 
   // Regex to extract template variables from strings
   private readonly templateVarRegex = /\{\{\$([\w\d_]+)\}\}/g;
@@ -512,19 +577,17 @@ export class DimrillLinter {
     // Check each condition
     for (const [operator, conditionMap] of Object.entries(conditions)) {
       // Check if the operator is supported
-      const baseOperator = operator.split(":")[0];
-      if (
-        !this.supportedOperators.includes(operator) &&
-        !this.supportedOperators.includes(baseOperator)
-      ) {
+      if (!this.isValidOperator(operator)) {
         errors.push({
           type: "condition",
           message: `Unsupported condition operator: ${operator}`,
           path: operator,
-          expected: this.supportedOperators.join(", "),
+          expected: this.getSupportedOperatorsExamples(),
           received: operator,
         });
       }
+
+      const baseOperator = operator.split(":")[0];
 
       // Check if this is a ToQuery operator and validate QueryKeys
       const isToQuery = operator.includes("ToQuery");

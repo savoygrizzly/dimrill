@@ -217,6 +217,124 @@ describe("Complex Policy Linter Tests", () => {
 		});
 	});
 
+	describe("Flexible Operator Formats", () => {
+		test("should accept ToQuery:InArray format (reversed)", () => {
+			const policy: Policy = {
+				Version: "1.0",
+				Statement: [
+					{
+						Effect: "Allow",
+						Action: ["blackeye:orders:getApplicableTags"],
+						Condition: {
+							"ToQuery:InArray": {
+								"seller.organization": ["org1", "org2"],
+							},
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(policy);
+			const hasOperatorError = result.some((error) =>
+				error.message.includes("Unsupported condition operator"),
+			);
+			expect(hasOperatorError).toBe(false);
+		});
+
+		test("should accept ToQuery:Bool format", () => {
+			const policy: Policy = {
+				Version: "1.0",
+				Statement: [
+					{
+						Effect: "Allow",
+						Action: ["blackeye:orders:selectableOrderSellers"],
+						Condition: {
+							"ToQuery:Bool": {
+								isSeller: true,
+							},
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(policy);
+			const hasOperatorError = result.some((error) =>
+				error.message.includes("Unsupported condition operator"),
+			);
+			expect(hasOperatorError).toBe(false);
+		});
+
+		test("should accept ToQuery:NotInArray format", () => {
+			const policy: Policy = {
+				Version: "1.0",
+				Statement: [
+					{
+						Effect: "Allow",
+						Action: ["blackeye:orders:getApplicableTags"],
+						Condition: {
+							"ToQuery:NotInArray": {
+								"seller.organization": ["excludedOrg"],
+							},
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(policy);
+			const hasOperatorError = result.some((error) =>
+				error.message.includes("Unsupported condition operator"),
+			);
+			expect(hasOperatorError).toBe(false);
+		});
+
+		test("should accept compound operators with multiple modifiers", () => {
+			const policy: Policy = {
+				Version: "1.0",
+				Statement: [
+					{
+						Effect: "Allow",
+						Action: ["blackeye:orders:getApplicableTags"],
+						Condition: {
+							"ToQuery:InArray:AnyValues": {
+								"seller.organization": ["org1"],
+							},
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(policy);
+			const hasOperatorError = result.some((error) =>
+				error.message.includes("Unsupported condition operator"),
+			);
+			expect(hasOperatorError).toBe(false);
+		});
+
+		test("should reject completely invalid operators", () => {
+			const policy: Policy = {
+				Version: "1.0",
+				Statement: [
+					{
+						Effect: "Allow",
+						Action: ["blackeye:orders:convertOrder"],
+						Condition: {
+							CompletelyInvalidOperator: {
+								someField: "value",
+							},
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(policy);
+			expect(
+				result.some((error) =>
+					error.message.includes("Unsupported condition operator"),
+				),
+			).toBe(true);
+		});
+	});
+
 	describe("ToQuery with Template Variable Keys", () => {
 		test("should skip QueryKeys validation for template variable keys in ToQuery", () => {
 			// When using template variables as keys in ToQuery conditions,
