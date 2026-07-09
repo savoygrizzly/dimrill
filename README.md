@@ -1,11 +1,12 @@
 # Dimrill
 
-**VERSION 5.1.X**
+**VERSION 5.2.X**
 
 > _"Dimrill, like the ancient gate of Nanduhirion, stands resolute, its silent decrees sifting friend from foe in the twilight of access."_
 
 Dimrill is a policy-based authorization framework for Node.js, designed for fine-grained access control. It empowers developers to define permissions based on resources, actions, and dynamic contexts, transcending traditional role-based access control (RBAC).
 
+It has now been updated to TS7
 ## **IMPORTANT NOTICE**:
 
 **From version 5.1.X onward**
