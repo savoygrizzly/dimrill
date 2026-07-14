@@ -29,6 +29,7 @@ interface SchemaDetails {
   variables?: Record<string, VariableSchema>;
   arguments?: Record<string, { type: string }>;
   conditions?: {
+    variableEnforceTypeCast?: Record<string, string>;
     queryEnforceTypeCast?: Record<string, string>;
     operators?: string[];
     queryKeys?: string[];
@@ -161,10 +162,13 @@ export class DimrillLinter {
     }
 
     const condition = (current as PathSchema).Condition;
+    const variableEnforceTypeCast =
+      condition?.VariableEnforceTypeCast ?? condition?.QueryEnforceTypeCast;
     return {
       variables: (current as PathSchema).Variables,
       arguments: (current as PathSchema).Arguments as any,
       conditions: condition ? {
+        variableEnforceTypeCast,
         queryEnforceTypeCast: condition.QueryEnforceTypeCast,
         operators: condition.Operators,
         queryKeys: condition.QueryKeys,
@@ -180,6 +184,15 @@ export class DimrillLinter {
   private extractTemplateKeyVariable(key: string): string | null {
     const match = key.match(this.templateKeyRegex);
     return match ? match[1] : null;
+  }
+
+  private isDangerousQueryKey(key: string): boolean {
+    return (
+      key.startsWith("$") ||
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype"
+    );
   }
 
   /**
@@ -692,14 +705,23 @@ export class DimrillLinter {
       }
     });
 
-    // If QueryKeys is defined in the schema, validate the condition keys
-    if (hasQueryKeys) {
-      const conditionKeys = Object.keys(conditionMap);
-      const allowedKeys = Array.from(allowedKeysSet);
+    const conditionKeys = Object.keys(conditionMap);
+    const allowedKeys = Array.from(allowedKeysSet);
 
-      conditionKeys.forEach((key) => {
+    conditionKeys.forEach((key) => {
+      if (this.isDangerousQueryKey(key)) {
+        errors.push({
+          type: "condition",
+          message: `Query key "${key}" is not allowed in ToQuery conditions`,
+          path: `${operator}.${key}`,
+          received: key,
+        });
+        return;
+      }
+
+      if (hasQueryKeys) {
         // Skip validation for template variable keys (e.g., {{$customerId}})
-        // These are dynamic keys determined at runtime
+        // These are dynamic keys resolved and checked by runtime enforcement.
         if (this.extractTemplateKeyVariable(key)) {
           return;
         }
@@ -713,8 +735,8 @@ export class DimrillLinter {
             received: key,
           });
         }
-      });
-    }
+      }
+    });
   }
 
   /**

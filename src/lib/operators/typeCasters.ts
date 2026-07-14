@@ -1,4 +1,6 @@
 import { ObjectId } from "bson";
+import { parseStrictBoolean } from "./parseBoolean";
+
 export default class TypeCasters {
   public ToNumber(value: any): number {
     return Number(value);
@@ -9,7 +11,7 @@ export default class TypeCasters {
   }
 
   public ToBoolean(value: any): boolean {
-    return Boolean(value);
+    return parseStrictBoolean(value);
   }
 
   public ToArray(value: any | any[]): any[] {

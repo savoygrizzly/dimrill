@@ -70,6 +70,8 @@ export interface ConditionSchema {
   Enforce?: ConditionEnforceSchema;
   Operators?: string[];
   QueryOperators?: string[];
+  VariableEnforceTypeCast?: Record<string, string>;
+  /** @deprecated Use VariableEnforceTypeCast. Kept as a one-release alias. */
   QueryEnforceTypeCast?: Record<string, string>;
   QueryKeys?: string[];
   [key: string]: any;

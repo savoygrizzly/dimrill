@@ -1,3 +1,5 @@
+import { parseStrictBoolean } from "./parseBoolean";
+
 export default class Operators {
   public Equals = (leftOperator: any, rightOperator: any): boolean => {
     return leftOperator === rightOperator;
@@ -19,6 +21,14 @@ export default class Operators {
     rightOperator: string
   ): boolean => {
     return String(leftOperator) !== String(rightOperator);
+  };
+
+  /** Strict equality without string coercion */
+  public StringStrictlyEquals = (
+    leftOperator: string,
+    rightOperator: string
+  ): boolean => {
+    return leftOperator === rightOperator;
   };
 
   public NumberEquals = (
@@ -62,6 +72,14 @@ export default class Operators {
   ): boolean => {
     return Number(leftOperator) >= Number(rightOperator);
   };
+
+  // Aliases matching SchemaOperators / AWS-style Numeric* names
+  public NumericEquals = this.NumberEquals;
+  public NumericNotEquals = this.NumberNotEquals;
+  public NumericLessThan = this.NumberLessThan;
+  public NumericLessThanEquals = this.NumberLessThanEquals;
+  public NumericGreaterThan = this.NumberGreaterThan;
+  public NumericGreaterThanEquals = this.NumberGreaterThanEquals;
 
   public DateEquals = (leftOperator: Date, rightOperator: Date): boolean => {
     if (!(leftOperator instanceof Date)) {
@@ -145,7 +163,13 @@ export default class Operators {
   };
 
   public Bool = (leftOperator: boolean, rightOperator: boolean): boolean => {
-    return Boolean(leftOperator) === Boolean(rightOperator);
+    try {
+      return (
+        parseStrictBoolean(leftOperator) === parseStrictBoolean(rightOperator)
+      );
+    } catch {
+      return false;
+    }
   };
 
   public InArray = (leftOperator: any, rightOperator: any[]): boolean => {
@@ -177,8 +201,8 @@ export default class Operators {
   ): boolean => {
     const rightOperatorSet = new Set(rightOperator);
     return (
-      [...new Set(leftOperator)].filter((x) => rightOperatorSet.has(x)).length ===
-      0
+      [...new Set(leftOperator)].filter((x) => rightOperatorSet.has(x))
+        .length === 0
     );
   };
 }

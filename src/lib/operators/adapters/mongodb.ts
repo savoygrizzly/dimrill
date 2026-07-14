@@ -1,3 +1,5 @@
+import { parseStrictBoolean } from "../parseBoolean";
+
 export default class MongoDbOperators {
   // Equals
   public Equals = (field: string, value: any): Record<string, object> => {
@@ -23,6 +25,13 @@ export default class MongoDbOperators {
     value: string,
   ): Record<string, object> => {
     return { [field]: { $ne: String(value) } };
+  };
+
+  public StringStrictlyEquals = (
+    field: string,
+    value: string,
+  ): Record<string, object> => {
+    return { [field]: { $eq: value } };
   };
 
   // NumberEquals
@@ -73,6 +82,13 @@ export default class MongoDbOperators {
     return { [field]: { $gte: Number(value) } };
   };
 
+  public NumericEquals = this.NumberEquals;
+  public NumericNotEquals = this.NumberNotEquals;
+  public NumericLessThan = this.NumberLessThan;
+  public NumericLessThanEquals = this.NumberLessThanEquals;
+  public NumericGreaterThan = this.NumberGreaterThan;
+  public NumericGreaterThanEquals = this.NumberGreaterThanEquals;
+
   // DateEquals
   public DateEquals = (field: string, value: Date): Record<string, object> => {
     return { [field]: { $eq: new Date(value) } };
@@ -120,7 +136,7 @@ export default class MongoDbOperators {
 
   // Bool
   public Bool = (field: string, value: boolean): Record<string, object> => {
-    return { [field]: { $eq: Boolean(value) } };
+    return { [field]: { $eq: parseStrictBoolean(value) } };
   };
 
   // InArray

@@ -265,11 +265,9 @@ class Dimrill {
   }
 
   /**
-   *  Authorize a DRNA Array
-   * @param drnaArray The array of DRNA to authorize
-   * @param policies The policies to check against
-   * @param options Options
-   * @returns An array of all the valid drna strings supplied
+   * Authorize multiple DRNA paths for UI/menu visibility checks.
+   * WARNING: Defaults to ignoreConditions=true and always uses pathOnly matching.
+   * Do NOT use this as the enforcement gate for privileged API actions — use authorize().
    */
   public async authorizeBulk(
     drnaArray: string[][],
@@ -382,13 +380,18 @@ class Dimrill {
         );
       }
 
-      // Use Variables.castVariables
-      if (Object.keys(variables).length > 0 && schemaExists.Variables) {
+      // Use Variables.castVariables whenever the schema declares Variables so
+      // required fields are enforced even when the caller passes {}.
+      if (schemaExists.Variables) {
         const schemaVariables = schemaExists.Variables as Record<
           string,
           VariableSchema
         >;
-        variables = Variables.castVariables(variables, schemaVariables, [drna[0], drna[1]]);
+        variables = Variables.castVariables(
+          variables,
+          schemaVariables,
+          [drna[0], drna[1]]
+        );
       }
 
       // Create VariableContext
@@ -549,6 +552,8 @@ class Dimrill {
     variables?: Record<string, VariableSchema>;
     arguments?: Record<string, { type: string }>;
     conditions?: {
+      variableEnforceTypeCast?: Record<string, string>;
+      /** @deprecated Use variableEnforceTypeCast. */
       queryEnforceTypeCast?: Record<string, string>;
       operators?: string[];
       queryKeys?: string[];

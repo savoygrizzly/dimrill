@@ -37,7 +37,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"orderId": "ToObjectId",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -60,7 +60,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray"
 			}
 		}
@@ -80,7 +80,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"organization": "ToObjectId"
 			},
@@ -106,7 +106,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"userSub": "ToObjectId"
 			}
@@ -121,7 +121,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray"
 			}
 		}
@@ -158,7 +158,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"customerId": "ToObjectId",
 				"sellerId": "ToObjectId"
@@ -221,7 +221,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -294,7 +294,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -364,7 +364,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -409,7 +409,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -473,7 +473,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -514,7 +514,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -555,7 +555,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",
@@ -596,7 +596,7 @@
 			}
 		},
 		"Condition": {
-			"QueryEnforceTypeCast": {
+			"VariableEnforceTypeCast": {
 				"organizations": "ToObjectIdArray",
 				"sellerId": "ToObjectId",
 				"accountingOrgId": "ToObjectId",

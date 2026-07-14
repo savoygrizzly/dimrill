@@ -267,6 +267,52 @@ describe("Policy Linter Tests", () => {
 			).toBe(true);
 		});
 
+		test("should reject dangerous ToQuery keys without QueryKeys", () => {
+			const dangerousQueryKeyPolicy: Policy = {
+				Version: "2023-10-17",
+				Statement: [
+					{
+						Effect: "Allow",
+						Resource: ["blackeye:orders:getCreateOrder"],
+						Condition: {
+							"StringEquals:ToQuery": {
+								$where: "1 == 1",
+							} as any,
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(dangerousQueryKeyPolicy);
+			expect(
+				result.some(
+					(error) =>
+						error.message.includes("Query key") &&
+						error.message.includes("$where"),
+				),
+			).toBe(true);
+		});
+
+		test("should allow non-dangerous dotted ToQuery keys without QueryKeys", () => {
+			const dottedQueryKeyPolicy: Policy = {
+				Version: "2023-10-17",
+				Statement: [
+					{
+						Effect: "Allow",
+						Resource: ["blackeye:orders:getCreateOrder"],
+						Condition: {
+							"InArray:ToQuery": {
+								"buyer.organization": "{{$organizations}}",
+							},
+						},
+					},
+				],
+			};
+
+			const result = dimrill.validatePolicy(dottedQueryKeyPolicy);
+			expect(result).toEqual([]);
+		});
+
 		test("should detect invalid key in mixed conditions", () => {
 			const mixedQueryKeysPolicy: Policy = {
 				Version: "2023-10-17",

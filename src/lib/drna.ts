@@ -244,9 +244,10 @@ class DRNA extends Schema {
       if (pathOnly) {
         return true;
       }
-      // If policy has no parameters, match only if parameters are also empty
-      if (policyParams.length === 0) {
-        return Object.keys(parameters).length === 0;
+      // Empty policy params = unconstrained on params (path grant only).
+      // Policy authors must list params (or use Conditions) to scope access.
+      if (Object.keys(policyParams).length === 0) {
+        return true;
       }
 
       for (const param of Object.keys(policyParams)) {

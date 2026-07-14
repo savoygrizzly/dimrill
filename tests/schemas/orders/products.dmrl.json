@@ -32,7 +32,7 @@
       }
     },
     "Condition": {
-      "QueryEnforceTypeCast": {
+      "VariableEnforceTypeCast": {
         "organizations": "ToObjectIdArray",
         "categories": "ToObjectIdArray"
       },
@@ -69,7 +69,7 @@
       }
     },
     "Condition": {
-      "QueryEnforceTypeCast": {
+      "VariableEnforceTypeCast": {
         "organizations": "ToObjectIdArray",
         "categories": "ToObjectIdArray"
       },

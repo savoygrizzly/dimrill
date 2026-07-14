@@ -98,10 +98,17 @@ export class VariableContext {
 
     // Mimics the __operatorsClass__ call
     public runOperatorCondition(fn: string, a: any, b: any): any {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error - We assume fn exists on operators
-        const result = this.operators[fn](a, b);
-        return result; // No need for ExternalCopy
+        const operatorFn = (this.operators as unknown as Record<string, unknown>)[
+            fn
+        ];
+        if (typeof operatorFn !== "function") {
+            throw new Error(`Unknown condition operator: ${fn}`);
+        }
+        return (operatorFn as (left: any, right: any) => any).call(
+            this.operators,
+            a,
+            b
+        );
     }
 
     // Mimics the __adapterClass__ call
@@ -112,7 +119,7 @@ export class VariableContext {
         b: any
     ): any {
         // Adjust the unsafeEquals check based on whether castType was provided (like in the original ivmSandbox wrapper)
-        const checkUnsafe = castType === undefined || castType === 'undefined';
+        const checkUnsafe = castType === undefined || castType === "undefined";
         if (
             !this.options.unsafeEquals &&
             ["Equals", "NotEquals"].includes(fn) &&
@@ -123,9 +130,14 @@ export class VariableContext {
         ) {
             b = String(b); // Ensure string comparison for objects if unsafeEquals is false and no explicit cast type was given
         }
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error - We assume fn exists on adapter
-        const result = this.adapter[fn](a, b);
-        return result; // No need for ExternalCopy
+        const adapterFn = (this.adapter as unknown as Record<string, unknown>)[fn];
+        if (typeof adapterFn !== "function") {
+            throw new Error(`Unknown query operator: ${fn}`);
+        }
+        return (adapterFn as (field: string, value: any) => any).call(
+            this.adapter,
+            a,
+            b
+        );
     }
-} 
+}

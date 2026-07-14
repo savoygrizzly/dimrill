@@ -18,7 +18,17 @@ import _get from "lodash/get";
 import _set from "lodash/set";
 // import _merge from "lodash/merge";
 interface SchemaVariable {
-  type: "string" | "number" | "boolean" | "array";
+  type:
+    | "string"
+    | "number"
+    | "boolean"
+    | "array"
+    | "stringArray"
+    | "numberArray"
+    | "anyArray"
+    | "objectId"
+    | "objectIdArray"
+    | "date";
   required?: boolean;
   description?: string;
 }
@@ -103,6 +113,10 @@ class Schema {
             );
           }
 
+          if (value.Condition) {
+            this.validateSchemaCondition(value.Condition as ConditionSchema);
+          }
+
           Object.setPrototypeOf(
             value,
             this.returnSchemaSectionPrototype(key, true)
@@ -145,20 +159,22 @@ class Schema {
   private validateSchemaVariables(
     variables: Record<string, SchemaVariable>
   ): boolean {
+    const allowedTypes = [
+      "string",
+      "number",
+      "boolean",
+      "array",
+      "stringArray",
+      "numberArray",
+      "anyArray",
+      "objectId",
+      "objectIdArray",
+      "date",
+    ];
     for (const [key, value] of Object.entries(variables)) {
-      if (
-        !value.type ||
-        ![
-          "string",
-          "number",
-          "boolean",
-          "array",
-          "objectId",
-          "objectIdArray",
-        ].includes(value.type)
-      ) {
+      if (!value.type || !allowedTypes.includes(value.type)) {
         throw new Error(
-          `Invalid variable type for ${key}. Must be one of: string, number, boolean, array`
+          `Invalid variable type for ${key}. Must be one of: ${allowedTypes.join(", ")}`
         );
       }
     }
@@ -211,6 +227,14 @@ class Schema {
   private validateSchemaCondition(
     schemaCondition: ConditionSchema
   ): ConditionSchema {
+    if (schemaCondition.QueryEnforceTypeCast) {
+      console.warn(
+        "[dimrill] Deprecated: Condition.QueryEnforceTypeCast is deprecated. " +
+          "Migrate to Condition.VariableEnforceTypeCast. " +
+          "QueryEnforceTypeCast remains supported for one release as a legacy alias."
+      );
+    }
+
     Object.keys(schemaCondition).forEach((key: string) => {
       if (!SchemaConditionKeys.includes(key)) {
         throw new Error(`Invalid schema condition key: ${key}`);
@@ -234,6 +258,17 @@ class Schema {
             );
           }
         });
+      } else if (
+        key === "QueryKeys" ||
+        key === "VariableEnforceTypeCast" ||
+        key === "QueryEnforceTypeCast"
+      ) {
+        if (typeof schemaCondition[key] !== "object" || schemaCondition[key] === null) {
+          throw new Error(`Invalid schema condition value for: ${key}`);
+        }
+        if (key === "QueryKeys" && !Array.isArray(schemaCondition[key])) {
+          throw new Error(`Invalid schema condition value for: ${key}`);
+        }
       } else {
         if (typeof schemaCondition[key] !== "object") {
           throw new Error(`Invalid schema condition value for: ${key}`);
@@ -395,6 +430,16 @@ class Schema {
     remove: (value: string | string[]) => void;
   } {
     const pathSections = path.split(".");
+    const dangerousSegments = new Set([
+      "__proto__",
+      "constructor",
+      "prototype",
+    ]);
+    if (pathSections.some((section) => dangerousSegments.has(section))) {
+      throw new Error(
+        `Invalid schema path: ${path}. Prototype-polluting path segments are not allowed.`
+      );
+    }
     const targetKey = pathSections[pathSections.length - 1];
     const parentPath = pathSections.slice(0, -1).join(".");
     // Assuming validEndpoints includes keys that are allowed to be endpoints.

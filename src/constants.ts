@@ -10,6 +10,7 @@ export const SchemaConditionKeys = [
   "Enforce",
   "Operators",
   "QueryOperators",
+  "VariableEnforceTypeCast",
   "QueryEnforceTypeCast",
   "QueryKeys",
 ] as string[];

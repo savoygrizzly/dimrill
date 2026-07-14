@@ -1,5 +1,6 @@
 import Dimrill from "../src";
 import path from "path";
+import { ObjectId } from "bson";
 
 describe("Dimrill Authorization Tests", () => {
 	let dimrill: Dimrill;
@@ -303,6 +304,143 @@ describe("Dimrill Authorization Tests", () => {
 			);
 
 			expect(result.valid).toBe(true);
+		});
+
+		test("should allow dotted paths without QueryKeys while applying variable casts", async () => {
+			const policy = [
+				{
+					Version: "1.0",
+					Statement: [
+						{
+							Effect: "Allow",
+							Resource: ["blackeye:orders:getCreateOrder"],
+							Condition: {
+								"InArray:ToQuery": {
+									"buyer.organization": "{{$organizations}}",
+								},
+							},
+						},
+					],
+				},
+			];
+
+			const result = await dimrill.authorize(
+				["Resource", "blackeye:orders:getCreateOrder"],
+				policy as any,
+				{
+					variables: {
+						organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+					},
+				},
+			);
+
+			expect(result.valid).toBe(true);
+			const query = (
+				Array.isArray(result.query)
+					? Object.assign({}, ...result.query)
+					: result.query
+			) as Record<string, any>;
+			expect(query["buyer.organization"]).toBeDefined();
+			expect(query["buyer.organization"].$in[0]).toBeInstanceOf(ObjectId);
+		});
+
+		test("should keep QueryKeys separate from variable cast names", async () => {
+			const policy = [
+				{
+					Version: "1.0",
+					Statement: [
+						{
+							Effect: "Allow",
+							Action: ["blackeye:orders:getApplicableTags"],
+							Condition: {
+								"InArray:ToQuery": {
+									"buyer.organization": "{{$organizations}}",
+								},
+							},
+						},
+					],
+				},
+			];
+
+			const result = await dimrill.authorize(
+				["Action", "blackeye:orders:getApplicableTags"],
+				policy as any,
+				{
+					variables: {
+						organizations: ["5e9f8f8f8f8f8f8f8f8f8f8f"],
+					},
+				},
+			);
+
+			expect(result.valid).toBe(true);
+			const query = (
+				Array.isArray(result.query)
+					? Object.assign({}, ...result.query)
+					: result.query
+			) as Record<string, any>;
+			expect(query["buyer.organization"]).toBeDefined();
+			expect(query["buyer.organization"].$in[0]).toBeInstanceOf(ObjectId);
+		});
+
+		test("should support legacy QueryEnforceTypeCast alias and warn on load", async () => {
+			const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+			const legacyDimrill = new Dimrill();
+			legacyDimrill.loadSchemaFromString(
+				JSON.stringify({
+					legacyResource: {
+						Type: ["Resource"],
+						Variables: {
+							organizationId: {
+								type: "string",
+							},
+						},
+						Condition: {
+							QueryEnforceTypeCast: {
+								organizationId: "ToObjectId",
+							},
+							QueryKeys: ["buyer.organization"],
+						},
+					},
+				}),
+				"legacy.dmrl.json",
+			);
+			await legacyDimrill.compileSchemas();
+
+			expect(warnSpy).toHaveBeenCalledWith(
+				expect.stringContaining("QueryEnforceTypeCast is deprecated"),
+			);
+			warnSpy.mockRestore();
+
+			const result = await legacyDimrill.authorize(
+				["Resource", "legacyResource"],
+				[
+					{
+						Version: "1.0",
+						Statement: [
+							{
+								Effect: "Allow",
+								Resource: ["legacyResource"],
+								Condition: {
+									"StringEquals:ToQuery": {
+										"buyer.organization": "{{$organizationId}}",
+									},
+								},
+							},
+						],
+					},
+				] as any,
+				{
+					variables: {
+						organizationId: "5e9f8f8f8f8f8f8f8f8f8f8f",
+					},
+				},
+			);
+
+			expect(result.valid).toBe(true);
+			const query = Array.isArray(result.query)
+				? result.query[0]
+				: result.query;
+			expect((query as any)["buyer.organization"]).toBeInstanceOf(ObjectId);
 		});
 	});
 });

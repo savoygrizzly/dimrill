@@ -72,8 +72,12 @@ class Policies {
 			pathOnly: boolean;
 			ignoreConditions: boolean;
 		},
-	): Promise<{ valid: boolean; query: object | string }> {
-		let allowResult: { valid: boolean; query: object | string } | null = null;
+	): Promise<{ valid: boolean; query: object | string; denied: boolean }> {
+		let allowResult: {
+			valid: boolean;
+			query: object | string;
+			denied: boolean;
+		} | null = null;
 
 		for (const statement of policy.Statement) {
 			if (!statement[String(drnaType)]) continue;
@@ -107,30 +111,36 @@ class Policies {
 						if (statement.Effect === "Deny") {
 							// Deny statement matched - check conditions if present
 							if (statement.Condition && !options.ignoreConditions) {
-								const conditionResult = await this.Conditions.runConditions(
-									statement.Condition,
-									schema,
-									variableContext,
-								);
-								// If condition is valid, deny access immediately
-								if (conditionResult.valid) {
-									return { valid: false, query: {} };
+								try {
+									const conditionResult = await this.Conditions.runConditions(
+										statement.Condition,
+										schema,
+										variableContext,
+									);
+									// If condition is valid, deny access immediately
+									if (conditionResult.valid) {
+										return { valid: false, query: {}, denied: true };
+									}
+								} catch {
+									// Fail closed: Deny condition evaluation errors still deny
+									return { valid: false, query: {}, denied: true };
 								}
 								// If condition is invalid, this Deny doesn't apply - continue checking
 								continue;
 							}
 							// No condition or ignoring conditions - deny immediately
-							return { valid: false, query: {} };
+							return { valid: false, query: {}, denied: true };
 						} else if (statement.Effect === "Allow") {
 							// Allow statement matched - store result but continue checking for Deny
 							if (options.ignoreConditions) {
-								allowResult = { valid: true, query: {} };
+								allowResult = { valid: true, query: {}, denied: false };
 							} else {
-								allowResult = await this.Conditions.runConditions(
+								const conditionResult = await this.Conditions.runConditions(
 									statement.Condition,
 									schema,
 									variableContext,
 								);
+								allowResult = { ...conditionResult, denied: false };
 							}
 							// Don't return yet - continue checking for potential Deny statements
 						}
@@ -144,7 +154,7 @@ class Policies {
 			return allowResult;
 		}
 
-		return { valid: false, query: {} };
+		return { valid: false, query: {}, denied: false };
 	}
 
 	public async matchPolicy(
@@ -158,12 +168,13 @@ class Policies {
 			pathOnly: boolean;
 			ignoreConditions: boolean;
 		},
-	): Promise<Array<{ valid: boolean; query: object | string }>> {
+	): Promise<Array<{ valid: boolean; query: object | string; denied: boolean }>> {
 		if (policies.length === 0) {
 			return [
 				{
 					valid: false,
 					query: {},
+					denied: false,
 				},
 			];
 		}
@@ -186,11 +197,19 @@ class Policies {
 	}
 
 	public mergePoliciesResults(
-		results: Array<{ valid: boolean; query: object | string }>,
+		results: Array<{ valid: boolean; query: object | string; denied?: boolean }>,
 	): {
 		valid: boolean;
 		query: object | string;
 	} {
+		// Explicit Deny always wins across the entire policy set (IAM-style)
+		if (results.some((result) => result.denied)) {
+			return {
+				valid: false,
+				query: {},
+			};
+		}
+
 		const allValidResults = results.filter((result) => result.valid);
 		if (allValidResults.length === 0) {
 			return {

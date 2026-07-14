@@ -25,6 +25,44 @@ class Condition {
     adapter?: string;
   };
 
+  private isDangerousQueryKey(key: string): boolean {
+    return (
+      key.startsWith("$") ||
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype"
+    );
+  }
+
+  private extractTemplateVariableName(value: unknown): string | undefined {
+    if (typeof value !== "string") return undefined;
+    const match = value.match(/^\{\{\$([\w\d_]+)\}\}$/);
+    return match?.[1];
+  }
+
+  private getVariableTypeCast(
+    queryKey: string,
+    rawValue: unknown,
+    variableEnforceTypeCast: Record<string, string> | undefined,
+    legacyQueryEnforceTypeCast: Record<string, string> | undefined
+  ): string | undefined {
+    const variableName = this.extractTemplateVariableName(rawValue);
+    if (variableName) {
+      if (variableEnforceTypeCast?.[variableName]) {
+        return variableEnforceTypeCast[variableName];
+      }
+      if (legacyQueryEnforceTypeCast?.[variableName]) {
+        return legacyQueryEnforceTypeCast[variableName];
+      }
+    }
+    // Prefer VariableEnforceTypeCast; fall back to legacy QueryEnforceTypeCast.
+    // Keys may match either the variable name or the query field path.
+    return (
+      variableEnforceTypeCast?.[queryKey] ??
+      legacyQueryEnforceTypeCast?.[queryKey]
+    );
+  }
+
   public async runConditions(
     condition: StatementCondition | undefined,
     schema: ConditionSchema,
@@ -218,42 +256,81 @@ class Condition {
         schema?.Condition?.QueryOperators.includes(mainOperator))
     ) {
       // SECURITY: Validate query keys before building the query
-      if (schema?.Condition?.QueryKeys) {
-        const queryKeys = Object.keys(values);
-        const allowedKeys = schema.Condition.QueryKeys;
-        
-        for (const key of queryKeys) {
-          if (!allowedKeys.includes(key)) {
-            throw new Error(
-              `Security Error: Query key "${key}" is not allowed. Allowed keys: ${allowedKeys.join(", ")}`
-            );
-          }
+      const queryKeys = Object.keys(values);
+      const allowedKeys = schema?.Condition?.QueryKeys;
+
+      for (const key of queryKeys) {
+        const resolvedKey = String(variableContext.formatValue(key));
+        if (this.isDangerousQueryKey(resolvedKey)) {
+          throw new Error(
+            `Security Error: Query key "${resolvedKey}" is not allowed`
+          );
+        }
+        if (allowedKeys && !allowedKeys.includes(resolvedKey)) {
+          throw new Error(
+            `Security Error: Query key "${resolvedKey}" is not allowed. Allowed keys: ${allowedKeys.join(", ")}`
+          );
         }
       }
-      
-      returnValue.valid = true;
+
+      const variableEnforceTypeCast =
+        schema?.Condition?.VariableEnforceTypeCast ??
+        schema?.Condition?.QueryEnforceTypeCast;
+      const legacyQueryEnforceTypeCast =
+        schema?.Condition?.QueryEnforceTypeCast;
+      const queryTypeCast = Object.fromEntries(
+        Object.entries(values)
+          .map(([queryKey, rawValue]) => {
+            const resolvedKey = String(variableContext.formatValue(queryKey));
+            const cast = this.getVariableTypeCast(
+              resolvedKey,
+              rawValue,
+              variableEnforceTypeCast,
+              legacyQueryEnforceTypeCast
+            );
+            return cast ? [resolvedKey, cast] : undefined;
+          })
+          .filter((entry): entry is [string, string] => Boolean(entry))
+      );
+
       const results = await Promise.all(
         Object.entries(values).map(async (variables) => {
           return await this.runAdapter(
             mainOperator,
             variables,
-            modifiers.castType ?? schema?.Condition?.QueryEnforceTypeCast,
+            modifiers.castType,
             variableContext
           );
         })
       );
-      if (modifiers.castType ?? schema?.Condition?.QueryEnforceTypeCast) {
+
+      // Fail closed if any adapter call failed
+      if (results.some((result) => result === null)) {
+        return { valid: false, query: {} };
+      }
+
+      returnValue.valid = true;
+      if (modifiers.castType || Object.keys(queryTypeCast).length > 0) {
         // cast results to correct type
         returnValue.query = this.castQuery(
           results,
           modifiers.castType ?? "",
-          schema?.Condition?.QueryEnforceTypeCast as Record<string, string>
+          queryTypeCast
         );
       } else {
         returnValue.query = Object.assign({}, ...results);
       }
       if (modifiers.operand === "AnyValues") {
-        returnValue.query = { $or: returnValue.query };
+        const query = returnValue.query;
+        if (Array.isArray(query)) {
+          returnValue.query = { $or: query };
+        } else if (query && typeof query === "object") {
+          returnValue.query = {
+            $or: Object.entries(query as Record<string, unknown>).map(
+              ([field, value]) => ({ [field]: value })
+            ),
+          };
+        }
       }
     } else if (
       !schema?.Condition?.Operators ||
@@ -346,7 +423,7 @@ class Condition {
     valueArray: string[],
     castType: string | any,
     variableContext: VariableContext
-  ): Promise<Record<string, object> | string> {
+  ): Promise<Record<string, object> | string | null> {
     try {
       const formattedValue1 = variableContext.formatValue(valueArray[0]);
       const formattedValue2 = variableContext.formatValue(valueArray[1]);
@@ -360,8 +437,8 @@ class Condition {
       return query;
     } catch (error) {
       console.error(`Error in runAdapter for operator ${operator}: ${error}`);
-      // Return a safe default value based on the adapter's expected return type
-      return {};
+      // Fail closed: do not return an empty query that would grant unscoped access
+      return null;
     }
   }
 
@@ -382,6 +459,7 @@ class Condition {
       return result;
     } catch (error) {
       console.error(`Error in runCondition for operator ${operator}: ${error}`);
+      // Fail closed for Allow; Deny path handles errors separately
       return false;
     }
   }
